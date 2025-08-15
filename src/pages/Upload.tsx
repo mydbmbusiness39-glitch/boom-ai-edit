@@ -1,5 +1,4 @@
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
+import { useState, useRef, DragEvent } from "react";
 import { Upload as UploadIcon, Video, Image, Music, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,9 +15,20 @@ interface UploadedFile {
 
 const Upload = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map(file => ({
+  const handleFiles = (files: FileList | null) => {
+    if (!files) return;
+
+    const validFiles = Array.from(files).filter(file => {
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+      const isAudio = file.type.startsWith('audio/');
+      return isVideo || isImage || isAudio;
+    });
+
+    const newFiles = validFiles.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
       preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
@@ -28,16 +38,31 @@ const Upload = () => {
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
-  }, []);
+  };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'video/*': ['.mp4', '.mov', '.avi', '.mkv'],
-      'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-      'audio/*': ['.mp3', '.wav', '.aac']
-    }
-  });
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    handleFiles(e.dataTransfer.files);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleFiles(e.target.files);
+  };
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
+  };
 
   const removeFile = (id: string) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
@@ -75,13 +100,23 @@ const Upload = () => {
         <Card className="border-dashed border-2 border-border hover:border-primary/50 transition-colors">
           <CardContent className="p-8">
             <div
-              {...getRootProps()}
               className={cn(
                 "flex flex-col items-center justify-center space-y-4 py-12 cursor-pointer transition-all",
                 isDragActive && "scale-105 opacity-70"
               )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onClick={openFileDialog}
             >
-              <input {...getInputProps()} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="video/*,image/*,audio/*"
+                onChange={handleFileInput}
+                className="hidden"
+              />
               <div className="relative">
                 <UploadIcon className="h-16 w-16 text-muted-foreground" />
                 {isDragActive && (
@@ -98,7 +133,7 @@ const Upload = () => {
                 </p>
               </div>
 
-              <Button variant="outline" className="mt-4">
+              <Button variant="outline" className="mt-4" type="button">
                 <Plus className="h-4 w-4 mr-2" />
                 Choose Files
               </Button>
