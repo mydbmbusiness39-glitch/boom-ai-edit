@@ -14,13 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assets: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          kind: string
+          meta: Json | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          kind: string
+          meta?: Json | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          kind?: string
+          meta?: Json | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assets_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jobs: {
+        Row: {
+          bpm: number | null
+          captions: Json | null
+          created_at: string
+          duration_s: number
+          id: string
+          logs: string | null
+          output_url: string | null
+          preview_url: string | null
+          progress: number | null
+          stage: string | null
+          status: string
+          style: string
+          timeline: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bpm?: number | null
+          captions?: Json | null
+          created_at?: string
+          duration_s: number
+          id?: string
+          logs?: string | null
+          output_url?: string | null
+          preview_url?: string | null
+          progress?: number | null
+          stage?: string | null
+          status?: string
+          style: string
+          timeline?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bpm?: number | null
+          captions?: Json | null
+          created_at?: string
+          duration_s?: number
+          id?: string
+          logs?: string | null
+          output_url?: string | null
+          preview_url?: string | null
+          progress?: number | null
+          stage?: string | null
+          status?: string
+          style?: string
+          timeline?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          plan?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_user_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
