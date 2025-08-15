@@ -1,0 +1,61 @@
+import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Upload, Palette, Edit, Activity, Zap } from "lucide-react";
+
+const Navigation = () => {
+  const location = useLocation();
+
+  const navItems = [
+    { href: "/", label: "Home", icon: Zap },
+    { href: "/upload", label: "Upload", icon: Upload },
+    { href: "/style", label: "Style", icon: Palette },
+    { href: "/editor", label: "Editor", icon: Edit },
+    { href: "/status", label: "Status", icon: Activity },
+  ];
+
+  return (
+    <nav className="flex items-center justify-between w-full p-4 bg-card border-b border-border">
+      <div className="flex items-center space-x-2">
+        <div className="relative">
+          <Zap className="h-8 w-8 text-neon-purple" />
+          <div className="absolute inset-0 h-8 w-8 text-neon-purple animate-pulse opacity-50" />
+        </div>
+        <span className="text-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
+          BOOM!
+        </span>
+        <span className="text-lg text-muted-foreground">AI Video Editor</span>
+      </div>
+
+      <div className="flex items-center space-x-1">
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const isActive = location.pathname === href;
+          
+          return (
+            <Link
+              key={href}
+              to={href}
+              className={cn(
+                "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300",
+                "hover:bg-secondary/50 hover:shadow-lg",
+                isActive && [
+                  "bg-primary/10 text-primary",
+                  "shadow-[0_0_20px_hsl(var(--neon-purple)/0.3)]",
+                  "border border-primary/20"
+                ],
+                !isActive && "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className={cn(
+                "h-4 w-4",
+                isActive && "text-primary"
+              )} />
+              <span className="hidden md:inline-block">{label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+};
+
+export default Navigation;
