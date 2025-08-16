@@ -11,6 +11,7 @@ import Upload from "./pages/Upload";
 import Style from "./pages/Style";
 import Editor from "./pages/Editor";
 import Status from "./pages/Status";
+import Create from "./pages/Create";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Style />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/create" 
+              element={
+                <ProtectedRoute>
+                  <Create />
                 </ProtectedRoute>
               } 
             />
