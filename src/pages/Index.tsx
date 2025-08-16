@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import Layout from "@/components/Layout/Layout";
 
 const Index = () => {
+  const { user, signOut } = useAuth();
+
   const features = [
     {
       icon: Upload,
@@ -61,24 +64,50 @@ const Index = () => {
               </p>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-                <Link to="/upload">
-                  <Button 
-                    size="lg"
-                    className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25 px-8 py-4 text-lg"
-                  >
-                    <Play className="h-5 w-5 mr-2" />
-                    Start Creating
-                  </Button>
-                </Link>
-                
-                <Button 
-                  variant="outline" 
-                  size="lg"
-                  className="border-primary/20 hover:border-primary/50 px-8 py-4 text-lg"
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  Watch Demo
-                </Button>
+                {user ? (
+                  <>
+                    <Link to="/upload">
+                      <Button 
+                        size="lg"
+                        className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25 px-8 py-4 text-lg"
+                      >
+                        <Play className="h-5 w-5 mr-2" />
+                        Start Creating
+                      </Button>
+                    </Link>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="border-primary/20 hover:border-primary/50 px-8 py-4 text-lg"
+                      onClick={() => signOut()}
+                    >
+                      <LogOut className="h-5 w-5 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/auth">
+                      <Button 
+                        size="lg"
+                        className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25 px-8 py-4 text-lg"
+                      >
+                        <Play className="h-5 w-5 mr-2" />
+                        Get Started
+                      </Button>
+                    </Link>
+                    
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="border-primary/20 hover:border-primary/50 px-8 py-4 text-lg"
+                    >
+                      <Sparkles className="h-5 w-5 mr-2" />
+                      Watch Demo
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
