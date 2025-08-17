@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Palette, Sparkles, Film, Zap, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Palette, Sparkles, Film, Zap, ArrowRight, Gamepad2, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,77 +9,41 @@ import Layout from "@/components/Layout/Layout";
 import { AIStylePreset } from "@/types";
 
 const Style = () => {
+  const navigate = useNavigate();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
+  const [duration, setDuration] = useState<number>(15);
 
   const stylePresets: AIStylePreset[] = [
     {
-      id: "cinematic-1",
-      name: "Cinematic Drama",
-      description: "Hollywood-style color grading with enhanced contrast and warm tones",
+      id: "rgb-gamer",
+      name: "RGB Gamer",
+      description: "High-energy gaming aesthetic with vibrant RGB lighting effects",
       thumbnail: "/api/placeholder/300/200",
-      category: "cinematic",
-      parameters: { contrast: 1.3, saturation: 1.1, warmth: 0.2 }
+      category: "gaming",
+      parameters: { rgbIntensity: 0.9, saturation: 1.4, energy: 0.8 }
     },
     {
-      id: "artistic-1", 
-      name: "Artistic Vision",
-      description: "Creative art-inspired filters with unique color palettes",
+      id: "luxury", 
+      name: "Luxury",
+      description: "Premium elegant look with sophisticated color grading",
       thumbnail: "/api/placeholder/300/200",
-      category: "artistic",
-      parameters: { creativity: 0.8, stylization: 0.9 }
-    },
-    {
-      id: "vintage-1",
-      name: "Retro Vintage",
-      description: "Classic film aesthetic with grain and nostalgic color tones",
-      thumbnail: "/api/placeholder/300/200", 
-      category: "vintage",
-      parameters: { grain: 0.3, sepia: 0.4, vignette: 0.2 }
-    },
-    {
-      id: "modern-1",
-      name: "Modern Clean",
-      description: "Crisp, clean modern look with enhanced clarity",
-      thumbnail: "/api/placeholder/300/200",
-      category: "modern", 
-      parameters: { clarity: 1.4, sharpness: 1.2, brightness: 0.1 }
-    },
-    {
-      id: "experimental-1",
-      name: "AI Experimental",
-      description: "Cutting-edge AI-generated visual effects and transformations",
-      thumbnail: "/api/placeholder/300/200",
-      category: "experimental",
-      parameters: { aiStrength: 0.7, innovation: 0.9 }
-    },
-    {
-      id: "cinematic-2",
-      name: "Neon Cyber",
-      description: "Futuristic cyberpunk aesthetic with neon highlights",
-      thumbnail: "/api/placeholder/300/200",
-      category: "experimental",
-      parameters: { neonGlow: 0.8, contrast: 1.5, cyberpunk: 0.9 }
+      category: "luxury",
+      parameters: { elegance: 0.9, contrast: 1.2, sophistication: 0.8 }
     }
   ];
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'cinematic': return <Film className="h-5 w-5" />;
-      case 'artistic': return <Palette className="h-5 w-5" />;
-      case 'vintage': return <Sparkles className="h-5 w-5" />;
-      case 'modern': return <Zap className="h-5 w-5" />;
-      case 'experimental': return <Sparkles className="h-5 w-5" />;
+      case 'gaming': return <Gamepad2 className="h-5 w-5" />;
+      case 'luxury': return <Crown className="h-5 w-5" />;
       default: return <Palette className="h-5 w-5" />;
     }
   };
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'cinematic': return 'text-yellow-400';
-      case 'artistic': return 'text-pink-400';
-      case 'vintage': return 'text-orange-400';
-      case 'modern': return 'text-blue-400';
-      case 'experimental': return 'text-neon-purple';
+      case 'gaming': return 'text-neon-purple';
+      case 'luxury': return 'text-yellow-400';
       default: return 'text-neon-green';
     }
   };
@@ -95,7 +60,7 @@ const Style = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {stylePresets.map((preset) => (
             <Card
               key={preset.id}
@@ -151,11 +116,41 @@ const Style = () => {
           ))}
         </div>
 
+        {/* Duration Selection */}
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="text-center">Video Duration</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center">
+              <span className="text-3xl font-bold text-neon-purple">{duration}s</span>
+            </div>
+            <input
+              type="range"
+              min="10"
+              max="30"
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
+            />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>10s</span>
+              <span>30s</span>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex justify-center pt-8">
           <Button 
             size="lg"
             className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
             disabled={!selectedStyle}
+            onClick={() => {
+              // Store data in localStorage for next step
+              localStorage.setItem('selectedStyle', selectedStyle!);
+              localStorage.setItem('videoDuration', duration.toString());
+              navigate('/editor');
+            }}
           >
             Continue to Editor
             <ArrowRight className="h-4 w-4 ml-2" />

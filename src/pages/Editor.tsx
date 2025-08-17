@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, Scissors, Copy, Trash2, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Scissors, Copy, Trash2, Settings, Zap, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -9,40 +10,82 @@ import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
 
 const Editor = () => {
+  const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [volume, setVolume] = useState([80]);
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
+  const [projectData, setProjectData] = useState<any>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const timelineItems = [
-    {
-      id: "1",
-      name: "Main Video",
-      type: "video",
+  // Load project data from localStorage
+  useEffect(() => {
+    const uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
+    const selectedMusic = localStorage.getItem('selectedMusic');
+    const selectedStyle = localStorage.getItem('selectedStyle');
+    const videoDuration = localStorage.getItem('videoDuration');
+    
+    setProjectData({
+      files: uploadedFiles,
+      music: selectedMusic,
+      style: selectedStyle,
+      duration: videoDuration
+    });
+  }, []);
+
+  const timelineItems = projectData ? [
+    ...projectData.files.map((file: any, index: number) => ({
+      id: `file-${index}`,
+      name: file.file.name,
+      type: file.type,
       startTime: 0,
-      duration: 30,
-      track: 0,
-      color: "bg-neon-purple/20 border-neon-purple"
-    },
+      duration: parseInt(projectData.duration || '15'),
+      track: index,
+      color: file.type === 'video' ? "bg-neon-purple/20 border-neon-purple" : "bg-blue-500/20 border-blue-500"
+    })),
     {
-      id: "2", 
-      name: "Background Music",
+      id: "music",
+      name: `Music: ${projectData.music}`,
       type: "audio",
       startTime: 0,
-      duration: 45,
-      track: 1,
+      duration: parseInt(projectData.duration || '15'),
+      track: projectData.files.length,
       color: "bg-neon-green/20 border-neon-green"
-    },
-    {
-      id: "3",
-      name: "Intro Image",
-      type: "image", 
-      startTime: 0,
-      duration: 5,
-      track: 2,
-      color: "bg-blue-500/20 border-blue-500"
     }
-  ];
+  ] : [];
+
+  const handleBoomClick = async () => {
+    if (!projectData) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      // Create job ID
+      const jobId = Math.random().toString(36).substr(2, 9);
+      
+      // Store job data for status page
+      const jobData = {
+        id: jobId,
+        files: projectData.files,
+        music: projectData.music,
+        style: projectData.style,
+        duration: projectData.duration,
+        createdAt: new Date().toISOString()
+      };
+      
+      localStorage.setItem(`job-${jobId}`, JSON.stringify(jobData));
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Navigate to status page
+      navigate(`/status/${jobId}`);
+    } catch (error) {
+      console.error('Error creating job:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -71,8 +114,22 @@ const Editor = () => {
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
-            <Button className="bg-gradient-to-r from-neon-purple to-neon-green text-background">
-              Export Video
+            <Button 
+              className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
+              onClick={handleBoomClick}
+              disabled={isProcessing || !projectData}
+            >
+              {isProcessing ? (
+                <>
+                  <Upload className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4 mr-2" />
+                  BOOM
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -221,61 +278,83 @@ const Editor = () => {
             </div>
           </div>
 
-          {/* Side Panel */}
+          {/* Side Panel - Project Summary */}
           <div className="w-80 border-l border-border bg-card">
             <div className="p-4 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Properties</CardTitle>
+                  <CardTitle className="text-lg">Project Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {selectedTrack ? (
+                  {projectData ? (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-sm font-medium">Selected Item</label>
-                        <p className="text-sm text-muted-foreground">
-                          {timelineItems.find(item => item.id === selectedTrack)?.name}
-                        </p>
+                        <label className="text-sm font-medium">Files</label>
+                        <div className="space-y-1">
+                          {projectData.files.map((file: any, index: number) => (
+                            <p key={index} className="text-sm text-muted-foreground truncate">
+                              {file.file.name}
+                            </p>
+                          ))}
+                        </div>
                       </div>
                       
                       <Separator />
                       
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Opacity</label>
-                        <Slider defaultValue={[100]} max={100} step={1} />
+                      <div>
+                        <label className="text-sm font-medium">Music</label>
+                        <p className="text-sm text-muted-foreground capitalize">
+                          {projectData.music}
+                        </p>
                       </div>
                       
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Scale</label>
-                        <Slider defaultValue={[100]} max={200} step={1} />
+                      <div>
+                        <label className="text-sm font-medium">Style</label>
+                        <p className="text-sm text-muted-foreground">
+                          {projectData.style === 'rgb-gamer' ? 'RGB Gamer' : 'Luxury'}
+                        </p>
                       </div>
                       
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Position X</label>
-                        <Slider defaultValue={[0]} min={-100} max={100} step={1} />
+                      <div>
+                        <label className="text-sm font-medium">Duration</label>
+                        <p className="text-sm text-muted-foreground">
+                          {projectData.duration} seconds
+                        </p>
                       </div>
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      Select a timeline item to edit its properties
+                      Loading project data...
                     </p>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Effects</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Button variant="outline" size="sm">Blur</Button>
-                    <Button variant="outline" size="sm">Glow</Button>
-                    <Button variant="outline" size="sm">Sharpen</Button>
-                    <Button variant="outline" size="sm">Vintage</Button>
-                  </div>
-                </CardContent>
-              </Card>
+              {selectedTrack && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Item Properties</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Selected</label>
+                      <p className="text-sm text-muted-foreground">
+                        {timelineItems.find(item => item.id === selectedTrack)?.name}
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Opacity</label>
+                      <Slider defaultValue={[100]} max={100} step={1} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Scale</label>
+                      <Slider defaultValue={[100]} max={200} step={1} />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>

@@ -73,6 +73,8 @@ export interface Job {
   timeline: Timeline;
   assets: Asset[];
   outputUrl?: string;
+  previewUrl?: string;
+  stage?: string;
   progress?: number;
   error?: string;
   createdAt: Date;
@@ -91,7 +93,7 @@ export interface AIStylePreset {
   description: string;
   thumbnail: string;
   parameters: Record<string, any>;
-  category: 'cinematic' | 'artistic' | 'vintage' | 'modern' | 'experimental';
+  category: 'cinematic' | 'artistic' | 'vintage' | 'modern' | 'experimental' | 'gaming' | 'luxury';
 }
 
 export interface RenderJob {

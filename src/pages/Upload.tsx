@@ -1,4 +1,5 @@
 import { useState, useRef, DragEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Upload as UploadIcon, Video, Image, Music, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,27 +15,44 @@ interface UploadedFile {
 }
 
 const Upload = () => {
+  const navigate = useNavigate();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [selectedMusic, setSelectedMusic] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
 
+    // Filter for videos and images only (1-5 videos or 1 image)
     const validFiles = Array.from(files).filter(file => {
       const isVideo = file.type.startsWith('video/');
       const isImage = file.type.startsWith('image/');
-      const isAudio = file.type.startsWith('audio/');
-      return isVideo || isImage || isAudio;
+      return isVideo || isImage;
     });
+
+    const videoFiles = validFiles.filter(f => f.type.startsWith('video/'));
+    const imageFiles = validFiles.filter(f => f.type.startsWith('image/'));
+
+    // Validation: 1-5 videos OR 1 image
+    if (videoFiles.length > 0 && imageFiles.length > 0) {
+      alert('Please upload either videos OR images, not both');
+      return;
+    }
+    if (videoFiles.length > 5) {
+      alert('Maximum 5 videos allowed');
+      return;
+    }
+    if (imageFiles.length > 1) {
+      alert('Only 1 image allowed');
+      return;
+    }
 
     const newFiles = validFiles.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
       preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-      type: file.type.startsWith('video/') ? 'video' as const :
-            file.type.startsWith('image/') ? 'image' as const :
-            'audio' as const
+      type: file.type.startsWith('video/') ? 'video' as const : 'image' as const
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
@@ -113,7 +131,7 @@ const Upload = () => {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="video/*,image/*,audio/*"
+                accept="video/*,image/*"
                 onChange={handleFileInput}
                 className="hidden"
               />
@@ -129,7 +147,7 @@ const Upload = () => {
                   {isDragActive ? "Drop your files here!" : "Drag & drop files here"}
                 </p>
                 <p className="text-muted-foreground">
-                  Or click to select files • MP4, MOV, PNG, JPG, MP3, WAV
+                  Or click to select files • 1-5 videos (MP4, MOV) or 1 image (PNG, JPG)
                 </p>
               </div>
 
@@ -194,10 +212,55 @@ const Upload = () => {
                 ))}
               </div>
 
+              {/* Music Selection */}
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="text-lg font-semibold mb-4">Choose Music</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card 
+                    className={`cursor-pointer transition-all ${selectedMusic === 'auto' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                    onClick={() => setSelectedMusic('auto')}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <Music className="h-8 w-8 mx-auto mb-2 text-neon-purple" />
+                      <p className="font-medium">Auto Music</p>
+                      <p className="text-sm text-muted-foreground">AI-generated soundtrack</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card 
+                    className={`cursor-pointer transition-all ${selectedMusic === 'upbeat' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                    onClick={() => setSelectedMusic('upbeat')}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <Music className="h-8 w-8 mx-auto mb-2 text-neon-green" />
+                      <p className="font-medium">Upbeat Pop</p>
+                      <p className="text-sm text-muted-foreground">Energetic and modern</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card 
+                    className={`cursor-pointer transition-all ${selectedMusic === 'chill' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
+                    onClick={() => setSelectedMusic('chill')}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <Music className="h-8 w-8 mx-auto mb-2 text-blue-400" />
+                      <p className="font-medium">Chill Ambient</p>
+                      <p className="text-sm text-muted-foreground">Relaxed and atmospheric</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
               <div className="flex justify-end mt-6">
                 <Button 
                   className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
-                  disabled={uploadedFiles.length === 0}
+                  disabled={uploadedFiles.length === 0 || !selectedMusic}
+                  onClick={() => {
+                    // Store data in localStorage for next step
+                    localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                    localStorage.setItem('selectedMusic', selectedMusic);
+                    navigate('/style');
+                  }}
                 >
                   Continue to Style Selection
                 </Button>
