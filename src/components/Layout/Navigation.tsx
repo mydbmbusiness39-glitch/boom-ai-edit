@@ -1,9 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Upload, Palette, Edit, Activity, Zap } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthProvider";
 
 const Navigation = () => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
@@ -53,6 +56,18 @@ const Navigation = () => {
             </Link>
           );
         })}
+        
+        {user && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => signOut()}
+            className="text-muted-foreground hover:text-foreground ml-4"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            <span className="hidden md:inline-block">Sign Out</span>
+          </Button>
+        )}
       </div>
     </nav>
   );
