@@ -111,38 +111,144 @@ export type Database = {
           },
         ]
       }
+      jobs_new: {
+        Row: {
+          created_at: string
+          duration: number | null
+          files: Json | null
+          id: string
+          name: string
+          output_url: string | null
+          preview_url: string | null
+          progress: number | null
+          status: string
+          style_id: string | null
+          updated_at: string
+          user_id: string
+          watermarked: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          duration?: number | null
+          files?: Json | null
+          id?: string
+          name: string
+          output_url?: string | null
+          preview_url?: string | null
+          progress?: number | null
+          status?: string
+          style_id?: string | null
+          updated_at?: string
+          user_id: string
+          watermarked?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          duration?: number | null
+          files?: Json | null
+          id?: string
+          name?: string
+          output_url?: string | null
+          preview_url?: string | null
+          progress?: number | null
+          status?: string
+          style_id?: string | null
+          updated_at?: string
+          user_id?: string
+          watermarked?: boolean | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
           email: string
           id: string
+          jobs_today: number | null
+          last_job_date: string | null
           plan: string
+          tier: string | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           email: string
           id: string
+          jobs_today?: number | null
+          last_job_date?: string | null
           plan?: string
+          tier?: string | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          jobs_today?: number | null
+          last_job_date?: string | null
           plan?: string
+          tier?: string | null
           updated_at?: string
         }
         Relationships: []
+      }
+      uploads: {
+        Row: {
+          created_at: string
+          file_path: string
+          file_size: number
+          filename: string
+          id: string
+          job_id: string | null
+          mime_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          file_size: number
+          filename: string
+          id?: string
+          job_id?: string | null
+          mime_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          file_size?: number
+          filename?: string
+          id?: string
+          job_id?: string | null
+          mime_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploads_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_new"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_job_limit: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       get_current_user_id: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      increment_job_count: {
+        Args: { user_uuid: string }
+        Returns: undefined
       }
     }
     Enums: {
