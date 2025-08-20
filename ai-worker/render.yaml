@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ai-worker
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: AI_WORKER_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+    disk:
+      name: temp-storage
+      mountPath: /tmp
+      sizeGB: 1

@@ -1,73 +1,174 @@
-# Welcome to your Lovable project
+# Video AI Platform
 
-## Project info
+A modern video editing platform with AI-powered features built with React, Vite, and Supabase.
 
-**URL**: https://lovable.dev/projects/7e58db6b-2c15-4a81-aba4-676ed257901c
+## 🚀 Quick Start
 
-## How can I edit this code?
+### Prerequisites
+- Node.js 18+
+- Python 3.11+ (for AI worker)
+- Docker (optional)
 
-There are several ways of editing your application.
+### Frontend Setup
 
-**Use Lovable**
+1. **Clone and install dependencies**
+```bash
+npm install
+```
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7e58db6b-2c15-4a81-aba4-676ed257901c) and start prompting.
+2. **Environment setup**
+```bash
+cp .env.example .env
+# Edit .env with your actual values
+```
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. **Start development server**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### AI Worker Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **Navigate to AI worker directory**
+```bash
+cd ai-worker
+```
 
-**Use GitHub Codespaces**
+2. **Option A: Docker (Recommended)**
+```bash
+./deploy.sh docker
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. **Option B: Local Python**
+```bash
+pip install -r requirements.txt
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
 
-## What technologies are used for this project?
+## 🌐 Deployment
 
-This project is built with:
+### Frontend (Vercel)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. **Connect repository to Vercel**
+2. **Set environment variables** from `.env.example`
+3. **Deploy** - Vercel will auto-detect Vite configuration
 
-## How can I deploy this project?
+### AI Worker
 
-Simply open [Lovable](https://lovable.dev/projects/7e58db6b-2c15-4a81-aba4-676ed257901c) and click on Share -> Publish.
+#### Fly.io (Recommended)
+```bash
+cd ai-worker
+./deploy.sh fly
+```
 
-## Can I connect a custom domain to my Lovable project?
+#### Render
+```bash
+cd ai-worker
+./deploy.sh render
+```
 
-Yes, you can!
+#### Manual Docker
+```bash
+cd ai-worker
+docker build -t ai-worker .
+docker run -p 8000:8000 --env-file .env ai-worker
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🔧 Configuration
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+### Environment Variables
+
+**Frontend (.env)**
+- `VITE_SUPABASE_*` - Supabase configuration
+
+**AI Worker**
+- `OPENAI_API_KEY` - OpenAI API key
+- `AI_WORKER_URL` - Public URL of the worker
+
+### Supabase Setup
+
+1. **Create Supabase project**
+2. **Run migrations** (auto-applied via Lovable)
+3. **Set up storage buckets**
+4. **Configure Edge Functions**
+
+## 📚 Architecture
+
+```
+Frontend (React/Vite) → Supabase Edge Functions → AI Worker (Python/FastAPI)
+```
+
+- **Frontend**: React with Vite, Tailwind CSS, Supabase client
+- **Backend**: Supabase (Auth, Database, Storage, Edge Functions)
+- **AI Worker**: FastAPI service for video/audio processing
+
+## 🛠️ Development
+
+### Available Scripts
+
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
+
+### Project Structure
+
+```
+src/
+├── components/      # React components
+├── pages/          # Route components
+├── contexts/       # React contexts
+├── hooks/          # Custom hooks
+├── lib/            # Utilities
+├── integrations/   # Supabase integration
+└── styles/         # Styling
+
+ai-worker/
+├── main.py         # FastAPI application
+├── requirements.txt
+├── Dockerfile
+└── deploy.sh       # Deployment script
+```
+
+## 🔐 Security
+
+- Row Level Security (RLS) enabled on all tables
+- Authentication via Supabase Auth
+- API keys managed via Supabase secrets
+- CORS properly configured
+
+## 📖 API Documentation
+
+### AI Worker Endpoints
+
+- `GET /health` - Health check
+- `POST /analyze/beats` - Audio beat analysis
+- `POST /analyze/scenes` - Video scene detection
+- `POST /generate/captions` - AI caption generation
+- `POST /timeline/compile` - Video timeline compilation
+
+Visit `https://your-ai-worker-url/docs` for interactive API documentation.
+
+## 🆘 Troubleshooting
+
+### Common Issues
+
+1. **AI Worker not accessible**
+   - Check `AI_WORKER_URL` environment variable
+   - Verify worker is running and healthy
+
+2. **Supabase connection issues**
+   - Verify `VITE_SUPABASE_*` variables
+   - Check network connectivity
+
+3. **File upload failures**
+   - Check storage bucket policies
+   - Verify authentication
+
+### Logs
+
+- **Frontend**: Browser console
+- **AI Worker**: Container/service logs
+- **Supabase**: Dashboard logs section
