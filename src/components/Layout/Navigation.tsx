@@ -58,15 +58,21 @@ const Navigation = () => {
         })}
         
         {user && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => signOut()}
-            className="text-muted-foreground hover:text-foreground ml-4"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            <span className="hidden md:inline-block">Sign Out</span>
-          </Button>
+          <div className="flex items-center space-x-2 ml-4">
+            <span className="text-sm text-muted-foreground hidden md:inline-block" data-cy="user-profile">
+              {user.email}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="text-muted-foreground hover:text-foreground"
+              data-cy="sign-out-button"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              <span className="hidden md:inline-block">Sign Out</span>
+            </Button>
+          </div>
         )}
       </div>
     </nav>

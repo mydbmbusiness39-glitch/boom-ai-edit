@@ -90,7 +90,7 @@ const Auth = () => {
                     <LogIn className="h-4 w-4 mr-2" />
                     Sign In
                   </TabsTrigger>
-                  <TabsTrigger value="signup" className="text-sm">
+                  <TabsTrigger value="signup" className="text-sm" data-cy="signup-tab">
                     <User className="h-4 w-4 mr-2" />
                     Sign Up
                   </TabsTrigger>
@@ -112,6 +112,7 @@ const Auth = () => {
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           className="pl-10"
+                          data-cy="email-input"
                           required
                         />
                       </div>
@@ -130,6 +131,7 @@ const Auth = () => {
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           className="pl-10"
+                          data-cy="password-input"
                           required
                         />
                       </div>
@@ -139,6 +141,7 @@ const Auth = () => {
                       type="submit"
                       className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
                       disabled={loading}
+                      data-cy="sign-in-button"
                     >
                       {loading ? 'Signing in...' : 'Sign In'}
                     </Button>
@@ -189,6 +192,7 @@ const Auth = () => {
                       type="submit"
                       className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
                       disabled={loading}
+                      data-cy="sign-up-button"
                     >
                       {loading ? 'Creating account...' : 'Create Account'}
                     </Button>

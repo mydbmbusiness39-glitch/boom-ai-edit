@@ -1,0 +1,178 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    name: Health Check
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Check staging health endpoint
+      run: |
+        curl -f ${{ secrets.STAGING_URL }}/functions/v1/healthz \
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+          || exit 1
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    name: Smoke Test
+    needs: health-check
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run smoke test
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      run: node scripts/seed-smoke.js
+
+  cypress-tests:
+    runs-on: ubuntu-latest
+    name: Cypress E2E Tests
+    needs: smoke-test
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build application
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      run: npm run build
+    
+    - name: Start preview server
+      run: |
+        npm run preview &
+        npx wait-on http://localhost:8080
+    
+    - name: Run Cypress tests
+      uses: cypress-io/github-action@v6
+      with:
+        install: false
+        start: npm run preview
+        wait-on: 'http://localhost:8080'
+        browser: chrome
+        record: true
+      env:
+        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+        CYPRESS_PROJECT_ID: ${{ secrets.CYPRESS_PROJECT_ID }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cypress-results
+        path: |
+          cypress/results/
+          cypress/videos/
+          cypress/screenshots/
+
+  integration-test:
+    runs-on: ubuntu-latest
+    name: Integration Test
+    needs: cypress-tests
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run integration tests
+      uses: cypress-io/github-action@v6
+      with:
+        install: false
+        spec: cypress/e2e/integration-test.cy.js
+        browser: chrome
+      env:
+        CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+    
+    - name: Verify event tracking
+      run: |
+        if [ -f cypress/results/events.log ]; then
+          echo "Event tracking verification:"
+          echo "Required events: job_created, preview_done, final_done, share_clicked, render_failed"
+          
+          events_found=0
+          for event in "job_created" "preview_done" "final_done" "share_clicked" "render_failed"; do
+            if grep -q "$event" cypress/results/events.log; then
+              echo "✅ $event - found"
+              events_found=$((events_found + 1))
+            else
+              echo "❌ $event - missing"
+            fi
+          done
+          
+          echo "Events found: $events_found/5"
+          
+          if [ $events_found -ge 4 ]; then
+            echo "✅ Event tracking verification passed"
+          else
+            echo "❌ Event tracking verification failed"
+            exit 1
+          fi
+        else
+          echo "❌ Events log file not found"
+          exit 1
+        fi
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [health-check, smoke-test, cypress-tests, integration-test]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to staging
+      run: |
+        echo "🚀 Deploying to staging environment..."
+        # Add your deployment script here
+        # For example, deploy to Vercel, Netlify, etc.
+    
+    - name: Run post-deployment smoke test
+      run: |
+        sleep 30  # Wait for deployment to propagate
+        curl -f ${{ secrets.STAGING_URL }}/functions/v1/healthz \
+          -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+          -H "authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
+    
+    - name: Notify deployment success
+      run: |
+        echo "✅ Staging deployment successful"
+        echo "🌐 Staging URL: ${{ secrets.STAGING_URL }}"
