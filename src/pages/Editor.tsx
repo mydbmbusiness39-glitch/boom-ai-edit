@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
+import Watermark from "@/components/Watermark";
+import { supabase } from "@/integrations/supabase/client";
 
 const Editor = () => {
   const navigate = useNavigate();
@@ -60,10 +62,43 @@ const Editor = () => {
     setIsProcessing(true);
     
     try {
-      // Create job ID
-      const jobId = Math.random().toString(36).substr(2, 9);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error('No session found');
+        return;
+      }
+
+      // Prepare job data
+      const jobData = {
+        name: `${projectData.style === 'rgb-gamer' ? 'RGB' : 'Luxury'} Video - ${projectData.duration}s`,
+        files: projectData.files.map((file: any) => ({
+          name: file.file.name,
+          type: file.type,
+          url: URL.createObjectURL(file.file), // In real app, this would be uploaded to S3
+          size: file.file.size
+        })),
+        style_id: projectData.style,
+        duration: parseInt(projectData.duration),
+        music: projectData.music
+      };
+
+      // Call job creation API
+      const { data, error } = await supabase.functions.invoke('create-job', {
+        body: jobData
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Job created:', data.job);
       
-      // Store job data for status page
+      // Navigate to status page
+      navigate(`/status/${data.job.id}`);
+    } catch (error) {
+      console.error('Error creating job:', error);
+      // Fallback to localStorage method
+      const jobId = Math.random().toString(36).substr(2, 9);
       const jobData = {
         id: jobId,
         files: projectData.files,
@@ -74,14 +109,7 @@ const Editor = () => {
       };
       
       localStorage.setItem(`job-${jobId}`, JSON.stringify(jobData));
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Navigate to status page
       navigate(`/status/${jobId}`);
-    } catch (error) {
-      console.error('Error creating job:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -118,6 +146,7 @@ const Editor = () => {
               className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
               onClick={handleBoomClick}
               disabled={isProcessing || !projectData}
+              data-cy="create-job-button"
             >
               {isProcessing ? (
                 <>
@@ -140,6 +169,7 @@ const Editor = () => {
             {/* Preview Window */}
             <div className="flex-1 bg-black/50 p-6 flex items-center justify-center">
               <div className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
+                <Watermark />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <div className="w-24 h-24 bg-gradient-to-br from-neon-purple to-neon-green rounded-full flex items-center justify-center">

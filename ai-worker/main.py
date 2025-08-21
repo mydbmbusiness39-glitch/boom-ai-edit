@@ -64,7 +64,7 @@ class TimelineRequest(BaseModel):
     items: List[TimelineItem]
     duration: float
     fps: int = 30
-    resolution: Dict[str, int] = {"width": 1920, "height": 1080}
+    resolution: Dict[str, int] = {"width": 1080, "height": 1920}  # 9:16 aspect ratio
 
 class TimelineResponse(BaseModel):
     timeline: Dict[str, Any]

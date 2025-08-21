@@ -7,12 +7,16 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
+import Watermark from "@/components/Watermark";
+import ShareModal from "@/components/ShareModal";
 import { Job, JobStatus } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 const Status = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Load job data and simulate updates
   useEffect(() => {
@@ -38,7 +42,7 @@ const Status = () => {
         items: [],
         duration: parseInt(JSON.parse(jobData).duration || '15'),
         fps: 30,
-        resolution: { width: 1920, height: 1080 }
+        resolution: { width: 1080, height: 1920 } // 9:16 aspect ratio
       },
       assets: [],
       stage: "uploading"
@@ -61,7 +65,7 @@ const Status = () => {
         items: [],
         duration: 15,
         fps: 30,
-        resolution: { width: 1920, height: 1080 }
+        resolution: { width: 1080, height: 1920 } // 9:16 aspect ratio
       },
       assets: [],
       stage: "processing"
@@ -81,12 +85,14 @@ const Status = () => {
         
         // Stage progression
         if (newProgress > 20 && prev.stage === "uploading") {
+          newStage = "analyzing";
+        } else if (newProgress > 40 && prev.stage === "analyzing") {
           newStage = "processing";
         } else if (newProgress > 60 && prev.stage === "processing") {
           newStage = "rendering";
         } else if (newProgress >= 100) {
           newStatus = "completed";
-          newStage = "complete";
+          newStage = "completed";
         }
         
         return {
@@ -139,23 +145,8 @@ const Status = () => {
     return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
   };
 
-  const handleShare = async () => {
-    if (!job?.outputUrl) return;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: job.name,
-          text: 'Check out my AI-generated video!',
-          url: job.outputUrl,
-        });
-      } catch (error) {
-        console.log('Share cancelled');
-      }
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(job.outputUrl);
-    }
+  const handleShare = () => {
+    setShowShareModal(true);
   };
 
   if (isLoading) {
@@ -189,7 +180,7 @@ const Status = () => {
 
   return (
     <Layout>
-      <div className="container max-w-4xl mx-auto p-6 space-y-8">
+      <div className="container max-w-4xl mx-auto p-6 space-y-8" data-cy="status-page">
         <div className="text-center space-y-4">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
             Render Status
@@ -205,12 +196,12 @@ const Status = () => {
               <div className="flex items-center space-x-3">
                 {getStatusIcon(job.status)}
                 <div>
-                  <CardTitle className="text-2xl">{job.name}</CardTitle>
+                  <CardTitle className="text-2xl" data-cy="job-title">{job.name}</CardTitle>
                   <p className="text-muted-foreground">Job ID: {job.id}</p>
                 </div>
               </div>
               
-              <Badge className={cn("text-sm px-3 py-1", getStatusColor(job.status))}>
+              <Badge className={cn("text-sm px-3 py-1", getStatusColor(job.status))} data-cy="job-status">
                 {job.status.toUpperCase()}
               </Badge>
             </div>
@@ -221,9 +212,9 @@ const Status = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                   <span>Stage: {job.stage}</span>
-                  <span className="font-mono">{Math.round(job.progress || 0)}%</span>
+                  <span className="font-mono" data-cy="progress-percentage">{Math.round(job.progress || 0)}%</span>
                 </div>
-                <Progress value={job.progress || 0} className="h-3" />
+                <Progress value={job.progress || 0} className="h-3" data-cy="progress-bar" />
                 {job.estimatedCompletionTime && (
                   <p className="text-sm text-muted-foreground text-center">
                     Estimated completion: {formatTimeRemaining(job.estimatedCompletionTime)}
@@ -239,13 +230,17 @@ const Status = () => {
                   <Play className="h-5 w-5 mr-2 text-neon-purple" />
                   Preview Available
                 </h3>
-                <video 
-                  controls 
-                  className="w-full rounded-lg"
-                  src={job.previewUrl}
-                >
-                  Your browser does not support the video tag.
-                </video>
+                <div className="relative">
+                  <video 
+                    controls 
+                    className="w-full rounded-lg"
+                    src={job.previewUrl}
+                    data-cy="preview-video"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                  <Watermark />
+                </div>
               </div>
             )}
 
@@ -259,7 +254,7 @@ const Status = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Duration:</span>
-                    <span>{job.timeline.duration}s</span>
+                    <span data-cy="job-duration">{job.timeline.duration}s</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Frame Rate:</span>
@@ -307,13 +302,25 @@ const Status = () => {
                 </div>
                 
                 {/* Final Video */}
-                <video 
-                  controls 
-                  className="w-full rounded-lg"
-                  src={job.outputUrl}
-                >
-                  Your browser does not support the video tag.
-                </video>
+                <div className="relative">
+                  <video 
+                    controls 
+                    className="w-full rounded-lg"
+                    src={job.outputUrl}
+                    data-cy="output-video"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                  <Watermark />
+                </div>
+                
+                {/* Watermark Notice for Free Tier */}
+                <div className="bg-muted/50 border border-border rounded-lg p-4" data-cy="watermark-notice">
+                  <p className="text-sm text-muted-foreground text-center">
+                    <span className="font-medium">Free Tier:</span> This video includes a watermark. 
+                    Upgrade to Pro to remove watermarks and unlock more features.
+                  </p>
+                </div>
                 
                 {/* Action Buttons */}
                 <div className="flex justify-center space-x-4">
@@ -321,6 +328,7 @@ const Status = () => {
                     size="lg"
                     variant="outline"
                     onClick={handleShare}
+                    data-cy="share-button"
                   >
                     <Share2 className="h-5 w-5 mr-2" />
                     Share
@@ -329,6 +337,7 @@ const Status = () => {
                     size="lg"
                     className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-green/25"
                     onClick={() => window.open(job.outputUrl, '_blank')}
+                    data-cy="download-button"
                   >
                     <Download className="h-5 w-5 mr-2" />
                     Download
@@ -338,14 +347,14 @@ const Status = () => {
             )}
 
             {job.status === "failed" && (
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t" data-cy="error-state">
                 <div className="flex items-center justify-center space-x-4">
                   <AlertCircle className="h-8 w-8 text-destructive" />
                   <div className="text-center">
                     <p className="text-lg font-semibold text-destructive mb-2">
                       Render Failed
                     </p>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-sm text-muted-foreground mb-4" data-cy="error-message">
                       {job.error || "An unexpected error occurred during rendering"}
                     </p>
                     <Button variant="outline">
@@ -358,6 +367,17 @@ const Status = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Share Modal */}
+        {job.outputUrl && (
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            videoUrl={job.outputUrl}
+            jobTitle={job.name}
+            jobId={job.id}
+          />
+        )}
       </div>
     </Layout>
   );

@@ -40,3 +40,12 @@ verify_jwt = true
 
 [functions.cleanup-uploads]
 verify_jwt = false
+
+[functions.create-job]
+verify_jwt = true
+
+[functions.job-processor]
+verify_jwt = false
+
+[functions.upload-presigned]
+verify_jwt = true
