@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut, TrendingUp, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import Layout from "@/components/Layout/Layout";
 
@@ -26,6 +26,24 @@ const Index = () => {
       title: "Timeline Editor",
       description: "Professional video editing with intuitive timeline controls",
       href: "/editor"
+    },
+    {
+      icon: Sparkles,
+      title: "AI Script Generator",
+      description: "Turn your videos into viral hooks and engaging teasers",
+      href: "/script-generator"
+    },
+    {
+      icon: TrendingUp,
+      title: "Trend Syncing",
+      description: "Detect trending audio that fits your vibe and auto-match",
+      href: "/trend-sync"
+    },
+    {
+      icon: Users,
+      title: "Community Collab",
+      description: "Your AI twin co-stars with other users for viral crossovers",
+      href: "/community-collab"
     },
     {
       icon: Activity,
@@ -124,7 +142,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (

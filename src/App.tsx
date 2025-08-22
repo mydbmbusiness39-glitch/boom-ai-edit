@@ -12,6 +12,9 @@ import Style from "./pages/Style";
 import Editor from "./pages/Editor";
 import Status from "./pages/Status";
 import Create from "./pages/Create";
+import ScriptGenerator from "./pages/ScriptGenerator";
+import TrendSync from "./pages/TrendSync";
+import CommunityCollab from "./pages/CommunityCollab";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -70,6 +73,30 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Status />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/script-generator" 
+            element={
+              <ProtectedRoute>
+                <ScriptGenerator />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/trend-sync" 
+            element={
+              <ProtectedRoute>
+                <TrendSync />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/community-collab" 
+            element={
+              <ProtectedRoute>
+                <CommunityCollab />
               </ProtectedRoute>
             } 
           />

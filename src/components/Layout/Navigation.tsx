@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Upload, Palette, Edit, Activity, Zap, LogOut } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
 
@@ -13,6 +13,9 @@ const Navigation = () => {
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/style", label: "Style", icon: Palette },
     { href: "/editor", label: "Editor", icon: Edit },
+    { href: "/script-generator", label: "Scripts", icon: Sparkles },
+    { href: "/trend-sync", label: "Trends", icon: TrendingUp },
+    { href: "/community-collab", label: "Collab", icon: Users },
     { href: "/status", label: "Status", icon: Activity },
   ];
 

@@ -49,3 +49,12 @@ verify_jwt = false
 
 [functions.upload-presigned]
 verify_jwt = true
+
+[functions.ai-script-generator]
+verify_jwt = true
+
+[functions.trend-detector]
+verify_jwt = true
+
+[functions.trend-matcher]
+verify_jwt = true
