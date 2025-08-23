@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, Brain, Wand2, Zap, Play, Download, Share, Eye, Settings, Lightbulb, Scissors, Target, BookOpen } from "lucide-react";
+import { Sparkles, Brain, Wand2, Zap, Play, Download, Share, Eye, Settings, Lightbulb, Scissors, Target, BookOpen, Crop, Clapperboard, Type } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout/Layout";
@@ -77,6 +77,19 @@ const AiStudio = () => {
     max_segments: 5
   });
 
+  const [videoEnhancement, setVideoEnhancement] = useState({
+    video_url: "",
+    enhancement_type: "all" as "face_crop" | "jump_cut_cleanup" | "animated_captions" | "all",
+    target_aspect_ratio: "9:16" as "9:16" | "16:9" | "1:1" | "4:5",
+    brand_color: "#3B82F6",
+    animation_style: "pop" as "pop" | "slide" | "fade" | "bounce",
+    remove_filler_words: true,
+    add_emojis: true,
+    highlight_keywords: true
+  });
+
+  const [enhancementResults, setEnhancementResults] = useState<any | null>(null);
+
   const [analysisResults, setAnalysisResults] = useState<{
     viral_moments?: ViralMoment[];
     wow_moments?: ViralMoment[];
@@ -121,6 +134,19 @@ const AiStudio = () => {
           wow_moments: 2, 
           chapters: 3,
           analysis_summary: { total_viral_moments: 7, avg_viral_score: 8.4 }
+        },
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "4",
+        name: "TikTok Enhancement",
+        type: "smart-analysis",
+        status: "ready",
+        config: { enhancement_type: "all", target_aspect_ratio: "9:16" },
+        output: { 
+          face_crop_data: { faces_detected: 1, aspect_ratio_optimized: "9:16" },
+          jump_cut_data: { cuts_made: 18, time_saved_seconds: 32.4 },
+          caption_data: { captions_generated: 67, sync_accuracy: 0.95 }
         },
         created_at: new Date().toISOString()
       }
@@ -245,6 +271,76 @@ const AiStudio = () => {
     }
   };
 
+  const runVideoEnhancement = async () => {
+    if (!videoEnhancement.video_url.trim()) {
+      toast({
+        title: "Missing Video URL",
+        description: "Please provide a video URL to enhance",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    setCurrentProject("video-enhancement");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('video-enhancer', {
+        body: {
+          video_url: videoEnhancement.video_url,
+          enhancement_type: videoEnhancement.enhancement_type,
+          options: {
+            target_aspect_ratio: videoEnhancement.target_aspect_ratio,
+            face_padding: 0.2,
+            tracking_smoothness: 'medium',
+            silence_threshold: -40,
+            min_pause_duration: 0.8,
+            remove_filler_words: videoEnhancement.remove_filler_words,
+            keep_natural_pauses: true,
+            brand_color: videoEnhancement.brand_color,
+            animation_style: videoEnhancement.animation_style,
+            add_emojis: videoEnhancement.add_emojis,
+            highlight_keywords: videoEnhancement.highlight_keywords,
+            caption_position: 'bottom'
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      setEnhancementResults(data);
+
+      toast({
+        title: "Enhancement Complete",
+        description: "Your video has been enhanced with AI features",
+      });
+
+      // Add to projects
+      const newProject: AIProject = {
+        id: Date.now().toString(),
+        name: `Video Enhancement ${Date.now()}`,
+        type: "smart-analysis",
+        status: "ready",
+        config: videoEnhancement,
+        output: data,
+        created_at: new Date().toISOString()
+      };
+
+      setProjects(prev => [newProject, ...prev]);
+
+    } catch (error: any) {
+      console.error('Video enhancement error:', error);
+      toast({
+        title: "Enhancement Failed",
+        description: error.message || "Failed to enhance video",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+      setCurrentProject(null);
+    }
+  };
+
   const runSmartAnalysis = async () => {
     if (!smartAnalysis.video_url.trim()) {
       toast({
@@ -343,11 +439,12 @@ const AiStudio = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="smart-analysis" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs defaultValue="video-enhancer" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="script-to-video">Script → Video</TabsTrigger>
             <TabsTrigger value="viral-optimizer">Viral Optimizer</TabsTrigger>
             <TabsTrigger value="smart-analysis">Smart Analysis</TabsTrigger>
+            <TabsTrigger value="video-enhancer">Video Enhancer</TabsTrigger>
             <TabsTrigger value="trend-analyzer">Trend Analyzer</TabsTrigger>
             <TabsTrigger value="projects">AI Projects</TabsTrigger>
           </TabsList>
@@ -831,6 +928,302 @@ const AiStudio = () => {
                           <p>✨ Auto-detect laughter & hype words</p>
                           <p>🔥 Find wow moments & reactions</p>
                           <p>📚 Smart chapter splitting by topic</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Video Enhancer Tab */}
+          <TabsContent value="video-enhancer" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Clapperboard className="h-5 w-5" />
+                    <span>AI Video Enhancer</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="enhance-video-url">Video URL</Label>
+                    <Input
+                      id="enhance-video-url"
+                      placeholder="https://... or upload video file"
+                      value={videoEnhancement.video_url}
+                      onChange={(e) => setVideoEnhancement(prev => ({ ...prev, video_url: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Enhancement Type</Label>
+                    <Select
+                      value={videoEnhancement.enhancement_type}
+                      onValueChange={(value: any) => setVideoEnhancement(prev => ({ ...prev, enhancement_type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Complete Enhancement</SelectItem>
+                        <SelectItem value="face_crop">Face Auto-Crop Only</SelectItem>
+                        <SelectItem value="jump_cut_cleanup">Jump Cut Cleanup Only</SelectItem>
+                        <SelectItem value="animated_captions">Animated Captions Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Target Format</Label>
+                      <Select
+                        value={videoEnhancement.target_aspect_ratio}
+                        onValueChange={(value: any) => setVideoEnhancement(prev => ({ ...prev, target_aspect_ratio: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="9:16">9:16 (TikTok/Shorts)</SelectItem>
+                          <SelectItem value="16:9">16:9 (YouTube)</SelectItem>
+                          <SelectItem value="1:1">1:1 (Instagram)</SelectItem>
+                          <SelectItem value="4:5">4:5 (Instagram Post)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Caption Animation</Label>
+                      <Select
+                        value={videoEnhancement.animation_style}
+                        onValueChange={(value: any) => setVideoEnhancement(prev => ({ ...prev, animation_style: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pop">Pop Animation</SelectItem>
+                          <SelectItem value="slide">Slide In</SelectItem>
+                          <SelectItem value="fade">Fade In</SelectItem>
+                          <SelectItem value="bounce">Bounce</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="brand-color">Brand Color</Label>
+                    <div className="flex space-x-2">
+                      <Input
+                        id="brand-color"
+                        type="color"
+                        value={videoEnhancement.brand_color}
+                        onChange={(e) => setVideoEnhancement(prev => ({ ...prev, brand_color: e.target.value }))}
+                        className="w-16 h-10"
+                      />
+                      <Input
+                        placeholder="#3B82F6"
+                        value={videoEnhancement.brand_color}
+                        onChange={(e) => setVideoEnhancement(prev => ({ ...prev, brand_color: e.target.value }))}
+                        className="flex-1"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-muted p-4 rounded-lg space-y-3">
+                    <h4 className="font-medium flex items-center space-x-2">
+                      <Clapperboard className="h-4 w-4" />
+                      <span>Enhancement Features</span>
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Crop className="h-4 w-4" />
+                          <span className="text-sm">Face Auto-Crop & Center</span>
+                        </div>
+                        <Badge variant="secondary">AI Tracking</Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Scissors className="h-4 w-4" />
+                          <span className="text-sm">Remove Filler Words</span>
+                        </div>
+                        <label className="flex items-center space-x-1">
+                          <input
+                            type="checkbox"
+                            checked={videoEnhancement.remove_filler_words}
+                            onChange={(e) => setVideoEnhancement(prev => ({ ...prev, remove_filler_words: e.target.checked }))}
+                            className="rounded"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Type className="h-4 w-4" />
+                          <span className="text-sm">Add Emojis</span>
+                        </div>
+                        <label className="flex items-center space-x-1">
+                          <input
+                            type="checkbox"
+                            checked={videoEnhancement.add_emojis}
+                            onChange={(e) => setVideoEnhancement(prev => ({ ...prev, add_emojis: e.target.checked }))}
+                            className="rounded"
+                          />
+                        </label>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Lightbulb className="h-4 w-4" />
+                          <span className="text-sm">Highlight Keywords</span>
+                        </div>
+                        <label className="flex items-center space-x-1">
+                          <input
+                            type="checkbox"
+                            checked={videoEnhancement.highlight_keywords}
+                            onChange={(e) => setVideoEnhancement(prev => ({ ...prev, highlight_keywords: e.target.checked }))}
+                            className="rounded"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={runVideoEnhancement}
+                    disabled={!videoEnhancement.video_url.trim() || (isGenerating && currentProject === "video-enhancement")}
+                    className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background"
+                    size="lg"
+                  >
+                    {isGenerating && currentProject === "video-enhancement" ? (
+                      <>
+                        <Zap className="h-5 w-5 mr-2 animate-spin" />
+                        Enhancing Video...
+                      </>
+                    ) : (
+                      <>
+                        <Clapperboard className="h-5 w-5 mr-2" />
+                        Enhance Video
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Enhancement Results</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {enhancementResults ? (
+                    <div className="space-y-6">
+                      {/* Enhanced Video Preview */}
+                      <div className="bg-gradient-to-r from-neon-purple/10 to-neon-green/10 p-4 rounded-lg">
+                        <h4 className="font-medium mb-3 flex items-center space-x-2">
+                          <Play className="h-4 w-4" />
+                          <span>Enhanced Video Ready</span>
+                        </h4>
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">
+                            Video enhanced with AI features
+                          </p>
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline">
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Share className="h-4 w-4 mr-1" />
+                              Share
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Face Crop Results */}
+                      {enhancementResults.face_crop_data && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium flex items-center space-x-2">
+                            <Crop className="h-4 w-4" />
+                            <span>Face Auto-Crop</span>
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="p-3 border rounded">
+                              <p className="text-muted-foreground">Faces Detected</p>
+                              <p className="font-medium text-lg">{enhancementResults.face_crop_data.faces_detected}</p>
+                            </div>
+                            <div className="p-3 border rounded">
+                              <p className="text-muted-foreground">Optimized For</p>
+                              <p className="font-medium">{enhancementResults.face_crop_data.aspect_ratio_optimized}</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {enhancementResults.face_crop_data.crop_coordinates.length} tracking points applied
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Jump Cut Results */}
+                      {enhancementResults.jump_cut_data && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium flex items-center space-x-2">
+                            <Scissors className="h-4 w-4" />
+                            <span>Jump Cut Cleanup</span>
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="p-3 border rounded">
+                              <p className="text-muted-foreground">Cuts Made</p>
+                              <p className="font-medium text-lg">{enhancementResults.jump_cut_data.cuts_made}</p>
+                            </div>
+                            <div className="p-3 border rounded">
+                              <p className="text-muted-foreground">Time Saved</p>
+                              <p className="font-medium">{enhancementResults.jump_cut_data.time_saved_seconds}s</p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <p>✂️ Removed {enhancementResults.jump_cut_data.segments_removed.filter((s: any) => s.type === 'silence').length} silent pauses</p>
+                            <p>🗣️ Cleaned {enhancementResults.jump_cut_data.segments_removed.filter((s: any) => s.type === 'filler_word').length} filler words</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Caption Results */}
+                      {enhancementResults.caption_data && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium flex items-center space-x-2">
+                            <Type className="h-4 w-4" />
+                            <span>Animated Captions</span>
+                          </h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="p-3 border rounded">
+                              <p className="text-muted-foreground">Captions Generated</p>
+                              <p className="font-medium text-lg">{enhancementResults.caption_data.captions_generated}</p>
+                            </div>
+                            <div className="p-3 border rounded">
+                              <p className="text-muted-foreground">Sync Accuracy</p>
+                              <p className="font-medium">{Math.round(enhancementResults.caption_data.sync_accuracy * 100)}%</p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <p>✨ {enhancementResults.caption_data.animations_applied} animations applied</p>
+                            <p>📱 Optimized for {videoEnhancement.target_aspect_ratio} format</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 space-y-4">
+                      <Clapperboard className="h-16 w-16 text-primary mx-auto" />
+                      <div className="space-y-2">
+                        <p className="text-muted-foreground">
+                          Upload a video to enhance with AI
+                        </p>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>🎯 Face auto-crop & centering</p>
+                          <p>✂️ Remove pauses & filler words</p>
+                          <p>✨ Brand-colored animated captions</p>
                         </div>
                       </div>
                     </div>
