@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, Brain, Wand2, Zap, Play, Download, Share, Eye, Settings, Lightbulb, Scissors, Target, BookOpen, Crop, Clapperboard, Type } from "lucide-react";
+import { Sparkles, Brain, Wand2, Zap, Play, Download, Share, Eye, Settings, Lightbulb, Scissors, Target, BookOpen, Crop, Clapperboard, Type, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout/Layout";
@@ -90,6 +90,27 @@ const AiStudio = () => {
 
   const [enhancementResults, setEnhancementResults] = useState<any | null>(null);
 
+  const [brandingSettings, setBrandingSettings] = useState({
+    logo_url: "",
+    watermark_position: "bottom-right" as "top-left" | "top-right" | "bottom-left" | "bottom-right" | "center",
+    brand_colors: {
+      primary: "#3B82F6",
+      secondary: "#10B981", 
+      accent: "#F59E0B"
+    },
+    fonts: {
+      heading: "Inter",
+      body: "Inter", 
+      caption: "Inter"
+    },
+    template_name: "",
+    make_public: false,
+    template_price: 0
+  });
+
+  const [brandTemplates, setBrandTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+
   const [analysisResults, setAnalysisResults] = useState<{
     viral_moments?: ViralMoment[];
     wow_moments?: ViralMoment[];
@@ -101,6 +122,7 @@ const AiStudio = () => {
 
   useEffect(() => {
     loadProjects();
+    loadBrandTemplates();
   }, []);
 
   const loadProjects = async () => {
@@ -152,6 +174,22 @@ const AiStudio = () => {
       }
     ];
     setProjects(mockProjects);
+  };
+
+  const loadBrandTemplates = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('brand-manager', {
+        body: { action: 'get_templates' }
+      });
+
+      if (error) throw error;
+      setBrandTemplates([
+        ...(data.user_templates || []),
+        ...(data.public_templates || [])
+      ]);
+    } catch (error) {
+      console.error('Error loading brand templates:', error);
+    }
   };
 
   const generateScriptToVideo = async () => {
@@ -439,12 +477,13 @@ const AiStudio = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="video-enhancer" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+        <Tabs defaultValue="brand-studio" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="script-to-video">Script → Video</TabsTrigger>
             <TabsTrigger value="viral-optimizer">Viral Optimizer</TabsTrigger>
             <TabsTrigger value="smart-analysis">Smart Analysis</TabsTrigger>
             <TabsTrigger value="video-enhancer">Video Enhancer</TabsTrigger>
+            <TabsTrigger value="brand-studio">Brand Studio</TabsTrigger>
             <TabsTrigger value="trend-analyzer">Trend Analyzer</TabsTrigger>
             <TabsTrigger value="projects">AI Projects</TabsTrigger>
           </TabsList>
@@ -1228,6 +1267,436 @@ const AiStudio = () => {
                       </div>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Brand Studio Tab */}
+          <TabsContent value="brand-studio" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Palette className="h-5 w-5" />
+                    <span>Brand Studio</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Quick Apply Template</h4>
+                    <Select
+                      value={selectedTemplate}
+                      onValueChange={setSelectedTemplate}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a brand template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brandTemplates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            {template.name} {template.is_public ? '(Public)' : '(Yours)'}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Create Custom Brand</h4>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="logo-url">Logo URL</Label>
+                      <Input
+                        id="logo-url"
+                        placeholder="https://... (your brand logo)"
+                        value={brandingSettings.logo_url}
+                        onChange={(e) => setBrandingSettings(prev => ({ ...prev, logo_url: e.target.value }))}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Watermark Position</Label>
+                      <Select
+                        value={brandingSettings.watermark_position}
+                        onValueChange={(value: any) => setBrandingSettings(prev => ({ ...prev, watermark_position: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="top-left">Top Left</SelectItem>
+                          <SelectItem value="top-right">Top Right</SelectItem>
+                          <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                          <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                          <SelectItem value="center">Center</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Brand Colors</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Primary</Label>
+                          <div className="flex space-x-2">
+                            <input
+                              type="color"
+                              value={brandingSettings.brand_colors.primary}
+                              onChange={(e) => setBrandingSettings(prev => ({
+                                ...prev,
+                                brand_colors: { ...prev.brand_colors, primary: e.target.value }
+                              }))}
+                              className="w-8 h-8 rounded border"
+                            />
+                            <Input
+                              value={brandingSettings.brand_colors.primary}
+                              onChange={(e) => setBrandingSettings(prev => ({
+                                ...prev,
+                                brand_colors: { ...prev.brand_colors, primary: e.target.value }
+                              }))}
+                              className="text-xs"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Secondary</Label>
+                          <div className="flex space-x-2">
+                            <input
+                              type="color"
+                              value={brandingSettings.brand_colors.secondary}
+                              onChange={(e) => setBrandingSettings(prev => ({
+                                ...prev,
+                                brand_colors: { ...prev.brand_colors, secondary: e.target.value }
+                              }))}
+                              className="w-8 h-8 rounded border"
+                            />
+                            <Input
+                              value={brandingSettings.brand_colors.secondary}
+                              onChange={(e) => setBrandingSettings(prev => ({
+                                ...prev,
+                                brand_colors: { ...prev.brand_colors, secondary: e.target.value }
+                              }))}
+                              className="text-xs"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Accent</Label>
+                          <div className="flex space-x-2">
+                            <input
+                              type="color"
+                              value={brandingSettings.brand_colors.accent}
+                              onChange={(e) => setBrandingSettings(prev => ({
+                                ...prev,
+                                brand_colors: { ...prev.brand_colors, accent: e.target.value }
+                              }))}
+                              className="w-8 h-8 rounded border"
+                            />
+                            <Input
+                              value={brandingSettings.brand_colors.accent}
+                              onChange={(e) => setBrandingSettings(prev => ({
+                                ...prev,
+                                brand_colors: { ...prev.brand_colors, accent: e.target.value }
+                              }))}
+                              className="text-xs"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Brand Fonts</Label>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Heading</Label>
+                          <Select
+                            value={brandingSettings.fonts.heading}
+                            onValueChange={(value) => setBrandingSettings(prev => ({
+                              ...prev,
+                              fonts: { ...prev.fonts, heading: value }
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Inter">Inter</SelectItem>
+                              <SelectItem value="Roboto">Roboto</SelectItem>
+                              <SelectItem value="Open Sans">Open Sans</SelectItem>
+                              <SelectItem value="Poppins">Poppins</SelectItem>
+                              <SelectItem value="Montserrat">Montserrat</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Body</Label>
+                          <Select
+                            value={brandingSettings.fonts.body}
+                            onValueChange={(value) => setBrandingSettings(prev => ({
+                              ...prev,
+                              fonts: { ...prev.fonts, body: value }
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Inter">Inter</SelectItem>
+                              <SelectItem value="Roboto">Roboto</SelectItem>
+                              <SelectItem value="Open Sans">Open Sans</SelectItem>
+                              <SelectItem value="Source Sans Pro">Source Sans Pro</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Caption</Label>
+                          <Select
+                            value={brandingSettings.fonts.caption}
+                            onValueChange={(value) => setBrandingSettings(prev => ({
+                              ...prev,
+                              fonts: { ...prev.fonts, caption: value }
+                            }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Inter">Inter</SelectItem>
+                              <SelectItem value="Roboto">Roboto</SelectItem>
+                              <SelectItem value="Arial">Arial</SelectItem>
+                              <SelectItem value="Helvetica">Helvetica</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Save as Template</h4>
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="Template name (optional)"
+                        value={brandingSettings.template_name}
+                        onChange={(e) => setBrandingSettings(prev => ({ ...prev, template_name: e.target.value }))}
+                      />
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id="make-public"
+                            checked={brandingSettings.make_public}
+                            onChange={(e) => setBrandingSettings(prev => ({ ...prev, make_public: e.target.checked }))}
+                            className="rounded"
+                          />
+                          <Label htmlFor="make-public" className="text-sm">Share publicly</Label>
+                        </div>
+                        {brandingSettings.make_public && (
+                          <Input
+                            type="number"
+                            placeholder="$0"
+                            min="0"
+                            step="0.01"
+                            value={brandingSettings.template_price}
+                            onChange={(e) => setBrandingSettings(prev => ({ ...prev, template_price: parseFloat(e.target.value) || 0 }))}
+                            className="w-20"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={async () => {
+                        try {
+                          const { data, error } = await supabase.functions.invoke('brand-manager', {
+                            body: {
+                              action: 'create_template',
+                              brand_config: {
+                                logo_url: brandingSettings.logo_url,
+                                watermark_position: brandingSettings.watermark_position,
+                                brand_colors: brandingSettings.brand_colors,
+                                fonts: brandingSettings.fonts
+                              },
+                              template_data: {
+                                name: brandingSettings.template_name || 'My Brand Template',
+                                is_public: brandingSettings.make_public,
+                                price: brandingSettings.template_price
+                              }
+                            }
+                          });
+
+                          if (error) throw error;
+
+                          toast({
+                            title: "Template Saved",
+                            description: "Your brand template has been saved",
+                          });
+
+                          loadBrandTemplates();
+                        } catch (error: any) {
+                          toast({
+                            title: "Save Failed",
+                            description: error.message,
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                    >
+                      Save Template
+                    </Button>
+                    <Button
+                      className="flex-1 bg-gradient-to-r from-neon-purple to-neon-green text-background"
+                      onClick={async () => {
+                        try {
+                          const { data, error } = await supabase.functions.invoke('brand-manager', {
+                            body: {
+                              action: 'apply_watermark',
+                              video_url: 'https://example.com/video.mp4',
+                              brand_config: {
+                                logo_url: brandingSettings.logo_url,
+                                watermark_position: brandingSettings.watermark_position,
+                                opacity: 0.8,
+                                size: 'medium',
+                                brand_colors: brandingSettings.brand_colors
+                              }
+                            }
+                          });
+
+                          if (error) throw error;
+
+                          toast({
+                            title: "Brand Applied",
+                            description: "Your branding has been applied to the video",
+                          });
+                        } catch (error: any) {
+                          toast({
+                            title: "Application Failed",
+                            description: error.message,
+                            variant: "destructive"
+                          });
+                        }
+                      }}
+                    >
+                      Apply Branding
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Brand Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="aspect-video bg-muted rounded-lg relative overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <div className="text-center space-y-2">
+                          <div className="text-2xl font-bold" style={{ fontFamily: brandingSettings.fonts.heading }}>
+                            Your Video Title
+                          </div>
+                          <div className="text-sm text-muted-foreground" style={{ fontFamily: brandingSettings.fonts.body }}>
+                            Video content preview
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Watermark Preview */}
+                      {brandingSettings.logo_url && (
+                        <div 
+                          className={`absolute w-16 h-8 bg-white/90 backdrop-blur rounded flex items-center justify-center text-xs font-medium ${
+                            brandingSettings.watermark_position === 'top-left' ? 'top-2 left-2' :
+                            brandingSettings.watermark_position === 'top-right' ? 'top-2 right-2' :
+                            brandingSettings.watermark_position === 'bottom-left' ? 'bottom-2 left-2' :
+                            brandingSettings.watermark_position === 'bottom-right' ? 'bottom-2 right-2' :
+                            'top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2'
+                          }`}
+                          style={{ color: brandingSettings.brand_colors.primary }}
+                        >
+                          LOGO
+                        </div>
+                      )}
+
+                      {/* Caption Preview */}
+                      <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded text-sm text-center">
+                        <span 
+                          style={{ 
+                            fontFamily: brandingSettings.fonts.caption,
+                            color: brandingSettings.brand_colors.accent 
+                          }}
+                        >
+                          Sample caption text
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-medium mb-2">Color Palette</h4>
+                        <div className="flex space-x-2">
+                          <div
+                            className="w-12 h-12 rounded border-2 border-white shadow flex items-center justify-center text-white text-xs font-medium"
+                            style={{ backgroundColor: brandingSettings.brand_colors.primary }}
+                          >
+                            1°
+                          </div>
+                          <div
+                            className="w-12 h-12 rounded border-2 border-white shadow flex items-center justify-center text-white text-xs font-medium"
+                            style={{ backgroundColor: brandingSettings.brand_colors.secondary }}
+                          >
+                            2°
+                          </div>
+                          <div
+                            className="w-12 h-12 rounded border-2 border-white shadow flex items-center justify-center text-white text-xs font-medium"
+                            style={{ backgroundColor: brandingSettings.brand_colors.accent }}
+                          >
+                            Acc
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-medium mb-2">Typography</h4>
+                        <div className="space-y-1 text-sm">
+                          <p style={{ fontFamily: brandingSettings.fonts.heading }}>
+                            <strong>Heading:</strong> {brandingSettings.fonts.heading}
+                          </p>
+                          <p style={{ fontFamily: brandingSettings.fonts.body }}>
+                            <strong>Body:</strong> {brandingSettings.fonts.body}
+                          </p>
+                          <p style={{ fontFamily: brandingSettings.fonts.caption }}>
+                            <strong>Caption:</strong> {brandingSettings.fonts.caption}
+                          </p>
+                        </div>
+                      </div>
+
+                      {brandTemplates.length > 0 && (
+                        <div>
+                          <h4 className="font-medium mb-2">Your Templates</h4>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {brandTemplates.slice(0, 3).map((template) => (
+                              <div key={template.id} className="flex items-center justify-between p-2 border rounded text-sm">
+                                <span>{template.name}</span>
+                                <Badge variant={template.is_public ? "default" : "outline"}>
+                                  {template.is_public ? 'Public' : 'Private'}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>

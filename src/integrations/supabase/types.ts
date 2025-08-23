@@ -88,6 +88,63 @@ export type Database = {
           },
         ]
       }
+      brand_templates: {
+        Row: {
+          brand_colors: Json | null
+          created_at: string
+          fonts: Json | null
+          id: string
+          intro_template: Json | null
+          is_default: boolean | null
+          is_public: boolean | null
+          logo_url: string | null
+          name: string
+          outro_template: Json | null
+          overlay_settings: Json | null
+          price: number | null
+          sales_count: number | null
+          updated_at: string
+          user_id: string
+          watermark_position: string | null
+        }
+        Insert: {
+          brand_colors?: Json | null
+          created_at?: string
+          fonts?: Json | null
+          id?: string
+          intro_template?: Json | null
+          is_default?: boolean | null
+          is_public?: boolean | null
+          logo_url?: string | null
+          name: string
+          outro_template?: Json | null
+          overlay_settings?: Json | null
+          price?: number | null
+          sales_count?: number | null
+          updated_at?: string
+          user_id: string
+          watermark_position?: string | null
+        }
+        Update: {
+          brand_colors?: Json | null
+          created_at?: string
+          fonts?: Json | null
+          id?: string
+          intro_template?: Json | null
+          is_default?: boolean | null
+          is_public?: boolean | null
+          logo_url?: string | null
+          name?: string
+          outro_template?: Json | null
+          overlay_settings?: Json | null
+          price?: number | null
+          sales_count?: number | null
+          updated_at?: string
+          user_id?: string
+          watermark_position?: string | null
+        }
+        Relationships: []
+      }
       dynamic_overlays: {
         Row: {
           avatar_id: string | null
@@ -240,6 +297,69 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_items: {
+        Row: {
+          content: Json
+          created_at: string
+          creator_id: string
+          description: string | null
+          downloads_count: number | null
+          id: string
+          is_featured: boolean | null
+          is_free: boolean | null
+          name: string
+          preview_url: string | null
+          price: number
+          rating: number | null
+          reviews_count: number | null
+          status: string | null
+          tags: Json | null
+          thumbnail_url: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          downloads_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_free?: boolean | null
+          name: string
+          preview_url?: string | null
+          price?: number
+          rating?: number | null
+          reviews_count?: number | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          downloads_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_free?: boolean | null
+          name?: string
+          preview_url?: string | null
+          price?: number
+          rating?: number | null
+          reviews_count?: number | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -272,6 +392,38 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      purchases: {
+        Row: {
+          buyer_id: string
+          id: string
+          item_id: string
+          price_paid: number
+          purchased_at: string
+        }
+        Insert: {
+          buyer_id: string
+          id?: string
+          item_id: string
+          price_paid: number
+          purchased_at?: string
+        }
+        Update: {
+          buyer_id?: string
+          id?: string
+          item_id?: string
+          price_paid?: number
+          purchased_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       uploads: {
         Row: {

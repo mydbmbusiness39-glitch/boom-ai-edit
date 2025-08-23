@@ -22,6 +22,7 @@ import VoiceCloning from "./pages/VoiceCloning";
 import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
 import AiStudio from "./pages/AiStudio";
+import Marketplace from "./pages/Marketplace";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -160,6 +161,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <AiStudio />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/marketplace" 
+            element={
+              <ProtectedRoute>
+                <Marketplace />
               </ProtectedRoute>
             } 
           />

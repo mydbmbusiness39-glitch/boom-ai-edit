@@ -74,5 +74,5 @@ verify_jwt = true
 [functions.generate-host-video]
 verify_jwt = true
 
-[functions.video-enhancer]
+[functions.brand-manager]
 verify_jwt = true
