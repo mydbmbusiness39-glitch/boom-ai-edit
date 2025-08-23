@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut, TrendingUp, Users, Scissors, Layers, Link2 } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import Layout from "@/components/Layout/Layout";
 
@@ -58,14 +58,20 @@ const Index = () => {
       href: "/batch-processor"
     },
     {
-      icon: Link2,
-      title: "Auto-Upload",
-      description: "Direct posting to TikTok, YouTube Shorts & Instagram Reels",
-      href: "/auto-upload"
+      icon: Monitor,
+      title: "Dynamic Overlays",
+      description: "Your AI twin reacting in the corner while main video plays",
+      href: "/dynamic-overlays"
+    },
+    {
+      icon: Brain,
+      title: "AI Studio",
+      description: "Advanced script-to-video, viral optimization & trend analysis",
+      href: "/ai-studio"
     },
     {
       icon: Activity,
-      title: "Render Status", 
+      title: "Render Status",
       description: "Track your video processing progress in real-time",
       href: "/status/demo-job"
     }

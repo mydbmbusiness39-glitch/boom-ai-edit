@@ -68,5 +68,8 @@ verify_jwt = true
 [functions.social-auth]
 verify_jwt = false
 
-[functions.save-auto-upload-settings]
+[functions.generate-ai-avatar]
+verify_jwt = true
+
+[functions.generate-host-video]
 verify_jwt = true
