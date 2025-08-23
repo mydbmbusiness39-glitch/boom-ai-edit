@@ -145,6 +145,155 @@ export type Database = {
         }
         Relationships: []
       }
+      clip_performances: {
+        Row: {
+          click_through_rate: number | null
+          clip_title: string | null
+          clip_url: string
+          comments: number | null
+          confidence_level: number | null
+          created_at: string
+          engagement_rate: number | null
+          id: string
+          job_id: string | null
+          last_updated: string | null
+          likes: number | null
+          platform: string
+          posted_at: string | null
+          predicted_max_views: number | null
+          saves: number | null
+          shares: number | null
+          updated_at: string
+          user_id: string
+          views: number | null
+          viral_prediction_score: number | null
+          watch_time_seconds: number | null
+        }
+        Insert: {
+          click_through_rate?: number | null
+          clip_title?: string | null
+          clip_url: string
+          comments?: number | null
+          confidence_level?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          job_id?: string | null
+          last_updated?: string | null
+          likes?: number | null
+          platform: string
+          posted_at?: string | null
+          predicted_max_views?: number | null
+          saves?: number | null
+          shares?: number | null
+          updated_at?: string
+          user_id: string
+          views?: number | null
+          viral_prediction_score?: number | null
+          watch_time_seconds?: number | null
+        }
+        Update: {
+          click_through_rate?: number | null
+          clip_title?: string | null
+          clip_url?: string
+          comments?: number | null
+          confidence_level?: number | null
+          created_at?: string
+          engagement_rate?: number | null
+          id?: string
+          job_id?: string | null
+          last_updated?: string | null
+          likes?: number | null
+          platform?: string
+          posted_at?: string | null
+          predicted_max_views?: number | null
+          saves?: number | null
+          shares?: number | null
+          updated_at?: string
+          user_id?: string
+          views?: number | null
+          viral_prediction_score?: number | null
+          watch_time_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clip_performances_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      creator_analytics: {
+        Row: {
+          ad_revenue: number | null
+          avg_watch_time: number | null
+          created_at: string
+          date: string
+          engagement_rate: number | null
+          estimated_revenue: number | null
+          followers_count: number | null
+          following_count: number | null
+          id: string
+          platform: string
+          sponsored_content_revenue: number | null
+          total_comments: number | null
+          total_likes: number | null
+          total_shares: number | null
+          total_videos: number | null
+          total_views: number | null
+          total_watch_time_hours: number | null
+          updated_at: string
+          user_id: string
+          viral_clips_count: number | null
+        }
+        Insert: {
+          ad_revenue?: number | null
+          avg_watch_time?: number | null
+          created_at?: string
+          date?: string
+          engagement_rate?: number | null
+          estimated_revenue?: number | null
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          platform: string
+          sponsored_content_revenue?: number | null
+          total_comments?: number | null
+          total_likes?: number | null
+          total_shares?: number | null
+          total_videos?: number | null
+          total_views?: number | null
+          total_watch_time_hours?: number | null
+          updated_at?: string
+          user_id: string
+          viral_clips_count?: number | null
+        }
+        Update: {
+          ad_revenue?: number | null
+          avg_watch_time?: number | null
+          created_at?: string
+          date?: string
+          engagement_rate?: number | null
+          estimated_revenue?: number | null
+          followers_count?: number | null
+          following_count?: number | null
+          id?: string
+          platform?: string
+          sponsored_content_revenue?: number | null
+          total_comments?: number | null
+          total_likes?: number | null
+          total_shares?: number | null
+          total_videos?: number | null
+          total_views?: number | null
+          total_watch_time_hours?: number | null
+          updated_at?: string
+          user_id?: string
+          viral_clips_count?: number | null
+        }
+        Relationships: []
+      }
       dynamic_overlays: {
         Row: {
           avatar_id: string | null
@@ -360,6 +509,50 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_snapshots: {
+        Row: {
+          clip_performance_id: string
+          comments_delta: number | null
+          created_at: string
+          hours_since_post: number | null
+          id: string
+          likes_delta: number | null
+          shares_delta: number | null
+          snapshot_date: string
+          views_delta: number | null
+        }
+        Insert: {
+          clip_performance_id: string
+          comments_delta?: number | null
+          created_at?: string
+          hours_since_post?: number | null
+          id?: string
+          likes_delta?: number | null
+          shares_delta?: number | null
+          snapshot_date?: string
+          views_delta?: number | null
+        }
+        Update: {
+          clip_performance_id?: string
+          comments_delta?: number | null
+          created_at?: string
+          hours_since_post?: number | null
+          id?: string
+          likes_delta?: number | null
+          shares_delta?: number | null
+          snapshot_date?: string
+          views_delta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_snapshots_clip_performance_id_fkey"
+            columns: ["clip_performance_id"]
+            isOneToOne: false
+            referencedRelation: "clip_performances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -459,6 +652,72 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "uploads_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      viral_insights: {
+        Row: {
+          actual_viral: boolean | null
+          clip_id: string | null
+          created_at: string
+          id: string
+          improvement_suggestions: Json | null
+          job_id: string | null
+          optimal_posting_times: Json | null
+          predicted_viral: boolean | null
+          prediction_accuracy: number | null
+          target_audience: Json | null
+          trending_elements: Json | null
+          updated_at: string
+          user_id: string
+          viral_factors: Json | null
+        }
+        Insert: {
+          actual_viral?: boolean | null
+          clip_id?: string | null
+          created_at?: string
+          id?: string
+          improvement_suggestions?: Json | null
+          job_id?: string | null
+          optimal_posting_times?: Json | null
+          predicted_viral?: boolean | null
+          prediction_accuracy?: number | null
+          target_audience?: Json | null
+          trending_elements?: Json | null
+          updated_at?: string
+          user_id: string
+          viral_factors?: Json | null
+        }
+        Update: {
+          actual_viral?: boolean | null
+          clip_id?: string | null
+          created_at?: string
+          id?: string
+          improvement_suggestions?: Json | null
+          job_id?: string | null
+          optimal_posting_times?: Json | null
+          predicted_viral?: boolean | null
+          prediction_accuracy?: number | null
+          target_audience?: Json | null
+          trending_elements?: Json | null
+          updated_at?: string
+          user_id?: string
+          viral_factors?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viral_insights_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "clip_performances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viral_insights_job_id_fkey"
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs_new"

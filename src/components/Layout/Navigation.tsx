@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
 
@@ -19,6 +19,7 @@ const Navigation = () => {
     { href: "/dynamic-overlays", label: "Overlays", icon: Monitor },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/marketplace", label: "Marketplace", icon: Store },
+    { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/style", label: "Style", icon: Palette },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/script-generator", label: "Scripts", icon: Sparkles },

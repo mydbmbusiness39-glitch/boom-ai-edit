@@ -23,6 +23,7 @@ import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
 import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -169,6 +170,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Marketplace />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/analytics" 
+            element={
+              <ProtectedRoute>
+                <Analytics />
               </ProtectedRoute>
             } 
           />
