@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Sparkles, Brain, Wand2, Zap, Play, Download, Share, Eye, Settings, Lightbulb } from "lucide-react";
+import { Sparkles, Brain, Wand2, Zap, Play, Download, Share, Eye, Settings, Lightbulb, Scissors, Target, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout/Layout";
@@ -17,11 +17,35 @@ import Layout from "@/components/Layout/Layout";
 interface AIProject {
   id: string;
   name: string;
-  type: 'script-to-video' | 'voice-clone-video' | 'trend-analysis' | 'viral-optimizer';
+  type: 'script-to-video' | 'voice-clone-video' | 'trend-analysis' | 'viral-optimizer' | 'smart-analysis';
   status: 'generating' | 'ready' | 'failed';
   config: any;
   output?: any;
   created_at: string;
+}
+
+interface ViralMoment {
+  timestamp: number;
+  duration: number;
+  confidence: number;
+  type: string;
+  description: string;
+  suggested_cut: {
+    start: number;
+    end: number;
+    title?: string;
+  };
+  viral_score: number;
+}
+
+interface ChapterSegment {
+  start_time: number;
+  end_time: number;
+  title: string;
+  topic: string;
+  summary: string;
+  key_points: string[];
+  viral_potential: number;
 }
 
 const AiStudio = () => {
@@ -44,6 +68,21 @@ const AiStudio = () => {
     optimization_goals: ["engagement", "reach"],
     trend_analysis: true
   });
+
+  const [smartAnalysis, setSmartAnalysis] = useState({
+    video_url: "",
+    analysis_type: "all" as "viral_moments" | "wow_detector" | "chapter_split" | "all",
+    sensitivity: "medium" as "low" | "medium" | "high",
+    min_segment_duration: 30,
+    max_segments: 5
+  });
+
+  const [analysisResults, setAnalysisResults] = useState<{
+    viral_moments?: ViralMoment[];
+    wow_moments?: ViralMoment[];
+    chapters?: ChapterSegment[];
+    analysis_summary?: any;
+  } | null>(null);
 
   const { toast } = useToast();
 
@@ -69,6 +108,20 @@ const AiStudio = () => {
         type: "voice-clone-video",
         status: "generating",
         config: { voice: "professional", style: "corporate" },
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "3",
+        name: "Viral Moment Analysis",
+        type: "smart-analysis",
+        status: "ready",
+        config: { sensitivity: "medium", analysis_type: "all" },
+        output: { 
+          viral_moments: 5, 
+          wow_moments: 2, 
+          chapters: 3,
+          analysis_summary: { total_viral_moments: 7, avg_viral_score: 8.4 }
+        },
         created_at: new Date().toISOString()
       }
     ];
@@ -192,6 +245,69 @@ const AiStudio = () => {
     }
   };
 
+  const runSmartAnalysis = async () => {
+    if (!smartAnalysis.video_url.trim()) {
+      toast({
+        title: "Missing Video URL",
+        description: "Please provide a video URL to analyze",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    setCurrentProject("smart-analysis");
+
+    try {
+      const { data, error } = await supabase.functions.invoke('viral-moment-detector', {
+        body: {
+          video_url: smartAnalysis.video_url,
+          analysis_type: smartAnalysis.analysis_type,
+          options: {
+            sensitivity: smartAnalysis.sensitivity,
+            min_segment_duration: smartAnalysis.min_segment_duration,
+            max_segments: smartAnalysis.max_segments,
+            include_audio_analysis: true,
+            include_visual_analysis: true
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      setAnalysisResults(data);
+
+      toast({
+        title: "Analysis Complete",
+        description: `Found ${(data.viral_moments?.length || 0) + (data.wow_moments?.length || 0)} viral moments and ${data.chapters?.length || 0} chapters`,
+      });
+
+      // Add to projects
+      const newProject: AIProject = {
+        id: Date.now().toString(),
+        name: `Smart Analysis ${Date.now()}`,
+        type: "smart-analysis",
+        status: "ready",
+        config: smartAnalysis,
+        output: data,
+        created_at: new Date().toISOString()
+      };
+
+      setProjects(prev => [newProject, ...prev]);
+
+    } catch (error: any) {
+      console.error('Smart analysis error:', error);
+      toast({
+        title: "Analysis Failed",
+        description: error.message || "Failed to analyze video",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+      setCurrentProject(null);
+    }
+  };
+
   const styles = [
     { value: "cinematic", label: "Cinematic" },
     { value: "gaming", label: "Gaming" },
@@ -227,10 +343,11 @@ const AiStudio = () => {
           </p>
         </div>
 
-        <Tabs defaultValue="script-to-video" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+        <Tabs defaultValue="smart-analysis" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="script-to-video">Script → Video</TabsTrigger>
             <TabsTrigger value="viral-optimizer">Viral Optimizer</TabsTrigger>
+            <TabsTrigger value="smart-analysis">Smart Analysis</TabsTrigger>
             <TabsTrigger value="trend-analyzer">Trend Analyzer</TabsTrigger>
             <TabsTrigger value="projects">AI Projects</TabsTrigger>
           </TabsList>
@@ -480,6 +597,244 @@ const AiStudio = () => {
                       </div>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Smart Analysis Tab */}
+          <TabsContent value="smart-analysis" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Target className="h-5 w-5" />
+                    <span>Smart Video Analysis</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="analysis-video-url">Video URL</Label>
+                    <Input
+                      id="analysis-video-url"
+                      placeholder="https://... or upload video file"
+                      value={smartAnalysis.video_url}
+                      onChange={(e) => setSmartAnalysis(prev => ({ ...prev, video_url: e.target.value }))}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Analysis Type</Label>
+                    <Select
+                      value={smartAnalysis.analysis_type}
+                      onValueChange={(value: any) => setSmartAnalysis(prev => ({ ...prev, analysis_type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Complete Analysis</SelectItem>
+                        <SelectItem value="viral_moments">Viral Moments Only</SelectItem>
+                        <SelectItem value="wow_detector">Wow Moments Only</SelectItem>
+                        <SelectItem value="chapter_split">Chapter Splitting Only</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Detection Sensitivity</Label>
+                      <Select
+                        value={smartAnalysis.sensitivity}
+                        onValueChange={(value: any) => setSmartAnalysis(prev => ({ ...prev, sensitivity: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">High (Strict)</SelectItem>
+                          <SelectItem value="medium">Medium (Balanced)</SelectItem>
+                          <SelectItem value="low">Low (Permissive)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Max Segments</Label>
+                      <Select
+                        value={smartAnalysis.max_segments.toString()}
+                        onValueChange={(value) => setSmartAnalysis(prev => ({ ...prev, max_segments: parseInt(value) }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3 segments</SelectItem>
+                          <SelectItem value="5">5 segments</SelectItem>
+                          <SelectItem value="8">8 segments</SelectItem>
+                          <SelectItem value="10">10 segments</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="bg-muted p-4 rounded-lg space-y-3">
+                    <h4 className="font-medium flex items-center space-x-2">
+                      <Scissors className="h-4 w-4" />
+                      <span>What We Detect</span>
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 text-sm text-muted-foreground">
+                      <div className="space-y-1">
+                        <p>• Laughter & reactions</p>
+                        <p>• Hype words & energy spikes</p>
+                        <p>• Jaw-drop moments</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p>• Topic changes</p>
+                        <p>• Audience engagement</p>
+                        <p>• Viral-worthy cuts</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={runSmartAnalysis}
+                    disabled={!smartAnalysis.video_url.trim() || (isGenerating && currentProject === "smart-analysis")}
+                    className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background"
+                    size="lg"
+                  >
+                    {isGenerating && currentProject === "smart-analysis" ? (
+                      <>
+                        <Zap className="h-5 w-5 mr-2 animate-spin" />
+                        Analyzing Video...
+                      </>
+                    ) : (
+                      <>
+                        <Target className="h-5 w-5 mr-2" />
+                        Start Smart Analysis
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Analysis Results</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {analysisResults ? (
+                    <div className="space-y-6">
+                      {/* Summary */}
+                      {analysisResults.analysis_summary && (
+                        <div className="bg-gradient-to-r from-neon-purple/10 to-neon-green/10 p-4 rounded-lg">
+                          <h4 className="font-medium mb-3">Analysis Summary</h4>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Viral Moments</p>
+                              <p className="font-medium text-lg">{analysisResults.analysis_summary.total_viral_moments}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Avg. Score</p>
+                              <p className="font-medium text-lg">{analysisResults.analysis_summary.avg_viral_score}/10</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Viral Moments */}
+                      {analysisResults.viral_moments && analysisResults.viral_moments.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium flex items-center space-x-2">
+                            <Zap className="h-4 w-4" />
+                            <span>Viral Moments ({analysisResults.viral_moments.length})</span>
+                          </h4>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {analysisResults.viral_moments.map((moment, idx) => (
+                              <div key={idx} className="p-3 border rounded text-sm space-y-1">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-medium">{moment.suggested_cut.title}</p>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {moment.viral_score}/10
+                                  </Badge>
+                                </div>
+                                <p className="text-muted-foreground text-xs">{moment.description}</p>
+                                <p className="text-xs">
+                                  <strong>Cut:</strong> {Math.floor(moment.suggested_cut.start)}s - {Math.floor(moment.suggested_cut.end)}s
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Wow Moments */}
+                      {analysisResults.wow_moments && analysisResults.wow_moments.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium flex items-center space-x-2">
+                            <Eye className="h-4 w-4" />
+                            <span>Wow Moments ({analysisResults.wow_moments.length})</span>
+                          </h4>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {analysisResults.wow_moments.map((moment, idx) => (
+                              <div key={idx} className="p-3 border rounded text-sm space-y-1">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-medium">{moment.suggested_cut.title}</p>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {moment.viral_score}/10
+                                  </Badge>
+                                </div>
+                                <p className="text-muted-foreground text-xs">{moment.description}</p>
+                                <p className="text-xs">
+                                  <strong>Cut:</strong> {Math.floor(moment.suggested_cut.start)}s - {Math.floor(moment.suggested_cut.end)}s
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Chapters */}
+                      {analysisResults.chapters && analysisResults.chapters.length > 0 && (
+                        <div className="space-y-3">
+                          <h4 className="font-medium flex items-center space-x-2">
+                            <BookOpen className="h-4 w-4" />
+                            <span>Chapter Segments ({analysisResults.chapters.length})</span>
+                          </h4>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {analysisResults.chapters.map((chapter, idx) => (
+                              <div key={idx} className="p-3 border rounded text-sm space-y-2">
+                                <div className="flex justify-between items-start">
+                                  <p className="font-medium">{chapter.title}</p>
+                                  <Badge variant="outline" className="text-xs">
+                                    {chapter.viral_potential}/10
+                                  </Badge>
+                                </div>
+                                <p className="text-muted-foreground text-xs">{chapter.summary}</p>
+                                <p className="text-xs">
+                                  <strong>Duration:</strong> {Math.floor(chapter.start_time)}s - {Math.floor(chapter.end_time)}s
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 space-y-4">
+                      <Target className="h-16 w-16 text-primary mx-auto" />
+                      <div className="space-y-2">
+                        <p className="text-muted-foreground">
+                          Upload a video to analyze viral moments
+                        </p>
+                        <div className="text-sm text-muted-foreground space-y-1">
+                          <p>✨ Auto-detect laughter & hype words</p>
+                          <p>🔥 Find wow moments & reactions</p>
+                          <p>📚 Smart chapter splitting by topic</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
