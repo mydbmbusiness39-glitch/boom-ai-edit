@@ -58,3 +58,15 @@ verify_jwt = true
 
 [functions.trend-matcher]
 verify_jwt = true
+
+[functions.clip-and-post]
+verify_jwt = true
+
+[functions.batch-processor]
+verify_jwt = true
+
+[functions.social-auth]
+verify_jwt = false
+
+[functions.save-auto-upload-settings]
+verify_jwt = true

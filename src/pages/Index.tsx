@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut, TrendingUp, Users } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, Play, Sparkles, ArrowRight, LogOut, TrendingUp, Users, Scissors, Layers, Link2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthProvider";
 import Layout from "@/components/Layout/Layout";
 
@@ -46,8 +46,26 @@ const Index = () => {
       href: "/community-collab"
     },
     {
+      icon: Scissors,
+      title: "Clip & Post",
+      description: "One-click clip extraction and instant social media posting",
+      href: "/clip-post"
+    },
+    {
+      icon: Layers,
+      title: "Batch Processor",
+      description: "Upload 10 videos → Generate 50 viral clips overnight",
+      href: "/batch-processor"
+    },
+    {
+      icon: Link2,
+      title: "Auto-Upload",
+      description: "Direct posting to TikTok, YouTube Shorts & Instagram Reels",
+      href: "/auto-upload"
+    },
+    {
       icon: Activity,
-      title: "Render Status",
+      title: "Render Status", 
       description: "Track your video processing progress in real-time",
       href: "/status/demo-job"
     }

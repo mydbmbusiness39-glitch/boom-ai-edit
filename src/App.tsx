@@ -15,6 +15,9 @@ import Create from "./pages/Create";
 import ScriptGenerator from "./pages/ScriptGenerator";
 import TrendSync from "./pages/TrendSync";
 import CommunityCollab from "./pages/CommunityCollab";
+import ClipPost from "./pages/ClipPost";
+import BatchProcessor from "./pages/BatchProcessor";
+import AutoUpload from "./pages/AutoUpload";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +100,30 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CommunityCollab />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/clip-post" 
+            element={
+              <ProtectedRoute>
+                <ClipPost />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/batch-processor" 
+            element={
+              <ProtectedRoute>
+                <BatchProcessor />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/auto-upload" 
+            element={
+              <ProtectedRoute>
+                <AutoUpload />
               </ProtectedRoute>
             } 
           />
