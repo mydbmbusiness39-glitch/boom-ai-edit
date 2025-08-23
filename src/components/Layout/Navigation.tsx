@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2 } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
 
@@ -14,6 +14,9 @@ const Navigation = () => {
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/batch-processor", label: "Batch", icon: Layers },
     { href: "/auto-upload", label: "Auto-Upload", icon: Link2 },
+    { href: "/voice-cloning", label: "Voice Clone", icon: Volume2 },
+    { href: "/ai-host", label: "AI Host", icon: Bot },
+    { href: "/dynamic-overlays", label: "Overlays", icon: Monitor },
     { href: "/style", label: "Style", icon: Palette },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/script-generator", label: "Scripts", icon: Sparkles },

@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_avatars: {
+        Row: {
+          animation_style: string | null
+          avatar_type: string
+          avatar_url: string | null
+          created_at: string
+          id: string
+          name: string
+          status: string
+          updated_at: string
+          user_id: string
+          voice_model_id: string | null
+        }
+        Insert: {
+          animation_style?: string | null
+          avatar_type?: string
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          voice_model_id?: string | null
+        }
+        Update: {
+          animation_style?: string | null
+          avatar_type?: string
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          voice_model_id?: string | null
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           created_at: string
@@ -48,6 +87,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      dynamic_overlays: {
+        Row: {
+          avatar_id: string | null
+          created_at: string
+          id: string
+          name: string
+          position: string | null
+          reactions: Json | null
+          size: string | null
+          style_settings: Json | null
+          trigger_keywords: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          position?: string | null
+          reactions?: Json | null
+          size?: string | null
+          style_settings?: Json | null
+          trigger_keywords?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          position?: string | null
+          reactions?: Json | null
+          size?: string | null
+          style_settings?: Json | null
+          trigger_keywords?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       jobs: {
         Row: {
@@ -232,6 +313,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      voice_models: {
+        Row: {
+          created_at: string
+          elevenlabs_voice_id: string | null
+          id: string
+          name: string
+          sample_audio_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          elevenlabs_voice_id?: string | null
+          id?: string
+          name: string
+          sample_audio_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          elevenlabs_voice_id?: string | null
+          id?: string
+          name?: string
+          sample_audio_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      voice_scripts: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          duration_ms: number | null
+          id: string
+          script_text: string
+          script_type: string | null
+          updated_at: string
+          user_id: string
+          voice_model_id: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          script_text: string
+          script_type?: string | null
+          updated_at?: string
+          user_id: string
+          voice_model_id?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          duration_ms?: number | null
+          id?: string
+          script_text?: string
+          script_type?: string | null
+          updated_at?: string
+          user_id?: string
+          voice_model_id?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

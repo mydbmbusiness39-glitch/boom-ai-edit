@@ -18,6 +18,9 @@ import CommunityCollab from "./pages/CommunityCollab";
 import ClipPost from "./pages/ClipPost";
 import BatchProcessor from "./pages/BatchProcessor";
 import AutoUpload from "./pages/AutoUpload";
+import VoiceCloning from "./pages/VoiceCloning";
+import AiHost from "./pages/AiHost";
+import DynamicOverlays from "./pages/DynamicOverlays";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -124,6 +127,30 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <AutoUpload />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/voice-cloning" 
+            element={
+              <ProtectedRoute>
+                <VoiceCloning />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/ai-host" 
+            element={
+              <ProtectedRoute>
+                <AiHost />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/dynamic-overlays" 
+            element={
+              <ProtectedRoute>
+                <DynamicOverlays />
               </ProtectedRoute>
             } 
           />
