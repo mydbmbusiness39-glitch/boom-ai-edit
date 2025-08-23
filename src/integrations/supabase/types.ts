@@ -249,6 +249,65 @@ export type Database = {
           },
         ]
       }
+      cloud_sync_configs: {
+        Row: {
+          access_token_encrypted: string | null
+          auto_sync_new_videos: boolean | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          provider: string
+          refresh_token_encrypted: string | null
+          sync_folder_path: string | null
+          sync_status: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          auto_sync_new_videos?: boolean | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          provider: string
+          refresh_token_encrypted?: string | null
+          sync_folder_path?: string | null
+          sync_status?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          auto_sync_new_videos?: boolean | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          provider?: string
+          refresh_token_encrypted?: string | null
+          sync_folder_path?: string | null
+          sync_status?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cloud_sync_configs_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creator_analytics: {
         Row: {
           ad_revenue: number | null
@@ -653,6 +712,68 @@ export type Database = {
           },
         ]
       }
+      sync_operations: {
+        Row: {
+          bytes_transferred: number | null
+          cloud_file_id: string | null
+          cloud_file_path: string | null
+          cloud_file_url: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          operation_type: string
+          provider: string
+          started_at: string | null
+          status: string
+          total_bytes: number | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          bytes_transferred?: number | null
+          cloud_file_id?: string | null
+          cloud_file_path?: string | null
+          cloud_file_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operation_type: string
+          provider: string
+          started_at?: string | null
+          status?: string
+          total_bytes?: number | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          bytes_transferred?: number | null
+          cloud_file_id?: string | null
+          cloud_file_path?: string | null
+          cloud_file_url?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          operation_type?: string
+          provider?: string
+          started_at?: string | null
+          status?: string
+          total_bytes?: number | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_operations_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "video_library"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_invitations: {
         Row: {
           accepted_at: string | null
@@ -805,6 +926,99 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs_new"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_library: {
+        Row: {
+          auto_backup_enabled: boolean | null
+          backup_status: string | null
+          cloud_sync_status: Json | null
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          file_path: string
+          file_size: number
+          filename: string
+          folder_path: string | null
+          id: string
+          is_favorite: boolean | null
+          job_id: string | null
+          mime_type: string
+          original_filename: string
+          processing_status: string | null
+          source_type: string
+          tags: Json | null
+          team_id: string | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_backup_enabled?: boolean | null
+          backup_status?: string | null
+          cloud_sync_status?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_path: string
+          file_size: number
+          filename: string
+          folder_path?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          job_id?: string | null
+          mime_type: string
+          original_filename: string
+          processing_status?: string | null
+          source_type?: string
+          tags?: Json | null
+          team_id?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_backup_enabled?: boolean | null
+          backup_status?: string | null
+          cloud_sync_status?: Json | null
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_path?: string
+          file_size?: number
+          filename?: string
+          folder_path?: string | null
+          id?: string
+          is_favorite?: boolean | null
+          job_id?: string | null
+          mime_type?: string
+          original_filename?: string
+          processing_status?: string | null
+          source_type?: string
+          tags?: Json | null
+          team_id?: string | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_library_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs_new"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_library_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
