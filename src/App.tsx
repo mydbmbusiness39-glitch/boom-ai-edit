@@ -25,6 +25,7 @@ import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
 import Analytics from "./pages/Analytics";
 import Teams from "./pages/Teams";
+import Security from "./pages/Security";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -187,6 +188,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Teams />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/security" 
+             element={
+               <ProtectedRoute>
+                 <Security />
                </ProtectedRoute>
              } 
            />

@@ -79,3 +79,6 @@ verify_jwt = true
 
 [functions.team-manager]
 verify_jwt = true
+
+[functions.auth-api-token]
+verify_jwt = false

@@ -179,6 +179,48 @@ export type Database = {
         }
         Relationships: []
       }
+      api_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_used_at: string | null
+          name: string
+          permissions: Json | null
+          scopes: string[] | null
+          token_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          name: string
+          permissions?: Json | null
+          scopes?: string[] | null
+          token_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_used_at?: string | null
+          name?: string
+          permissions?: Json | null
+          scopes?: string[] | null
+          token_hash?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       assets: {
         Row: {
           created_at: string
@@ -545,6 +587,59 @@ export type Database = {
         }
         Relationships: []
       }
+      encrypted_uploads: {
+        Row: {
+          checksum: string
+          created_at: string
+          encrypted_filename: string
+          encryption_key_id: string | null
+          file_path: string
+          file_size: number
+          id: string
+          iv: string
+          mime_type: string
+          original_filename: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          checksum: string
+          created_at?: string
+          encrypted_filename: string
+          encryption_key_id?: string | null
+          file_path: string
+          file_size: number
+          id?: string
+          iv: string
+          mime_type: string
+          original_filename: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          checksum?: string
+          created_at?: string
+          encrypted_filename?: string
+          encryption_key_id?: string | null
+          file_path?: string
+          file_size?: number
+          id?: string
+          iv?: string
+          mime_type?: string
+          original_filename?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encrypted_uploads_encryption_key_id_fkey"
+            columns: ["encryption_key_id"]
+            isOneToOne: false
+            referencedRelation: "media_encryption_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           bpm: number | null
@@ -726,6 +821,42 @@ export type Database = {
           thumbnail_url?: string | null
           type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      media_encryption_keys: {
+        Row: {
+          algorithm: string | null
+          created_at: string
+          encrypted_key: string
+          id: string
+          is_active: boolean | null
+          key_name: string
+          key_version: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          algorithm?: string | null
+          created_at?: string
+          encrypted_key: string
+          id?: string
+          is_active?: boolean | null
+          key_name: string
+          key_version?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          algorithm?: string | null
+          created_at?: string
+          encrypted_key?: string
+          id?: string
+          is_active?: boolean | null
+          key_name?: string
+          key_version?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1136,6 +1267,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_security: {
+        Row: {
+          backup_codes: string[] | null
+          created_at: string
+          id: string
+          is_2fa_enabled: boolean | null
+          phone_number: string | null
+          recovery_email: string | null
+          totp_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_2fa_enabled?: boolean | null
+          phone_number?: string | null
+          recovery_email?: string | null
+          totp_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: string[] | null
+          created_at?: string
+          id?: string
+          is_2fa_enabled?: boolean | null
+          phone_number?: string | null
+          recovery_email?: string | null
+          totp_secret?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       video_library: {
         Row: {
