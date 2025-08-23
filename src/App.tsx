@@ -24,6 +24,7 @@ import DynamicOverlays from "./pages/DynamicOverlays";
 import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
 import Analytics from "./pages/Analytics";
+import Teams from "./pages/Teams";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -173,16 +174,24 @@ const App = () => (
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/analytics" 
-            element={
-              <ProtectedRoute>
-                <Analytics />
-              </ProtectedRoute>
-            } 
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+           <Route 
+             path="/analytics" 
+             element={
+               <ProtectedRoute>
+                 <Analytics />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/teams" 
+             element={
+               <ProtectedRoute>
+                 <Teams />
+               </ProtectedRoute>
+             } 
+           />
+           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

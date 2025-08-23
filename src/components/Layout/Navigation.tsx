@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store, BarChart3 } from "lucide-react";
+import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store, BarChart3, HandHeart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
 
@@ -20,11 +20,12 @@ const Navigation = () => {
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/marketplace", label: "Marketplace", icon: Store },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
+    { href: "/teams", label: "Teams", icon: Users },
     { href: "/style", label: "Style", icon: Palette },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/script-generator", label: "Scripts", icon: Sparkles },
     { href: "/trend-sync", label: "Trends", icon: TrendingUp },
-    { href: "/community-collab", label: "Collab", icon: Users },
+    { href: "/community-collab", label: "Collab", icon: HandHeart },
     { href: "/status", label: "Status", icon: Activity },
   ];
 

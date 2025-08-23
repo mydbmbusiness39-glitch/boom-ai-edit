@@ -76,3 +76,6 @@ verify_jwt = true
 
 [functions.viral-predictor]
 verify_jwt = true
+
+[functions.team-manager]
+verify_jwt = true
