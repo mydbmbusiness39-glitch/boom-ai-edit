@@ -10,6 +10,7 @@ const Navigation = () => {
 
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
+    { href: "/one-tap", label: "One-Tap", icon: Zap },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/batch-processor", label: "Batch", icon: Layers },

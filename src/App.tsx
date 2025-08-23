@@ -10,8 +10,9 @@ import Auth from "./pages/Auth";
 import Upload from "./pages/Upload";
 import Style from "./pages/Style";
 import Editor from "./pages/Editor";
-import Status from "./pages/Status";
 import Create from "./pages/Create";
+import OneTapEdit from "./pages/OneTapEdit";
+import Status from "./pages/Status";
 import ScriptGenerator from "./pages/ScriptGenerator";
 import TrendSync from "./pages/TrendSync";
 import CommunityCollab from "./pages/CommunityCollab";
@@ -41,6 +42,22 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route 
+            path="/one-tap" 
+            element={
+              <ProtectedRoute>
+                <OneTapEdit />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/create" 
+            element={
+              <ProtectedRoute>
+                <Create />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/upload" 
             element={
               <ProtectedRoute>
@@ -53,14 +70,6 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Style />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/create" 
-            element={
-              <ProtectedRoute>
-                <Create />
               </ProtectedRoute>
             } 
           />
