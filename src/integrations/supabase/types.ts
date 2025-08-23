@@ -14,6 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_analytics: {
+        Row: {
+          affiliate_link_id: string
+          amount: number | null
+          commission: number | null
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          event_metadata: Json | null
+          event_type: string
+          id: string
+          platform: string
+          referrer: string | null
+          user_agent: string | null
+          user_id: string
+          video_id: string | null
+          visitor_ip: string | null
+        }
+        Insert: {
+          affiliate_link_id: string
+          amount?: number | null
+          commission?: number | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_metadata?: Json | null
+          event_type: string
+          id?: string
+          platform: string
+          referrer?: string | null
+          user_agent?: string | null
+          user_id: string
+          video_id?: string | null
+          visitor_ip?: string | null
+        }
+        Update: {
+          affiliate_link_id?: string
+          amount?: number | null
+          commission?: number | null
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event_metadata?: Json | null
+          event_type?: string
+          id?: string
+          platform?: string
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string
+          video_id?: string | null
+          visitor_ip?: string | null
+        }
+        Relationships: []
+      }
+      affiliate_links: {
+        Row: {
+          auto_sync_enabled: boolean | null
+          click_count: number | null
+          commission_rate: number | null
+          conversion_count: number | null
+          created_at: string
+          currency: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          link_type: string
+          platform: string
+          platform_data: Json | null
+          price: number | null
+          product_id: string | null
+          revenue_total: number | null
+          team_id: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          auto_sync_enabled?: boolean | null
+          click_count?: number | null
+          commission_rate?: number | null
+          conversion_count?: number | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_type?: string
+          platform: string
+          platform_data?: Json | null
+          price?: number | null
+          product_id?: string | null
+          revenue_total?: number | null
+          team_id?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          auto_sync_enabled?: boolean | null
+          click_count?: number | null
+          commission_rate?: number | null
+          conversion_count?: number | null
+          created_at?: string
+          currency?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_type?: string
+          platform?: string
+          platform_data?: Json | null
+          price?: number | null
+          product_id?: string | null
+          revenue_total?: number | null
+          team_id?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_avatars: {
         Row: {
           animation_style: string | null
@@ -647,6 +773,51 @@ export type Database = {
           },
         ]
       }
+      platform_sync_configs: {
+        Row: {
+          api_credentials: Json | null
+          created_at: string
+          error_message: string | null
+          id: string
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          platform: string
+          sync_settings: Json | null
+          sync_status: string | null
+          team_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_credentials?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          platform: string
+          sync_settings?: Json | null
+          sync_status?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_credentials?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          platform?: string
+          sync_settings?: Json | null
+          sync_status?: string | null
+          team_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -711,6 +882,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shoppable_overlays: {
+        Row: {
+          affiliate_link_ids: string[] | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          overlay_style: Json | null
+          trigger_settings: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affiliate_link_ids?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          overlay_style?: Json | null
+          trigger_settings?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affiliate_link_ids?: string[] | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          overlay_style?: Json | null
+          trigger_settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       sync_operations: {
         Row: {
@@ -1174,6 +1381,10 @@ export type Database = {
       get_user_team_role: {
         Args: { team_uuid: string; user_uuid: string }
         Returns: Database["public"]["Enums"]["team_role"]
+      }
+      increment_affiliate_stats: {
+        Args: { amount?: number; link_id: string; stat_type: string }
+        Returns: undefined
       }
       increment_job_count: {
         Args: { user_uuid: string }
