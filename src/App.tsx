@@ -26,6 +26,7 @@ import Marketplace from "./pages/Marketplace";
 import Analytics from "./pages/Analytics";
 import Teams from "./pages/Teams";
 import Security from "./pages/Security";
+import Community from "./pages/Community";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -196,6 +197,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Security />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/community" 
+             element={
+               <ProtectedRoute>
+                 <Community />
                </ProtectedRoute>
              } 
            />
