@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achievement_type: string
+          badge_color: string
+          badge_icon: string
+          created_at: string
+          criteria: Json
+          description: string
+          id: string
+          is_active: boolean | null
+          points: number | null
+          rarity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          achievement_type?: string
+          badge_color?: string
+          badge_icon?: string
+          created_at?: string
+          criteria?: Json
+          description: string
+          id?: string
+          is_active?: boolean | null
+          points?: number | null
+          rarity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          achievement_type?: string
+          badge_color?: string
+          badge_icon?: string
+          created_at?: string
+          criteria?: Json
+          description?: string
+          id?: string
+          is_active?: boolean | null
+          points?: number | null
+          rarity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       affiliate_analytics: {
         Row: {
           affiliate_link_id: string
@@ -326,6 +371,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string
+          description: string
+          end_date: string
+          goal_count: number
+          id: string
+          is_active: boolean | null
+          reward_data: Json | null
+          reward_type: string
+          start_date: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          challenge_type?: string
+          created_at?: string
+          description: string
+          end_date: string
+          goal_count?: number
+          id?: string
+          is_active?: boolean | null
+          reward_data?: Json | null
+          reward_type?: string
+          start_date?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string
+          description?: string
+          end_date?: string
+          goal_count?: number
+          id?: string
+          is_active?: boolean | null
+          reward_data?: Json | null
+          reward_type?: string
+          start_date?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       clip_performances: {
         Row: {
@@ -760,6 +850,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      leaderboards: {
+        Row: {
+          created_at: string
+          id: string
+          period_end: string
+          period_start: string
+          period_type: string
+          points: number | null
+          rank_position: number | null
+          top_clip_id: string | null
+          total_likes: number | null
+          total_views: number | null
+          updated_at: string
+          user_id: string
+          viral_clips_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          period_end: string
+          period_start: string
+          period_type?: string
+          points?: number | null
+          rank_position?: number | null
+          top_clip_id?: string | null
+          total_likes?: number | null
+          total_views?: number | null
+          updated_at?: string
+          user_id: string
+          viral_clips_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          points?: number | null
+          rank_position?: number | null
+          top_clip_id?: string | null
+          total_likes?: number | null
+          total_views?: number | null
+          updated_at?: string
+          user_id?: string
+          viral_clips_count?: number | null
+        }
+        Relationships: []
       }
       marketplace_items: {
         Row: {
@@ -1267,6 +1405,130 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          progress_data: Json | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          progress_data?: Json | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          progress_data?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_challenges: {
+        Row: {
+          challenge_id: string
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_completed: boolean | null
+          progress: number | null
+          reward_claimed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          reward_claimed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          progress?: number | null
+          reward_claimed?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_challenges_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_gamification: {
+        Row: {
+          badges_earned: number | null
+          challenges_completed: number | null
+          created_at: string
+          current_streak: number | null
+          experience_points: number | null
+          id: string
+          level: number | null
+          longest_streak: number | null
+          total_points: number | null
+          total_uploads: number | null
+          total_viral_clips: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          badges_earned?: number | null
+          challenges_completed?: number | null
+          created_at?: string
+          current_streak?: number | null
+          experience_points?: number | null
+          id?: string
+          level?: number | null
+          longest_streak?: number | null
+          total_points?: number | null
+          total_uploads?: number | null
+          total_viral_clips?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          badges_earned?: number | null
+          challenges_completed?: number | null
+          created_at?: string
+          current_streak?: number | null
+          experience_points?: number | null
+          id?: string
+          level?: number | null
+          longest_streak?: number | null
+          total_points?: number | null
+          total_uploads?: number | null
+          total_viral_clips?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_security: {
         Row: {
