@@ -97,12 +97,14 @@ export type Database = {
           intro_template: Json | null
           is_default: boolean | null
           is_public: boolean | null
+          is_team_shared: boolean | null
           logo_url: string | null
           name: string
           outro_template: Json | null
           overlay_settings: Json | null
           price: number | null
           sales_count: number | null
+          team_id: string | null
           updated_at: string
           user_id: string
           watermark_position: string | null
@@ -115,12 +117,14 @@ export type Database = {
           intro_template?: Json | null
           is_default?: boolean | null
           is_public?: boolean | null
+          is_team_shared?: boolean | null
           logo_url?: string | null
           name: string
           outro_template?: Json | null
           overlay_settings?: Json | null
           price?: number | null
           sales_count?: number | null
+          team_id?: string | null
           updated_at?: string
           user_id: string
           watermark_position?: string | null
@@ -133,17 +137,27 @@ export type Database = {
           intro_template?: Json | null
           is_default?: boolean | null
           is_public?: boolean | null
+          is_team_shared?: boolean | null
           logo_url?: string | null
           name?: string
           outro_template?: Json | null
           overlay_settings?: Json | null
           price?: number | null
           sales_count?: number | null
+          team_id?: string | null
           updated_at?: string
           user_id?: string
           watermark_position?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "brand_templates_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       clip_performances: {
         Row: {
@@ -163,6 +177,7 @@ export type Database = {
           predicted_max_views: number | null
           saves: number | null
           shares: number | null
+          team_id: string | null
           updated_at: string
           user_id: string
           views: number | null
@@ -186,6 +201,7 @@ export type Database = {
           predicted_max_views?: number | null
           saves?: number | null
           shares?: number | null
+          team_id?: string | null
           updated_at?: string
           user_id: string
           views?: number | null
@@ -209,6 +225,7 @@ export type Database = {
           predicted_max_views?: number | null
           saves?: number | null
           shares?: number | null
+          team_id?: string | null
           updated_at?: string
           user_id?: string
           views?: number | null
@@ -221,6 +238,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs_new"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clip_performances_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
         ]
@@ -410,6 +434,7 @@ export type Database = {
           progress: number | null
           status: string
           style_id: string | null
+          team_id: string | null
           updated_at: string
           user_id: string
           watermarked: boolean | null
@@ -425,6 +450,7 @@ export type Database = {
           progress?: number | null
           status?: string
           style_id?: string | null
+          team_id?: string | null
           updated_at?: string
           user_id: string
           watermarked?: boolean | null
@@ -440,11 +466,20 @@ export type Database = {
           progress?: number | null
           status?: string
           style_id?: string | null
+          team_id?: string | null
           updated_at?: string
           user_id?: string
           watermarked?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "jobs_new_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       marketplace_items: {
         Row: {
@@ -617,6 +652,121 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          invited_at: string | null
+          invited_by: string | null
+          joined_at: string | null
+          role: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invited_at?: string | null
+          invited_by?: string | null
+          joined_at?: string | null
+          role?: Database["public"]["Enums"]["team_role"]
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          owner_id: string
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          owner_id: string
+          plan?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       uploads: {
         Row: {
@@ -807,13 +957,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_user_team_role: {
+        Args: { team_uuid: string; user_uuid: string }
+        Returns: Database["public"]["Enums"]["team_role"]
+      }
       increment_job_count: {
         Args: { user_uuid: string }
         Returns: undefined
       }
     }
     Enums: {
-      [_ in never]: never
+      team_role: "owner" | "manager" | "editor" | "uploader" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -940,6 +1094,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      team_role: ["owner", "manager", "editor", "uploader", "viewer"],
+    },
   },
 } as const
