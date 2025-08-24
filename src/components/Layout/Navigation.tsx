@@ -13,6 +13,7 @@ const Navigation = () => {
     { href: "/one-tap", label: "One-Tap", icon: Zap },
     { href: "/thumbnail-generator", label: "Thumbnails", icon: Eye },
     { href: "/video-dubbing", label: "Global Dub", icon: Globe },
+    { href: "/ai-music", label: "AI Music", icon: Volume2 },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/batch-processor", label: "Batch", icon: Layers },

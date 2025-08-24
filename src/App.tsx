@@ -30,6 +30,7 @@ import Security from "./pages/Security";
 import Community from "./pages/Community";
 import ThumbnailGenerator from "./pages/ThumbnailGenerator";
 import VideoDubbing from "./pages/VideoDubbing";
+import AIMusicGenerator from "./pages/AIMusicGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -232,6 +233,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <VideoDubbing />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/ai-music" 
+             element={
+               <ProtectedRoute>
+                 <AIMusicGenerator />
                </ProtectedRoute>
              } 
            />
