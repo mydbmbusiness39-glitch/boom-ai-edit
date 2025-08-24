@@ -100,7 +100,7 @@ const Index = () => {
               </h1>
               
               <div className="font-poppins text-2xl md:text-3xl font-semibold text-vibrant-yellow mb-6">
-                Pro edits. One tap.
+                Clip it. Flip it. BOOM it.
               </div>
               
               <p className="font-poppins text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -117,7 +117,7 @@ const Index = () => {
                         className="bg-neon-red hover:bg-neon-red/90 text-white hover:shadow-lg hover:shadow-neon-red/50 px-8 py-4 text-lg font-poppins font-semibold transition-all duration-300"
                       >
                         <Play className="h-5 w-5 mr-2" />
-                        Start Editing Now
+                        Start Creating Now
                       </Button>
                     </Link>
                     
@@ -139,7 +139,7 @@ const Index = () => {
                         className="bg-neon-red hover:bg-neon-red/90 text-white hover:shadow-lg hover:shadow-neon-red/50 px-8 py-4 text-lg font-poppins font-semibold transition-all duration-300"
                       >
                         <Play className="h-5 w-5 mr-2" />
-                        Start Editing Now
+                        Start Creating Now
                       </Button>
                     </Link>
                     
