@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
 import Watermark from "@/components/Watermark";
+import ChatAssistant from "@/components/Editor/ChatAssistant";
 import { supabase } from "@/integrations/supabase/client";
 
 const Editor = () => {
@@ -19,6 +20,7 @@ const Editor = () => {
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
   const [projectData, setProjectData] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showChatAssistant, setShowChatAssistant] = useState(true);
 
   // Load project data from localStorage
   useEffect(() => {
@@ -123,6 +125,12 @@ const Editor = () => {
 
   const togglePlayback = () => {
     setIsPlaying(!isPlaying);
+  };
+
+  const handleEditingCommand = (command: any) => {
+    console.log('Executing editing command:', command);
+    // Here you would integrate with actual video editing logic
+    // For now, we'll just log the command and potentially update UI state
   };
 
   return (
@@ -308,82 +316,117 @@ const Editor = () => {
             </div>
           </div>
 
-          {/* Side Panel - Project Summary */}
-          <div className="w-80 border-l border-border bg-card">
-            <div className="p-4 space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Project Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {projectData ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium">Files</label>
-                        <div className="space-y-1">
-                          {projectData.files.map((file: any, index: number) => (
-                            <p key={index} className="text-sm text-muted-foreground truncate">
-                              {file.file.name}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <Separator />
-                      
-                      <div>
-                        <label className="text-sm font-medium">Music</label>
-                        <p className="text-sm text-muted-foreground capitalize">
-                          {projectData.music}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium">Style</label>
-                        <p className="text-sm text-muted-foreground">
-                          {projectData.style === 'rgb-gamer' ? 'RGB Gamer' : 'Luxury'}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="text-sm font-medium">Duration</label>
-                        <p className="text-sm text-muted-foreground">
-                          {projectData.duration} seconds
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Loading project data...
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+          {/* Side Panel - Chat Assistant or Project Summary */}
+          <div className="w-80 border-l border-border bg-card flex flex-col">
+            {/* Tab Switcher */}
+            <div className="flex border-b border-border">
+              <button
+                className={`flex-1 p-3 text-sm font-medium transition-colors ${
+                  showChatAssistant 
+                    ? 'border-b-2 border-neon-purple bg-neon-purple/5 text-neon-purple' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setShowChatAssistant(true)}
+              >
+                AI Assistant
+              </button>
+              <button
+                className={`flex-1 p-3 text-sm font-medium transition-colors ${
+                  !showChatAssistant 
+                    ? 'border-b-2 border-neon-green bg-neon-green/5 text-neon-green' 
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                onClick={() => setShowChatAssistant(false)}
+              >
+                Project Details
+              </button>
+            </div>
 
-              {selectedTrack && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Item Properties</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Selected</label>
-                      <p className="text-sm text-muted-foreground">
-                        {timelineItems.find(item => item.id === selectedTrack)?.name}
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Opacity</label>
-                      <Slider defaultValue={[100]} max={100} step={1} />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Scale</label>
-                      <Slider defaultValue={[100]} max={200} step={1} />
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="flex-1 overflow-hidden">
+              {showChatAssistant ? (
+                <div className="h-full p-4">
+                  <ChatAssistant 
+                    onCommand={handleEditingCommand}
+                    projectData={projectData}
+                  />
+                </div>
+              ) : (
+                <div className="p-4 space-y-4">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Project Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {projectData ? (
+                        <div className="space-y-3">
+                          <div>
+                            <label className="text-sm font-medium">Files</label>
+                            <div className="space-y-1">
+                              {projectData.files.map((file: any, index: number) => (
+                                <p key={index} className="text-sm text-muted-foreground truncate">
+                                  {file.file.name}
+                                </p>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <Separator />
+                          
+                          <div>
+                            <label className="text-sm font-medium">Music</label>
+                            <p className="text-sm text-muted-foreground capitalize">
+                              {projectData.music}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium">Style</label>
+                            <p className="text-sm text-muted-foreground">
+                              {projectData.style === 'rgb-gamer' ? 'RGB Gamer' : 'Luxury'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <label className="text-sm font-medium">Duration</label>
+                            <p className="text-sm text-muted-foreground">
+                              {projectData.duration} seconds
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          Loading project data...
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {selectedTrack && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Item Properties</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium">Selected</label>
+                          <p className="text-sm text-muted-foreground">
+                            {timelineItems.find(item => item.id === selectedTrack)?.name}
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Opacity</label>
+                          <Slider defaultValue={[100]} max={100} step={1} />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Scale</label>
+                          <Slider defaultValue={[100]} max={200} step={1} />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               )}
             </div>
           </div>
