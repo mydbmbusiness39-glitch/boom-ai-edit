@@ -82,7 +82,7 @@ const Index = () => {
       <div className="min-h-[calc(100vh-80px)] bg-background">
         {/* Hero Section with BOOM Gradient */}
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #8A2BE2, #FF3131, #1A1A1A)' }} />
+          <div className="absolute inset-0 bg-gradient-to-r from-electric-purple via-neon-red to-background" />
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative container max-w-6xl mx-auto px-6 pt-20 pb-32">
             <div className="text-center space-y-8">
