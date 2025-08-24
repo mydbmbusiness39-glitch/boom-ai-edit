@@ -10,6 +10,7 @@ const Navigation = () => {
 
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
+    { href: "/dashboard", label: "Dashboard", icon: Brain },
     { href: "/one-tap", label: "One-Tap", icon: Zap },
     { href: "/thumbnail-generator", label: "Thumbnails", icon: Eye },
     { href: "/video-dubbing", label: "Global Dub", icon: Globe },

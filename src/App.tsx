@@ -27,6 +27,7 @@ import Marketplace from "./pages/Marketplace";
 import BrandMarketplace from "./pages/BrandMarketplace";
 import Subscribers from "./pages/Subscribers";
 import Analytics from "./pages/Analytics";
+import Dashboard from "./pages/Dashboard";
 import Teams from "./pages/Teams";
 import Security from "./pages/Security";
 import Community from "./pages/Community";
@@ -195,6 +196,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Analytics />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/dashboard" 
+             element={
+               <ProtectedRoute>
+                 <Dashboard />
                </ProtectedRoute>
              } 
            />
