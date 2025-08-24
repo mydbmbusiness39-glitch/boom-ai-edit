@@ -100,7 +100,7 @@ const Index = () => {
               </h1>
               
               <div className="font-poppins text-2xl md:text-3xl font-semibold text-vibrant-yellow mb-6">
-                Clip it. Flip it. BOOM it.
+                Pro edits. One tap.
               </div>
               
               <p className="font-poppins text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
