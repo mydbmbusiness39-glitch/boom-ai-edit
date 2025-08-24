@@ -28,6 +28,7 @@ import Analytics from "./pages/Analytics";
 import Teams from "./pages/Teams";
 import Security from "./pages/Security";
 import Community from "./pages/Community";
+import ThumbnailGenerator from "./pages/ThumbnailGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -214,6 +215,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Community />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/thumbnail-generator" 
+             element={
+               <ProtectedRoute>
+                 <ThumbnailGenerator />
                </ProtectedRoute>
              } 
            />
