@@ -24,6 +24,7 @@ import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
 import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
+import BrandMarketplace from "./pages/BrandMarketplace";
 import Subscribers from "./pages/Subscribers";
 import Analytics from "./pages/Analytics";
 import Teams from "./pages/Teams";
@@ -250,6 +251,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Subscribers />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/brand-marketplace" 
+             element={
+               <ProtectedRoute>
+                 <BrandMarketplace />
                </ProtectedRoute>
              } 
            />

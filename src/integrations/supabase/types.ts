@@ -384,6 +384,195 @@ export type Database = {
           },
         ]
       }
+      brand_creator_matches: {
+        Row: {
+          brand_id: string
+          created_at: string
+          creator_id: string
+          id: string
+          match_reasons: Json | null
+          match_score: number
+          opportunity_id: string | null
+          status: string | null
+          trending_clip_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand_id: string
+          created_at?: string
+          creator_id: string
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number
+          opportunity_id?: string | null
+          status?: string | null
+          trending_clip_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand_id?: string
+          created_at?: string
+          creator_id?: string
+          id?: string
+          match_reasons?: Json | null
+          match_score?: number
+          opportunity_id?: string | null
+          status?: string | null
+          trending_clip_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_creator_matches_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_creator_matches_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_creator_matches_trending_clip_id_fkey"
+            columns: ["trending_clip_id"]
+            isOneToOne: false
+            referencedRelation: "clip_performances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_profiles: {
+        Row: {
+          avg_rating: number | null
+          brand_guidelines_url: string | null
+          budget_max: number | null
+          budget_min: number | null
+          budget_range: string | null
+          company_description: string | null
+          company_name: string
+          contact_email: string | null
+          contact_person: string | null
+          content_requirements: Json | null
+          created_at: string
+          deals_completed: number | null
+          id: string
+          industry: string
+          is_active: boolean | null
+          logo_url: string | null
+          preferred_platforms: Json | null
+          target_demographics: Json | null
+          total_spent: number | null
+          updated_at: string
+          user_id: string
+          verification_status: string | null
+          website_url: string | null
+        }
+        Insert: {
+          avg_rating?: number | null
+          brand_guidelines_url?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          budget_range?: string | null
+          company_description?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_person?: string | null
+          content_requirements?: Json | null
+          created_at?: string
+          deals_completed?: number | null
+          id?: string
+          industry: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          preferred_platforms?: Json | null
+          target_demographics?: Json | null
+          total_spent?: number | null
+          updated_at?: string
+          user_id: string
+          verification_status?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          avg_rating?: number | null
+          brand_guidelines_url?: string | null
+          budget_max?: number | null
+          budget_min?: number | null
+          budget_range?: string | null
+          company_description?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_person?: string | null
+          content_requirements?: Json | null
+          created_at?: string
+          deals_completed?: number | null
+          id?: string
+          industry?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          preferred_platforms?: Json | null
+          target_demographics?: Json | null
+          total_spent?: number | null
+          updated_at?: string
+          user_id?: string
+          verification_status?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      brand_reviews: {
+        Row: {
+          communication_rating: number | null
+          content_quality_rating: number | null
+          created_at: string
+          deal_id: string
+          id: string
+          is_public: boolean | null
+          payment_timeliness_rating: number | null
+          rating: number
+          review_text: string | null
+          reviewer_id: string
+          reviewer_type: string
+        }
+        Insert: {
+          communication_rating?: number | null
+          content_quality_rating?: number | null
+          created_at?: string
+          deal_id: string
+          id?: string
+          is_public?: boolean | null
+          payment_timeliness_rating?: number | null
+          rating: number
+          review_text?: string | null
+          reviewer_id: string
+          reviewer_type: string
+        }
+        Update: {
+          communication_rating?: number | null
+          content_quality_rating?: number | null
+          created_at?: string
+          deal_id?: string
+          id?: string
+          is_public?: boolean | null
+          payment_timeliness_rating?: number | null
+          rating?: number
+          review_text?: string | null
+          reviewer_id?: string
+          reviewer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_reviews_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       brand_templates: {
         Row: {
           brand_colors: Json | null
@@ -1617,6 +1806,264 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sponsorship_applications: {
+        Row: {
+          applied_at: string
+          brand_notes: string | null
+          creator_id: string
+          id: string
+          opportunity_id: string
+          pitch_message: string
+          portfolio_links: Json | null
+          proposed_rate: number | null
+          relevant_clips: Json | null
+          reviewed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          applied_at?: string
+          brand_notes?: string | null
+          creator_id: string
+          id?: string
+          opportunity_id: string
+          pitch_message: string
+          portfolio_links?: Json | null
+          proposed_rate?: number | null
+          relevant_clips?: Json | null
+          reviewed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          applied_at?: string
+          brand_notes?: string | null
+          creator_id?: string
+          id?: string
+          opportunity_id?: string
+          pitch_message?: string
+          portfolio_links?: Json | null
+          proposed_rate?: number | null
+          relevant_clips?: Json | null
+          reviewed_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsorship_deals: {
+        Row: {
+          brand_approval_status: string | null
+          brand_id: string
+          completion_date: string | null
+          content_submitted_urls: Json | null
+          contract_terms: string | null
+          created_at: string
+          creator_id: string
+          creator_payout: number
+          deadline: string
+          deal_amount: number
+          deliverables: Json | null
+          id: string
+          opportunity_id: string
+          payment_status: string | null
+          platform_fee: number
+          platform_fee_rate: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          brand_approval_status?: string | null
+          brand_id: string
+          completion_date?: string | null
+          content_submitted_urls?: Json | null
+          contract_terms?: string | null
+          created_at?: string
+          creator_id: string
+          creator_payout?: number
+          deadline: string
+          deal_amount: number
+          deliverables?: Json | null
+          id?: string
+          opportunity_id: string
+          payment_status?: string | null
+          platform_fee?: number
+          platform_fee_rate?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          brand_approval_status?: string | null
+          brand_id?: string
+          completion_date?: string | null
+          content_submitted_urls?: Json | null
+          contract_terms?: string | null
+          created_at?: string
+          creator_id?: string
+          creator_payout?: number
+          deadline?: string
+          deal_amount?: number
+          deliverables?: Json | null
+          id?: string
+          opportunity_id?: string
+          payment_status?: string | null
+          platform_fee?: number
+          platform_fee_rate?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_deals_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsorship_deals_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsorship_opportunities: {
+        Row: {
+          applications_count: number | null
+          auto_approve: boolean | null
+          brand_id: string
+          budget: number
+          campaign_type: string | null
+          content_requirements: Json | null
+          created_at: string
+          deadline: string | null
+          deliverables: Json | null
+          description: string
+          id: string
+          max_creators: number | null
+          platforms: Json | null
+          preferred_demographics: Json | null
+          status: string | null
+          tags: Json | null
+          target_engagement_rate: number | null
+          target_views: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          applications_count?: number | null
+          auto_approve?: boolean | null
+          brand_id: string
+          budget: number
+          campaign_type?: string | null
+          content_requirements?: Json | null
+          created_at?: string
+          deadline?: string | null
+          deliverables?: Json | null
+          description: string
+          id?: string
+          max_creators?: number | null
+          platforms?: Json | null
+          preferred_demographics?: Json | null
+          status?: string | null
+          tags?: Json | null
+          target_engagement_rate?: number | null
+          target_views?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          applications_count?: number | null
+          auto_approve?: boolean | null
+          brand_id?: string
+          budget?: number
+          campaign_type?: string | null
+          content_requirements?: Json | null
+          created_at?: string
+          deadline?: string | null
+          deliverables?: Json | null
+          description?: string
+          id?: string
+          max_creators?: number | null
+          platforms?: Json | null
+          preferred_demographics?: Json | null
+          status?: string | null
+          tags?: Json | null
+          target_engagement_rate?: number | null
+          target_views?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_opportunities_brand_id_fkey"
+            columns: ["brand_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsorship_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          deal_id: string
+          id: string
+          payer_id: string | null
+          payment_method: string | null
+          payment_status: string | null
+          payment_type: string
+          processed_at: string | null
+          recipient_id: string
+          stripe_payment_id: string | null
+          transaction_fee: number | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          deal_id: string
+          id?: string
+          payer_id?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          payment_type: string
+          processed_at?: string | null
+          recipient_id: string
+          stripe_payment_id?: string | null
+          transaction_fee?: number | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          deal_id?: string
+          id?: string
+          payer_id?: string | null
+          payment_method?: string | null
+          payment_status?: string | null
+          payment_type?: string
+          processed_at?: string | null
+          recipient_id?: string
+          stripe_payment_id?: string | null
+          transaction_fee?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsorship_payments_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sponsorship_deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriber_engagement: {
         Row: {
