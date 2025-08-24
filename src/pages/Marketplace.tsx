@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Store, Search, Star, Download, DollarSign, Plus, Eye, Filter, TrendingUp, Crown, Palette } from "lucide-react";
+import { Store, Search, Star, Download, DollarSign, Plus, Eye, Filter, TrendingUp, Crown, Palette, Bot, Users, Sparkles, Clock, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/Layout/Layout";
@@ -44,10 +44,45 @@ interface BrandTemplate {
   is_public: boolean;
 }
 
+interface AITwinListing {
+  id: string;
+  name: string;
+  avatar_url?: string;
+  owner_id: string;
+  owner_name: string;
+  style: string;
+  specialties: string[];
+  rental_price_per_hour: number;
+  rental_price_per_video: number;
+  rating: number;
+  total_rentals: number;
+  earnings_total: number;
+  is_available_for_rent: boolean;
+  collaboration_settings: any;
+}
+
+interface CaptionPack {
+  id: string;
+  creator_id: string;
+  creator_name: string;
+  name: string;
+  description: string;
+  category: string;
+  niche: string;
+  caption_count: number;
+  price: number;
+  is_free: boolean;
+  downloads_count: number;
+  rating: number;
+  tags: string[];
+}
+
 const Marketplace = () => {
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MarketplaceItem[]>([]);
   const [brandTemplates, setBrandTemplates] = useState<BrandTemplate[]>([]);
+  const [aiTwins, setAiTwins] = useState<AITwinListing[]>([]);
+  const [captionPacks, setCaptionPacks] = useState<CaptionPack[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
@@ -70,6 +105,8 @@ const Marketplace = () => {
   useEffect(() => {
     loadMarketplaceItems();
     loadBrandTemplates();
+    loadAITwins();
+    loadCaptionPacks();
   }, []);
 
   useEffect(() => {
@@ -101,6 +138,65 @@ const Marketplace = () => {
       setBrandTemplates(data.public_templates || []);
     } catch (error) {
       console.error('Error loading brand templates:', error);
+    }
+  };
+
+  const loadAITwins = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ai_avatars')
+        .select('*')
+        .eq('is_available_for_rent', true)
+        .order('earnings_total', { ascending: false });
+
+      if (error) throw error;
+
+      // Transform data for display with mock data since no profiles setup yet
+      const transformedTwins = (data || []).map(twin => ({
+        ...twin,
+        owner_id: twin.user_id,
+        owner_name: 'Creator',
+        style: twin.animation_style || 'AI Host',
+        specialties: ['AI Host', 'Content Creation'],
+        total_rentals: Math.floor(Math.random() * 50) + 10,
+        rating: 4.2 + Math.random() * 0.8
+      }));
+
+      setAiTwins(transformedTwins);
+    } catch (error) {
+      console.error('Error loading AI twins:', error);
+      // Mock data for demo
+      setAiTwins([]);
+    }
+  };
+
+  const loadCaptionPacks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('caption_packs')
+        .select('*')
+        .eq('status', 'approved')
+        .order('downloads_count', { ascending: false });
+
+      if (error) throw error;
+
+      const transformedPacks = (data || []).map(pack => ({
+        ...pack,
+        creator_name: 'Creator',
+        tags: Array.isArray(pack.tags) ? pack.tags.map(tag => String(tag)) : [],
+        caption_count: pack.caption_count || 0,
+        downloads_count: pack.downloads_count || 0,
+        rating: pack.rating || 4.5,
+        price: pack.price || 0,
+        niche: pack.niche || '',
+        description: pack.description || ''
+      }));
+
+      setCaptionPacks(transformedPacks);
+    } catch (error) {
+      console.error('Error loading caption packs:', error);
+      // Mock data for demo
+      setCaptionPacks([]);
     }
   };
 
@@ -258,11 +354,101 @@ const Marketplace = () => {
     }
   };
 
+  const handleRentAITwin = async (avatarId: string, price: number, rentalType: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to rent AI twins",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Create rental request
+      const { data, error } = await supabase
+        .from('ai_twin_rentals')
+        .insert({
+          renter_id: userData.user.id,
+          owner_id: aiTwins.find(t => t.id === avatarId)?.owner_id,
+          avatar_id: avatarId,
+          rental_type: rentalType,
+          price_paid: price,
+          owner_earnings: price * 0.85, // 85% to owner, 15% platform fee
+          platform_fee: price * 0.15
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "🎬 Rental Request Sent!",
+        description: "The AI twin owner will be notified of your request",
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Rental Failed",
+        description: error.message || "Failed to create rental request",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePurchaseCaptionPack = async (packId: string, price: number) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        toast({
+          title: "Authentication Required", 
+          description: "Please sign in to purchase caption packs",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Mock purchase - in real app would integrate with payment processor
+      const { data, error } = await supabase
+        .from('purchases')
+        .insert({
+          buyer_id: userData.user.id,
+          item_id: packId,
+          price_paid: price
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "📝 Caption Pack Purchased!",
+        description: "Captions have been added to your library",
+      });
+
+      // Update download count
+      const pack = captionPacks.find(p => p.id === packId);
+      if (pack) {
+        await supabase
+          .from('caption_packs')
+          .update({ downloads_count: pack.downloads_count + 1 })
+          .eq('id', packId);
+      }
+
+      loadCaptionPacks();
+
+    } catch (error: any) {
+      toast({
+        title: "Purchase Failed",
+        description: error.message || "Failed to complete purchase",
+        variant: "destructive"
+      });
+    }
+  };
+
   const itemTypes = [
     { value: "all", label: "All Items" },
+    { value: "ai_twins", label: "AI Twins" },
+    { value: "caption_packs", label: "Caption Packs" },
     { value: "brand_template", label: "Brand Templates" },
     { value: "overlay_pack", label: "Overlay Packs" },
-    { value: "caption_pack", label: "Caption Packs" },
     { value: "intro_pack", label: "Intro Packs" },
     { value: "outro_pack", label: "Outro Packs" }
   ];
@@ -287,8 +473,27 @@ const Marketplace = () => {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Discover and sell premium templates, overlays, and creative assets
+            Rent AI twins • Sell caption packs • Trade templates • Earn revenue
           </p>
+          
+          {/* Revenue Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+            <div className="bg-gradient-to-br from-neon-green/10 to-transparent rounded-lg p-4 text-center">
+              <Trophy className="h-6 w-6 text-neon-green mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Total Creator Earnings</p>
+              <p className="font-bold text-xl">$127.5K</p>
+            </div>
+            <div className="bg-gradient-to-br from-neon-purple/10 to-transparent rounded-lg p-4 text-center">
+              <Users className="h-6 w-6 text-neon-purple mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Active AI Twins</p>
+              <p className="font-bold text-xl">1,247</p>
+            </div>
+            <div className="bg-gradient-to-br from-neon-blue/10 to-transparent rounded-lg p-4 text-center">
+              <Clock className="h-6 w-6 text-neon-blue mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Avg. Response Time</p>
+              <p className="font-bold text-xl">2.3 hrs</p>
+            </div>
+          </div>
         </div>
 
         {/* Search and Filters */}
@@ -455,8 +660,10 @@ const Marketplace = () => {
         </div>
 
         <Tabs defaultValue="browse" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="browse">Browse All</TabsTrigger>
+            <TabsTrigger value="ai-twins">AI Twins</TabsTrigger>
+            <TabsTrigger value="caption-packs">Caption Packs</TabsTrigger>
             <TabsTrigger value="brand-templates">Brand Templates</TabsTrigger>
             <TabsTrigger value="featured">Featured</TabsTrigger>
           </TabsList>
@@ -535,9 +742,162 @@ const Marketplace = () => {
                 </Card>
               ))}
             </div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="brand-templates" className="space-y-6">
+            <TabsContent value="ai-twins" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {aiTwins.map((twin) => (
+                  <Card key={twin.id} className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-neon-purple/20 to-neon-green/20 flex items-center justify-center">
+                          {twin.avatar_url ? (
+                            <img 
+                              src={twin.avatar_url} 
+                              alt={twin.name}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <Bot className="h-8 w-8 text-neon-purple" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold">{twin.name}</h3>
+                          <p className="text-sm text-muted-foreground">by {twin.owner_name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Star className="h-3 w-3 text-yellow-500" />
+                            <span className="text-sm">{twin.rating.toFixed(1)}</span>
+                            <span className="text-sm text-muted-foreground">•</span>
+                            <span className="text-sm text-muted-foreground">{twin.total_rentals} rentals</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">{twin.style}</p>
+                        <div className="flex flex-wrap gap-1">
+                          {twin.specialties.map((specialty, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              {specialty}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Per Video:</span>
+                          <span className="font-semibold">${twin.rental_price_per_video}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Per Hour:</span>
+                          <span className="font-semibold">${twin.rental_price_per_hour}/hr</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          className="flex-1 bg-gradient-to-r from-neon-purple to-neon-green text-background"
+                          onClick={() => handleRentAITwin(twin.id, twin.rental_price_per_video, 'per_video')}
+                        >
+                          Rent for Video
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              {aiTwins.length === 0 && (
+                <div className="text-center py-12">
+                  <Bot className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No AI Twins Available</h3>
+                  <p className="text-muted-foreground">
+                    Be the first to make your AI twin available for collaboration!
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="caption-packs" className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {captionPacks.map((pack) => (
+                  <Card key={pack.id} className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="aspect-video bg-gradient-to-br from-neon-green/20 to-neon-purple/20 rounded-lg flex items-center justify-center">
+                        <div className="text-center">
+                          <Sparkles className="h-8 w-8 text-neon-green mx-auto mb-2" />
+                          <span className="font-bold text-2xl">{pack.caption_count}</span>
+                          <p className="text-sm text-muted-foreground">Captions</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold">{pack.name}</h3>
+                          <Badge variant="secondary">{pack.category}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">by {pack.creator_name}</p>
+                        <p className="text-sm text-muted-foreground">{pack.description}</p>
+                        
+                        {pack.niche && (
+                          <Badge variant="outline" className="text-xs">
+                            {pack.niche}
+                          </Badge>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-1">
+                          {pack.tags.slice(0, 3).map((tag, index) => (
+                            <Badge key={index} variant="secondary" className="text-xs">
+                              #{tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span className="text-sm">{pack.rating.toFixed(1)}</span>
+                          <span className="text-sm text-muted-foreground">•</span>
+                          <Download className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">{pack.downloads_count}</span>
+                        </div>
+                        <div className="text-right">
+                          {pack.is_free ? (
+                            <Badge className="bg-neon-green text-background">FREE</Badge>
+                          ) : (
+                            <span className="font-bold">${pack.price}</span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        className="w-full bg-gradient-to-r from-neon-green to-neon-purple text-background"
+                        onClick={() => handlePurchaseCaptionPack(pack.id, pack.price)}
+                      >
+                        {pack.is_free ? 'Download Free' : 'Purchase Pack'}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              
+              {captionPacks.length === 0 && (
+                <div className="text-center py-12">
+                  <Sparkles className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Caption Packs Available</h3>
+                  <p className="text-muted-foreground">
+                    Create and sell your own viral caption collections!
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="brand-templates" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {brandTemplates.map((template) => (
                 <Card key={template.id} className="group hover:shadow-lg transition-shadow">

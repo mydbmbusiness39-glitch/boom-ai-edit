@@ -190,9 +190,14 @@ export type Database = {
           animation_style: string | null
           avatar_type: string
           avatar_url: string | null
+          collaboration_settings: Json | null
           created_at: string
+          earnings_total: number | null
           id: string
+          is_available_for_rent: boolean | null
           name: string
+          rental_price_per_hour: number | null
+          rental_price_per_video: number | null
           status: string
           updated_at: string
           user_id: string
@@ -202,9 +207,14 @@ export type Database = {
           animation_style?: string | null
           avatar_type?: string
           avatar_url?: string | null
+          collaboration_settings?: Json | null
           created_at?: string
+          earnings_total?: number | null
           id?: string
+          is_available_for_rent?: boolean | null
           name: string
+          rental_price_per_hour?: number | null
+          rental_price_per_video?: number | null
           status?: string
           updated_at?: string
           user_id: string
@@ -214,15 +224,88 @@ export type Database = {
           animation_style?: string | null
           avatar_type?: string
           avatar_url?: string | null
+          collaboration_settings?: Json | null
           created_at?: string
+          earnings_total?: number | null
           id?: string
+          is_available_for_rent?: boolean | null
           name?: string
+          rental_price_per_hour?: number | null
+          rental_price_per_video?: number | null
           status?: string
           updated_at?: string
           user_id?: string
           voice_model_id?: string | null
         }
         Relationships: []
+      }
+      ai_twin_rentals: {
+        Row: {
+          avatar_id: string
+          collaboration_notes: string | null
+          commission_rate: number | null
+          created_at: string | null
+          duration_hours: number | null
+          id: string
+          owner_earnings: number
+          owner_id: string
+          platform_fee: number
+          price_paid: number
+          rental_end: string | null
+          rental_start: string | null
+          rental_type: string
+          renter_id: string
+          status: string | null
+          updated_at: string | null
+          video_project_id: string | null
+        }
+        Insert: {
+          avatar_id: string
+          collaboration_notes?: string | null
+          commission_rate?: number | null
+          created_at?: string | null
+          duration_hours?: number | null
+          id?: string
+          owner_earnings?: number
+          owner_id: string
+          platform_fee?: number
+          price_paid?: number
+          rental_end?: string | null
+          rental_start?: string | null
+          rental_type?: string
+          renter_id: string
+          status?: string | null
+          updated_at?: string | null
+          video_project_id?: string | null
+        }
+        Update: {
+          avatar_id?: string
+          collaboration_notes?: string | null
+          commission_rate?: number | null
+          created_at?: string | null
+          duration_hours?: number | null
+          id?: string
+          owner_earnings?: number
+          owner_id?: string
+          platform_fee?: number
+          price_paid?: number
+          rental_end?: string | null
+          rental_start?: string | null
+          rental_type?: string
+          renter_id?: string
+          status?: string | null
+          updated_at?: string | null
+          video_project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_twin_rentals_avatar_id_fkey"
+            columns: ["avatar_id"]
+            isOneToOne: false
+            referencedRelation: "ai_avatars"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       api_tokens: {
         Row: {
@@ -371,6 +454,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      caption_packs: {
+        Row: {
+          caption_count: number | null
+          captions: Json | null
+          category: string
+          created_at: string | null
+          creator_id: string
+          description: string | null
+          downloads_count: number | null
+          id: string
+          is_featured: boolean | null
+          is_free: boolean | null
+          name: string
+          niche: string | null
+          price: number | null
+          rating: number | null
+          revenue_total: number | null
+          reviews_count: number | null
+          status: string | null
+          tags: Json | null
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          caption_count?: number | null
+          captions?: Json | null
+          category: string
+          created_at?: string | null
+          creator_id: string
+          description?: string | null
+          downloads_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_free?: boolean | null
+          name: string
+          niche?: string | null
+          price?: number | null
+          rating?: number | null
+          revenue_total?: number | null
+          reviews_count?: number | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          caption_count?: number | null
+          captions?: Json | null
+          category?: string
+          created_at?: string | null
+          creator_id?: string
+          description?: string | null
+          downloads_count?: number | null
+          id?: string
+          is_featured?: boolean | null
+          is_free?: boolean | null
+          name?: string
+          niche?: string | null
+          price?: number | null
+          rating?: number | null
+          revenue_total?: number | null
+          reviews_count?: number | null
+          status?: string | null
+          tags?: Json | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       challenges: {
         Row: {
@@ -565,6 +717,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      collaboration_projects: {
+        Row: {
+          ai_avatars_used: Json | null
+          budget_total: number | null
+          collaborator_ids: Json | null
+          created_at: string | null
+          creator_id: string
+          deadline: string | null
+          description: string | null
+          id: string
+          project_data: Json | null
+          project_type: string | null
+          revenue_split: Json | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_avatars_used?: Json | null
+          budget_total?: number | null
+          collaborator_ids?: Json | null
+          created_at?: string | null
+          creator_id: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          project_data?: Json | null
+          project_type?: string | null
+          revenue_split?: Json | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_avatars_used?: Json | null
+          budget_total?: number | null
+          collaborator_ids?: Json | null
+          created_at?: string | null
+          creator_id?: string
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          project_data?: Json | null
+          project_type?: string | null
+          revenue_split?: Json | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       creator_analytics: {
         Row: {
@@ -907,12 +1110,15 @@ export type Database = {
           description: string | null
           downloads_count: number | null
           id: string
+          is_exclusive: boolean | null
           is_featured: boolean | null
           is_free: boolean | null
+          license_type: string | null
           name: string
           preview_url: string | null
           price: number
           rating: number | null
+          revenue_share_rate: number | null
           reviews_count: number | null
           status: string | null
           tags: Json | null
@@ -927,12 +1133,15 @@ export type Database = {
           description?: string | null
           downloads_count?: number | null
           id?: string
+          is_exclusive?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean | null
+          license_type?: string | null
           name: string
           preview_url?: string | null
           price?: number
           rating?: number | null
+          revenue_share_rate?: number | null
           reviews_count?: number | null
           status?: string | null
           tags?: Json | null
@@ -947,12 +1156,15 @@ export type Database = {
           description?: string | null
           downloads_count?: number | null
           id?: string
+          is_exclusive?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean | null
+          license_type?: string | null
           name?: string
           preview_url?: string | null
           price?: number
           rating?: number | null
+          revenue_share_rate?: number | null
           reviews_count?: number | null
           status?: string | null
           tags?: Json | null
@@ -1151,6 +1363,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      revenue_shares: {
+        Row: {
+          amount: number
+          created_at: string | null
+          id: string
+          processed_at: string | null
+          share_percentage: number
+          source_id: string
+          source_type: string
+          status: string | null
+          transaction_type: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          share_percentage?: number
+          source_id: string
+          source_type: string
+          status?: string | null
+          transaction_type?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          id?: string
+          processed_at?: string | null
+          share_percentage?: number
+          source_id?: string
+          source_type?: string
+          status?: string | null
+          transaction_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       shoppable_overlays: {
         Row: {
