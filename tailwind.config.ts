@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'montserrat': ['Montserrat', 'sans-serif'],
+				'poppins': ['Poppins', 'sans-serif'],
+				sans: ['Montserrat', 'sans-serif'], // Default to Montserrat
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -52,9 +57,10 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				'neon-purple': 'hsl(var(--neon-purple))',
-				'neon-green': 'hsl(var(--neon-green))',
-				'neon-blue': 'hsl(var(--neon-blue))',
+				'electric-purple': 'hsl(var(--electric-purple))',
+				'neon-red': 'hsl(var(--neon-red))',
+				'aqua-cyan': 'hsl(var(--aqua-cyan))',
+				'vibrant-yellow': 'hsl(var(--vibrant-yellow))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

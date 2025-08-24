@@ -2,65 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-/* BOOM! AI Video Editor Design System - Dark Neon Theme */
+/* BOOM Studio Design System - Electric Neon Theme */
 
 @layer base {
   :root {
-    /* Dark base theme */
-    --background: 240 10% 3.9%;
+    /* BOOM Studio Brand Colors */
+    --background: 0 0% 10%;              /* Deep Charcoal #1A1A1A */
     --foreground: 0 0% 98%;
 
     /* Card surfaces */
-    --card: 240 10% 5.9%;
+    --card: 0 0% 12%;
     --card-foreground: 0 0% 98%;
 
     /* Popover surfaces */
-    --popover: 240 10% 5.9%;
+    --popover: 0 0% 12%;
     --popover-foreground: 0 0% 98%;
 
-    /* Neon purple primary */
-    --primary: 258 93% 69%;
+    /* Electric Purple Primary */
+    --primary: 271 76% 53%;              /* #8A2BE2 */
     --primary-foreground: 0 0% 98%;
 
-    /* Neon green accent */
-    --accent: 123 100% 54%;
-    --accent-foreground: 240 10% 3.9%;
-
-    /* Secondary surfaces */
-    --secondary: 240 3.7% 15.9%;
+    /* Neon Red Secondary */
+    --secondary: 0 100% 60%;             /* #FF3131 */
     --secondary-foreground: 0 0% 98%;
 
+    /* Aqua Cyan Accent */
+    --accent: 180 100% 50%;              /* #00FFFF */
+    --accent-foreground: 0 0% 10%;
+
     /* Muted elements */
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
     /* Destructive */
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 100% 60%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders and inputs */
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 258 93% 69%;
+    --border: 271 76% 53% / 0.2;         /* Purple border */
+    --input: 0 0% 10%;                   /* Deep Charcoal input bg */
+    --ring: 271 76% 53%;                 /* Purple focus ring */
 
     /* Radius */
     --radius: 0.75rem;
 
-    /* Custom neon colors */
-    --neon-purple: 258 93% 69%;
-    --neon-green: 123 100% 54%;
-    --neon-blue: 199 89% 48%;
+    /* BOOM Studio Brand Colors */
+    --electric-purple: 271 76% 53%;      /* #8A2BE2 */
+    --neon-red: 0 100% 60%;              /* #FF3131 */
+    --aqua-cyan: 180 100% 50%;           /* #00FFFF */
+    --vibrant-yellow: 50 100% 50%;       /* #FFD300 */
     
-    /* Gradients */
-    --gradient-neon: linear-gradient(135deg, hsl(var(--neon-purple)), hsl(var(--neon-green)));
-    --gradient-dark: linear-gradient(135deg, hsl(240 10% 3.9%), hsl(240 10% 5.9%));
+    /* BOOM Brand Gradients */
+    --gradient-boom: linear-gradient(90deg, hsl(var(--electric-purple)), hsl(var(--neon-red)), hsl(var(--background)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--electric-purple)), hsl(var(--neon-red)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--aqua-cyan)), hsl(var(--vibrant-yellow)));
     
-    /* Glows */
-    --glow-purple: 0 0 20px hsl(var(--neon-purple) / 0.5);
-    --glow-green: 0 0 20px hsl(var(--neon-green) / 0.5);
+    /* BOOM Effects */
+    --glow-purple: 0 0 30px hsl(var(--electric-purple) / 0.6);
+    --glow-red: 0 0 30px hsl(var(--neon-red) / 0.6);
+    --glow-cyan: 0 0 30px hsl(var(--aqua-cyan) / 0.6);
     
-    /* Transitions */
-    --transition-neon: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* BOOM Transitions */
+    --transition-boom: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 98%;
 
