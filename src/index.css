@@ -52,10 +52,12 @@
     --aqua-cyan: 180 100% 50%;           /* #00FFFF */
     --vibrant-yellow: 50 100% 50%;       /* #FFD300 */
     
-    /* BOOM Brand Gradients */
-    --gradient-boom: linear-gradient(90deg, hsl(var(--electric-purple)), hsl(var(--neon-red)), hsl(var(--background)));
-    --gradient-hero: linear-gradient(135deg, hsl(var(--electric-purple)), hsl(var(--neon-red)));
-    --gradient-accent: linear-gradient(135deg, hsl(var(--aqua-cyan)), hsl(var(--vibrant-yellow)));
+        /* BOOM Brand Gradients */
+        --gradient-boom: linear-gradient(90deg, hsl(var(--electric-purple)), hsl(var(--neon-red)), hsl(var(--background)));
+        --gradient-hero: linear-gradient(135deg, hsl(var(--electric-purple)), hsl(var(--neon-red)));
+        --gradient-accent: linear-gradient(135deg, hsl(var(--aqua-cyan)), hsl(var(--vibrant-yellow)));
+        --gradient-radial-purple: radial-gradient(circle at center, hsl(var(--electric-purple)), transparent 60%);
+        --gradient-radial-red: radial-gradient(circle at center, hsl(var(--neon-red)), transparent 60%);
     
     /* BOOM Effects */
     --glow-purple: 0 0 30px hsl(var(--electric-purple) / 0.6);
