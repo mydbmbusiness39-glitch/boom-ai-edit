@@ -24,6 +24,7 @@ import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
 import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
+import Subscribers from "./pages/Subscribers";
 import Analytics from "./pages/Analytics";
 import Teams from "./pages/Teams";
 import Security from "./pages/Security";
@@ -241,6 +242,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <AIMusicGenerator />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/subscribers" 
+             element={
+               <ProtectedRoute>
+                 <Subscribers />
                </ProtectedRoute>
              } 
            />

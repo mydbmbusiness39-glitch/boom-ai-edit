@@ -838,6 +838,56 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          id: string
+          media_url: string | null
+          message: string
+          message_type: string | null
+          metadata: Json | null
+          platform: string | null
+          read_at: string | null
+          sender_id: string
+          sent_at: string
+          status: string | null
+          subscriber_id: string
+        }
+        Insert: {
+          id?: string
+          media_url?: string | null
+          message: string
+          message_type?: string | null
+          metadata?: Json | null
+          platform?: string | null
+          read_at?: string | null
+          sender_id: string
+          sent_at?: string
+          status?: string | null
+          subscriber_id: string
+        }
+        Update: {
+          id?: string
+          media_url?: string | null
+          message?: string
+          message_type?: string | null
+          metadata?: Json | null
+          platform?: string | null
+          read_at?: string | null
+          sender_id?: string
+          sent_at?: string
+          status?: string | null
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dynamic_overlays: {
         Row: {
           avatar_id: string | null
@@ -875,6 +925,135 @@ export type Database = {
           size?: string | null
           style_settings?: Json | null
           trigger_keywords?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_campaigns: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          list_ids: Json | null
+          name: string
+          scheduled_for: string | null
+          sent_at: string | null
+          status: string | null
+          subject: string
+          target_segment: string | null
+          template_id: string | null
+          total_clicks: number | null
+          total_opens: number | null
+          total_recipients: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          list_ids?: Json | null
+          name: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject: string
+          target_segment?: string | null
+          template_id?: string | null
+          total_clicks?: number | null
+          total_opens?: number | null
+          total_recipients?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          list_ids?: Json | null
+          name?: string
+          scheduled_for?: string | null
+          sent_at?: string | null
+          status?: string | null
+          subject?: string
+          target_segment?: string | null
+          template_id?: string | null
+          total_clicks?: number | null
+          total_opens?: number | null
+          total_recipients?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_list_subscribers: {
+        Row: {
+          added_at: string
+          id: string
+          list_id: string
+          subscriber_id: string
+        }
+        Insert: {
+          added_at?: string
+          id?: string
+          list_id: string
+          subscriber_id: string
+        }
+        Update: {
+          added_at?: string
+          id?: string
+          list_id?: string
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_list_subscribers_list_id_fkey"
+            columns: ["list_id"]
+            isOneToOne: false
+            referencedRelation: "email_lists"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_list_subscribers_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_lists: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          subscriber_count: number | null
+          tags: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          subscriber_count?: number | null
+          tags?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          subscriber_count?: number | null
+          tags?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -1434,6 +1613,121 @@ export type Database = {
           name?: string
           overlay_style?: Json | null
           trigger_settings?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriber_engagement: {
+        Row: {
+          campaign_id: string | null
+          created_at: string
+          dm_id: string | null
+          event_data: Json | null
+          event_type: string
+          id: string
+          subscriber_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          created_at?: string
+          dm_id?: string | null
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          subscriber_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          created_at?: string
+          dm_id?: string | null
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          subscriber_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriber_engagement_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "email_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriber_engagement_dm_id_fkey"
+            columns: ["dm_id"]
+            isOneToOne: false
+            referencedRelation: "direct_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriber_engagement_subscriber_id_fkey"
+            columns: ["subscriber_id"]
+            isOneToOne: false
+            referencedRelation: "subscribers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          engagement_score: number | null
+          fan_segment: string | null
+          id: string
+          last_engagement: string | null
+          metadata: Json | null
+          name: string | null
+          phone: string | null
+          purchase_value: number | null
+          source: string | null
+          status: string | null
+          subscription_date: string
+          tags: Json | null
+          total_clicks: number | null
+          total_opens: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          engagement_score?: number | null
+          fan_segment?: string | null
+          id?: string
+          last_engagement?: string | null
+          metadata?: Json | null
+          name?: string | null
+          phone?: string | null
+          purchase_value?: number | null
+          source?: string | null
+          status?: string | null
+          subscription_date?: string
+          tags?: Json | null
+          total_clicks?: number | null
+          total_opens?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          engagement_score?: number | null
+          fan_segment?: string | null
+          id?: string
+          last_engagement?: string | null
+          metadata?: Json | null
+          name?: string | null
+          phone?: string | null
+          purchase_value?: number | null
+          source?: string | null
+          status?: string | null
+          subscription_date?: string
+          tags?: Json | null
+          total_clicks?: number | null
+          total_opens?: number | null
           updated_at?: string
           user_id?: string
         }
