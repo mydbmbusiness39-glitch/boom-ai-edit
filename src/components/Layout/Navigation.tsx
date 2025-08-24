@@ -25,6 +25,7 @@ const Navigation = () => {
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/marketplace", label: "Marketplace", icon: Store },
     { href: "/brand-marketplace", label: "Brands", icon: Building },
+    { href: "/agency", label: "Agency", icon: Building },
     { href: "/subscribers", label: "Fans", icon: Heart },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/teams", label: "Teams", icon: Users },

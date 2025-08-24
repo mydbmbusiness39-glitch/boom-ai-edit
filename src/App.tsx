@@ -25,6 +25,7 @@ import DynamicOverlays from "./pages/DynamicOverlays";
 import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
 import BrandMarketplace from "./pages/BrandMarketplace";
+import Agency from "./pages/Agency";
 import Subscribers from "./pages/Subscribers";
 import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
@@ -268,6 +269,14 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <BrandMarketplace />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/agency" 
+             element={
+               <ProtectedRoute>
+                 <Agency />
                </ProtectedRoute>
              } 
            />
