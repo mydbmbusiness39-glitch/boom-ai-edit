@@ -57,10 +57,10 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				'electric-purple': 'hsl(var(--electric-purple))',
-				'neon-red': 'hsl(var(--neon-red))',
-				'aqua-cyan': 'hsl(var(--aqua-cyan))',
-				'vibrant-yellow': 'hsl(var(--vibrant-yellow))',
+				'boom-primary': 'hsl(var(--boom-primary))',
+				'boom-secondary': 'hsl(var(--boom-secondary))',
+				'boom-accent': 'hsl(var(--boom-accent))',
+				'boom-white': 'hsl(var(--boom-white))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

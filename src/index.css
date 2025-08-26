@@ -2,67 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-/* BOOM Studio Design System - Electric Neon Theme */
+/* BoomStudio Design System - Modern Brand Theme */
 
 @layer base {
   :root {
-    /* BOOM Studio Brand Colors */
-    --background: 0 0% 10%;              /* Deep Charcoal #1A1A1A */
+    /* BoomStudio Brand Colors */
+    --background: 222 19% 5%;            /* #0B0D12 */
     --foreground: 0 0% 98%;
 
     /* Card surfaces */
-    --card: 0 0% 12%;
+    --card: 222 19% 7%;
     --card-foreground: 0 0% 98%;
 
     /* Popover surfaces */
-    --popover: 0 0% 12%;
+    --popover: 222 19% 7%;
     --popover-foreground: 0 0% 98%;
 
-    /* Electric Purple Primary */
-    --primary: 271 76% 53%;              /* #8A2BE2 */
+    /* BoomStudio Primary Red */
+    --primary: 356 95% 64%;              /* #FF4D5A */
     --primary-foreground: 0 0% 98%;
 
-    /* Neon Red Secondary */
-    --secondary: 0 100% 60%;             /* #FF3131 */
+    /* BoomStudio Purple Secondary */
+    --secondary: 249 65% 59%;            /* #6C5DD3 */
     --secondary-foreground: 0 0% 98%;
 
-    /* Aqua Cyan Accent */
-    --accent: 180 100% 50%;              /* #00FFFF */
+    /* BoomStudio Gold Accent */
+    --accent: 43 100% 50%;               /* #FFB400 */
     --accent-foreground: 0 0% 10%;
 
     /* Muted elements */
-    --muted: 0 0% 15%;
+    --muted: 222 19% 15%;
     --muted-foreground: 0 0% 65%;
 
     /* Destructive */
-    --destructive: 0 100% 60%;
+    --destructive: 356 95% 64%;
     --destructive-foreground: 0 0% 98%;
 
     /* Borders and inputs */
-    --border: 271 76% 53% / 0.2;         /* Purple border */
-    --input: 0 0% 10%;                   /* Deep Charcoal input bg */
-    --ring: 271 76% 53%;                 /* Purple focus ring */
+    --border: 356 95% 64% / 0.2;         /* Primary red border */
+    --input: 222 19% 5%;                 /* Dark background input */
+    --ring: 356 95% 64%;                 /* Primary red focus ring */
 
     /* Radius */
     --radius: 0.75rem;
 
-    /* BOOM Studio Brand Colors */
-    --electric-purple: 271 76% 53%;      /* #8A2BE2 */
-    --neon-red: 0 100% 60%;              /* #FF3131 */
-    --aqua-cyan: 180 100% 50%;           /* #00FFFF */
-    --vibrant-yellow: 50 100% 50%;       /* #FFD300 */
+    /* BoomStudio Brand Colors */
+    --boom-primary: 356 95% 64%;         /* #FF4D5A */
+    --boom-secondary: 249 65% 59%;       /* #6C5DD3 */
+    --boom-accent: 43 100% 50%;          /* #FFB400 */
+    --boom-white: 0 0% 100%;             /* #FFFFFF */
     
-        /* BOOM Brand Gradients */
-        --gradient-boom: linear-gradient(90deg, hsl(var(--electric-purple)), hsl(var(--neon-red)), hsl(var(--background)));
-        --gradient-hero: linear-gradient(135deg, hsl(var(--electric-purple)), hsl(var(--neon-red)));
-        --gradient-accent: linear-gradient(135deg, hsl(var(--aqua-cyan)), hsl(var(--vibrant-yellow)));
-        --gradient-radial-purple: radial-gradient(circle at center, hsl(var(--electric-purple)), transparent 60%);
-        --gradient-radial-red: radial-gradient(circle at center, hsl(var(--neon-red)), transparent 60%);
+    /* BoomStudio Brand Gradients */
+    --gradient-boom: linear-gradient(90deg, hsl(var(--boom-primary)), hsl(var(--boom-secondary)), hsl(var(--background)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--boom-primary)), hsl(var(--boom-secondary)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--boom-secondary)), hsl(var(--boom-accent)));
+    --gradient-radial-primary: radial-gradient(circle at center, hsl(var(--boom-primary)), transparent 60%);
+    --gradient-radial-secondary: radial-gradient(circle at center, hsl(var(--boom-secondary)), transparent 60%);
     
-    /* BOOM Effects */
-    --glow-purple: 0 0 30px hsl(var(--electric-purple) / 0.6);
-    --glow-red: 0 0 30px hsl(var(--neon-red) / 0.6);
-    --glow-cyan: 0 0 30px hsl(var(--aqua-cyan) / 0.6);
+    /* BoomStudio Effects */
+    --glow-primary: 0 0 30px hsl(var(--boom-primary) / 0.6);
+    --glow-secondary: 0 0 30px hsl(var(--boom-secondary) / 0.6);
+    --glow-accent: 0 0 30px hsl(var(--boom-accent) / 0.6);
     
     /* BOOM Transitions */
     --transition-boom: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
