@@ -11,31 +11,11 @@ const Navigation = () => {
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
     { href: "/dashboard", label: "Dashboard", icon: Brain },
-    { href: "/one-tap", label: "One-Tap", icon: Zap },
-    { href: "/thumbnail-generator", label: "Thumbnails", icon: Eye },
-    { href: "/video-dubbing", label: "Global Dub", icon: Globe },
-    { href: "/ai-music", label: "AI Music", icon: Volume2 },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
-    { href: "/batch-processor", label: "Batch", icon: Layers },
-    { href: "/auto-upload", label: "Auto-Upload", icon: Link2 },
-    { href: "/voice-cloning", label: "Voice Clone", icon: Volume2 },
-    { href: "/ai-host", label: "AI Host", icon: Bot },
-    { href: "/dynamic-overlays", label: "Overlays", icon: Monitor },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
-    { href: "/marketplace", label: "Marketplace", icon: Store },
-    { href: "/brand-marketplace", label: "Brands", icon: Building },
-    { href: "/agency", label: "Agency", icon: Building },
-    { href: "/subscribers", label: "Fans", icon: Heart },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
-    { href: "/teams", label: "Teams", icon: Users },
-    { href: "/security", label: "Security", icon: Shield },
-    { href: "/community", label: "Community", icon: Trophy },
-    { href: "/style", label: "Style", icon: Palette },
     { href: "/editor", label: "Editor", icon: Edit },
-    { href: "/script-generator", label: "Scripts", icon: Sparkles },
-    { href: "/trend-sync", label: "Trends", icon: TrendingUp },
-    { href: "/community-collab", label: "Collab", icon: HandHeart },
     { href: "/status", label: "Status", icon: Activity },
   ];
 
@@ -43,13 +23,12 @@ const Navigation = () => {
     <nav className="flex items-center justify-between w-full p-4 bg-card border-b border-border">
       <div className="flex items-center space-x-2">
         <div className="relative">
-          <Zap className="h-8 w-8 text-neon-purple" />
-          <div className="absolute inset-0 h-8 w-8 text-neon-purple animate-pulse opacity-50" />
+          <Zap className="h-8 w-8 text-boom-primary" />
+          <div className="absolute inset-0 h-8 w-8 text-boom-primary animate-pulse opacity-50" />
         </div>
-        <span className="text-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
-          BOOM!
+        <span className="text-2xl font-bold bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">
+          BoomStudio
         </span>
-        <span className="text-lg text-muted-foreground">AI Video Editor</span>
       </div>
 
       <div className="flex items-center space-x-1">
@@ -63,11 +42,11 @@ const Navigation = () => {
               className={cn(
                 "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300",
                 "hover:bg-secondary/50 hover:shadow-lg",
-                isActive && [
-                  "bg-primary/10 text-primary",
-                  "shadow-[0_0_20px_hsl(var(--neon-purple)/0.3)]",
-                  "border border-primary/20"
-                ],
+              isActive && [
+                "bg-primary/10 text-primary",
+                "shadow-[0_0_20px_hsl(var(--boom-primary)/0.3)]",
+                "border border-primary/20"
+              ],
                 !isActive && "text-muted-foreground hover:text-foreground"
               )}
             >

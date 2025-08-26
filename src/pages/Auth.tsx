@@ -62,15 +62,15 @@ const Auth = () => {
           {/* Header */}
           <div className="text-center space-y-4">
             <div className="relative inline-block">
-              <div className="absolute -inset-4 bg-gradient-to-r from-neon-purple to-neon-green rounded-full blur-xl opacity-20 animate-pulse" />
-              <Zap className="relative h-16 w-16 text-neon-purple mx-auto" />
+              <div className="absolute -inset-4 bg-gradient-to-r from-boom-primary to-boom-secondary rounded-full blur-xl opacity-20 animate-pulse" />
+              <Zap className="relative h-16 w-16 text-boom-primary mx-auto" />
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-bold">
-                Welcome to <span className="bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">BOOM!</span>
+                Welcome to <span className="bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">BoomStudio</span>
               </h1>
               <p className="text-muted-foreground">
-                Sign in to access your AI video editing workspace
+                ClipIt. FlipIt. BoomIt.
               </p>
             </div>
           </div>
@@ -139,7 +139,7 @@ const Auth = () => {
 
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
+                      className="w-full bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
                       disabled={loading}
                       data-cy="sign-in-button"
                     >
@@ -190,7 +190,7 @@ const Auth = () => {
 
                     <Button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
+                      className="w-full bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
                       disabled={loading}
                       data-cy="sign-up-button"
                     >

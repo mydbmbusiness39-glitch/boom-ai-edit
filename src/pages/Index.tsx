@@ -104,7 +104,7 @@ const Index = () => {
                         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto group-hover:bg-primary/20 transition-colors">
                           <Icon className="h-8 w-8 text-primary" />
                         </div>
-                        <div className="absolute -inset-2 bg-gradient-to-r from-neon-purple to-neon-green rounded-full blur opacity-0 group-hover:opacity-20 transition-opacity" />
+                        <div className="absolute -inset-2 bg-gradient-to-r from-boom-primary to-boom-secondary rounded-full blur opacity-0 group-hover:opacity-20 transition-opacity" />
                       </div>
                       
                       <div className="space-y-2">

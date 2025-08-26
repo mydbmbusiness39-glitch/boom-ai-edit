@@ -107,7 +107,7 @@ const Upload = () => {
     <Layout>
       <div className="container max-w-6xl mx-auto p-6 space-y-8">
         <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">
             Upload Your Media
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -138,7 +138,7 @@ const Upload = () => {
               <div className="relative">
                 <UploadIcon className="h-16 w-16 text-muted-foreground" />
                 {isDragActive && (
-                  <div className="absolute inset-0 h-16 w-16 text-neon-purple animate-pulse" />
+                  <div className="absolute inset-0 h-16 w-16 text-boom-primary animate-pulse" />
                 )}
               </div>
               
@@ -184,7 +184,7 @@ const Upload = () => {
                     </Button>
 
                     <div className="flex items-start space-x-3">
-                      <div className="text-neon-purple">
+                      <div className="text-boom-primary">
                         {getFileIcon(uploadedFile.type)}
                       </div>
                       
@@ -221,7 +221,7 @@ const Upload = () => {
                     onClick={() => setSelectedMusic('auto')}
                   >
                     <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-neon-purple" />
+                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-primary" />
                       <p className="font-medium">Auto Music</p>
                       <p className="text-sm text-muted-foreground">AI-generated soundtrack</p>
                     </CardContent>
@@ -232,7 +232,7 @@ const Upload = () => {
                     onClick={() => setSelectedMusic('upbeat')}
                   >
                     <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-neon-green" />
+                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-secondary" />
                       <p className="font-medium">Upbeat Pop</p>
                       <p className="text-sm text-muted-foreground">Energetic and modern</p>
                     </CardContent>
@@ -243,7 +243,7 @@ const Upload = () => {
                     onClick={() => setSelectedMusic('chill')}
                   >
                     <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-blue-400" />
+                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-accent" />
                       <p className="font-medium">Chill Ambient</p>
                       <p className="text-sm text-muted-foreground">Relaxed and atmospheric</p>
                     </CardContent>
@@ -253,7 +253,7 @@ const Upload = () => {
 
               <div className="flex justify-end mt-6">
                 <Button 
-                  className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
+                  className="bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
                   disabled={uploadedFiles.length === 0 || !selectedMusic}
                   onClick={() => {
                     // Store data in localStorage for next step
