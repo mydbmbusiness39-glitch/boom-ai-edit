@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store, BarChart3, HandHeart, Shield, Trophy, Eye, Globe, Heart, Building } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
 
@@ -11,12 +12,14 @@ const Navigation = () => {
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
     { href: "/dashboard", label: "Dashboard", icon: Brain },
+    { href: "/test-dashboard", label: "Test Dashboard", icon: Monitor, badge: "Debug" },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/status", label: "Status", icon: Activity },
+    { href: "/test-settings", label: "Test Settings", icon: Shield, badge: "Debug" },
   ];
 
   return (
@@ -32,7 +35,7 @@ const Navigation = () => {
       </div>
 
       <div className="flex items-center space-x-1">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, badge }) => {
           const isActive = location.pathname === href;
           
           return (
@@ -55,6 +58,11 @@ const Navigation = () => {
                 isActive && "text-primary"
               )} />
               <span className="hidden md:inline-block">{label}</span>
+              {badge && (
+                <Badge variant="secondary" className="text-xs bg-boom-accent/20 text-boom-accent border-boom-accent/30">
+                  {badge}
+                </Badge>
+              )}
             </Link>
           );
         })}

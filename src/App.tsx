@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthProvider";
+import { testAnalytics } from "@/utils/testAnalytics";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
@@ -29,6 +30,8 @@ import Agency from "./pages/Agency";
 import Subscribers from "./pages/Subscribers";
 import Analytics from "./pages/Analytics";
 import Dashboard from "./pages/Dashboard";
+import TestDashboard from "./pages/TestDashboard";
+import TestSettings from "./pages/TestSettings";
 import Teams from "./pages/Teams";
 import Security from "./pages/Security";
 import Community from "./pages/Community";
@@ -205,6 +208,22 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Dashboard />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/test-dashboard" 
+             element={
+               <ProtectedRoute>
+                 <TestDashboard />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/test-settings" 
+             element={
+               <ProtectedRoute>
+                 <TestSettings />
                </ProtectedRoute>
              } 
            />
