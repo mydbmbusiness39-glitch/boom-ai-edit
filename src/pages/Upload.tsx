@@ -6,6 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
+import VideoUpload from "@/components/VideoProcessing/VideoUpload";
+import { ClipDetection } from "@/components/VideoProcessing/ClipDetection";
+import { AITwin } from "@/components/VideoProcessing/AITwin";
+import { BatchProcessing } from "@/components/VideoProcessing/BatchProcessing";
+import { SocialShare } from "@/components/VideoProcessing/SocialShare";
+import { TestAIFlow } from "@/components/VideoProcessing/TestAIFlow";
 
 interface UploadedFile {
   id: string;
@@ -268,6 +274,24 @@ const Upload = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Phase 2 AI Features */}
+        <div className="space-y-8 mt-12">
+          <div className="text-center space-y-4">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">
+              Phase 2: AI Processing Features
+            </h2>
+            <p className="text-muted-foreground">
+              Experience the future of AI-powered video editing with these advanced features
+            </p>
+          </div>
+          
+          <ClipDetection />
+          <AITwin />
+          <BatchProcessing />
+          <SocialShare />
+          <TestAIFlow />
+        </div>
       </div>
     </Layout>
   );
