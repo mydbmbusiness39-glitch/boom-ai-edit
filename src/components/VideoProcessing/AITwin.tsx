@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mic, Play, Square } from "lucide-react";
+import { Mic, Play, Square, Download } from "lucide-react";
 import { toast } from "sonner";
+import { useVoiceGeneration } from "@/hooks/useVoiceGeneration";
 
 interface AITwinProps {
   textToSpeak?: string;
@@ -11,31 +12,46 @@ interface AITwinProps {
 
 export function AITwin({ textToSpeak }: AITwinProps) {
   const [inputText, setInputText] = useState(textToSpeak || "");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  
+  const { audioUrl, isGenerating, generateVoice, reset } = useVoiceGeneration();
 
   const handleGenerateVoice = async () => {
-    if (!inputText.trim()) {
-      toast.error("Please enter some text first");
-      return;
-    }
-
-    setIsGenerating(true);
-    toast.loading("Generating AI voice...");
-
-    // Simulate voice generation
-    setTimeout(() => {
-      setIsGenerating(false);
-      setAudioUrl("generated-voice.mp3"); // Placeholder
-      toast.success("AI voice generated successfully!");
-    }, 3000);
+    await generateVoice({
+      text: inputText,
+      voice: "default",
+      format: "mp3"
+    });
   };
 
   const handlePlayAudio = () => {
+    if (audioUrl && audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+        toast.info("Paused");
+      } else {
+        audioRef.current.play();
+        setIsPlaying(true);  
+        toast.info("Playing AI voice");
+      }
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false);
+  };
+
+  const handleDownload = () => {
     if (audioUrl) {
-      setIsPlaying(!isPlaying);
-      toast.info(isPlaying ? "Paused" : "Playing AI voice");
+      const link = document.createElement('a');
+      link.href = audioUrl;
+      link.download = 'ai-voice.mp3';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Voice downloaded");
     }
   };
 
@@ -66,15 +82,36 @@ export function AITwin({ textToSpeak }: AITwinProps) {
           </Button>
           
           {audioUrl && (
-            <Button 
-              onClick={handlePlayAudio}
-              variant="outline"
-              className="border-boom-secondary text-boom-secondary hover:bg-boom-secondary/10"
-            >
-              {isPlaying ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
+            <>
+              <Button 
+                onClick={handlePlayAudio}
+                variant="outline"
+                className="border-boom-secondary text-boom-secondary hover:bg-boom-secondary/10"
+              >
+                {isPlaying ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              </Button>
+              
+              <Button 
+                onClick={handleDownload}
+                variant="outline"
+                size="icon"
+                className="border-boom-secondary text-boom-secondary hover:bg-boom-secondary/10"
+              >
+                <Download className="h-4 w-4" />
+              </Button>
+            </>
           )}
         </div>
+
+        {/* Hidden audio element for playback */}
+        {audioUrl && (
+          <audio 
+            ref={audioRef}
+            src={audioUrl}
+            onEnded={handleAudioEnded}
+            className="hidden"
+          />
+        )}
 
         <p className="text-muted-foreground text-sm">
           *AI Twin will speak in your cloned voice with natural intonation*
