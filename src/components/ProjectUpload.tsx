@@ -1,8 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Upload as UploadIcon, File, Video, X, ExternalLink, Copy } from "lucide-react";
+import { Upload as UploadIcon, File, Video, RefreshCw, ExternalLink, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
@@ -13,11 +13,14 @@ interface ProjectUploadProps {
 
 interface UploadedFile {
   id: string;
+  user_id: string;
+  project_id: string;
   filename: string;
   file_path: string;
   file_size: number;
   mime_type: string;
   created_at: string;
+  url?: string;
 }
 
 const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
@@ -27,13 +30,26 @@ const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Generate safe path following Display Sync Pack format: {uid}/{project_id}/{safe_filename}
+  const makePath = useCallback((fileName: string) => {
+    if (!user) return '';
+    const safeFileName = fileName.replace(/\s+/g, '_');
+    return `${user.id}/${projectId}/${safeFileName}`;
+  }, [user, projectId]);
+
+  // Generate public URL for bucket/path
+  const toPublicUrl = useCallback((bucket: string, path: string) => {
+    return `https://qtvdzxxdydgncrfbtejj.supabase.co/storage/v1/object/public/${bucket}/${path}`;
+  }, []);
 
   // Load uploaded files for this project
   const loadFiles = useCallback(async () => {
     if (!user) return;
     
     try {
+      setIsRefreshing(true);
       const { data, error } = await supabase
         .from('uploads')
         .select('*')
@@ -45,13 +61,20 @@ const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
       setUploadedFiles(data || []);
     } catch (error) {
       console.error('Error loading files:', error);
+      toast({
+        title: "Failed to load files",
+        description: "Could not load uploaded files.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
     }
-  }, [user, projectId]);
+  }, [user, projectId, toast]);
 
-  // Load files on mount and when refresh key changes
-  useState(() => {
+  // Load files on mount
+  useEffect(() => {
     loadFiles();
-  });
+  }, [loadFiles]);
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0 || !user) return;
@@ -85,36 +108,29 @@ const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
           continue;
         }
 
-        // Get presigned upload URL
-        const { data: presignedData, error: presignedError } = await supabase.functions.invoke('upload-presigned', {
-          body: {
-            fileName: file.name,
-            fileType: file.type,
-            fileSize: file.size
-          }
-        });
+        // Generate path following Display Sync Pack format
+        const filePath = makePath(file.name);
+        
+        // Upload directly to storage using the generated path
+        const { error: uploadError } = await supabase.storage
+          .from('video-uploads')
+          .upload(filePath, file, {
+            upsert: true
+          });
 
-        if (presignedError) throw presignedError;
+        if (uploadError) throw uploadError;
 
-        // Upload file to storage
-        const uploadResponse = await fetch(presignedData.uploadUrl, {
-          method: 'PUT',
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
-        });
+        // Generate public URL
+        const publicUrl = toPublicUrl('video-uploads', filePath);
 
-        if (!uploadResponse.ok) throw new Error('Upload failed');
-
-        // Save upload metadata with project_id
+        // Save upload metadata with all required fields
         const { error: dbError } = await supabase
           .from('uploads')
           .insert({
             user_id: user.id,
             project_id: projectId,
             filename: file.name,
-            file_path: presignedData.filePath,
+            file_path: filePath,
             file_size: file.size,
             mime_type: file.type
           });
@@ -130,8 +146,7 @@ const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
       });
 
       // Refresh file list
-      setRefreshKey(prev => prev + 1);
-      loadFiles();
+      await loadFiles();
 
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -185,8 +200,7 @@ const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
   };
 
   const getPublicUrl = (filePath: string) => {
-    const { data } = supabase.storage.from('video-uploads').getPublicUrl(filePath);
-    return data.publicUrl;
+    return toPublicUrl('video-uploads', filePath);
   };
 
   return (
@@ -262,7 +276,19 @@ const ProjectUpload = ({ projectId }: ProjectUploadProps) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Files in this project</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Files in this project</CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={loadFiles}
+              disabled={isRefreshing}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {uploadedFiles.length === 0 ? (
