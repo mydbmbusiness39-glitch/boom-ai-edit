@@ -40,6 +40,7 @@ import ThumbnailGenerator from "./pages/ThumbnailGenerator";
 import VideoDubbing from "./pages/VideoDubbing";
 import AIMusicGenerator from "./pages/AIMusicGenerator";
 import Health from "./pages/Health";
+import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/demo" element={<Demo />} />
           <Route path="/auth" element={<Auth />} />
           <Route 
             path="/one-tap" 

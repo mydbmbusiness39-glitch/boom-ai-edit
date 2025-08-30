@@ -10,11 +10,11 @@ const Health = () => {
     const phase = "2";
     
     toast({
-      title: "Health Check Complete",
-      description: `Health OK • v${version} • phase ${phase}`,
+      title: "Health Check Complete", 
+      description: `Routes good • v${version} • phase ${phase}`,
     });
     
-    console.log(`BoomStudio Health Check: OK • v${version} • phase ${phase}`);
+    console.log(`BoomStudio Health Check: Routes good • v${version} • phase ${phase}`);
   };
 
   return (
