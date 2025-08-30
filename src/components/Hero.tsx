@@ -1,20 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthProvider';
 
 export default function Hero() {
-  const { user } = useAuth();
+  const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
-
-  const handleStartCreating = () => {
-    if (user) {
-      window.location.href = '/dashboard';
-    } else {
-      window.location.href = '/auth';
-    }
-  };
 
   return (
     <section className="relative min-h-[92vh] flex items-center justify-center bg-background overflow-hidden">
@@ -69,16 +60,16 @@ export default function Hero() {
         {/* CTA buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Button 
-            onClick={handleStartCreating}
+            onClick={() => navigate('/dashboard')}
             size="lg"
             className="w-full sm:w-auto font-poppins font-semibold shadow-[0_6px_20px_rgba(255,77,90,0.45)]">
             Start Creating Now
           </Button>
           <Button 
             variant="secondary"
-            asChild
+            onClick={() => navigate('/demo')}
             className="w-full sm:w-auto font-poppins font-medium">
-            <Link to="/demo">Watch Demo</Link>
+            Watch Demo
           </Button>
         </div>
 
