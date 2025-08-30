@@ -1,4 +1,21 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthProvider';
+
 export default function Hero() {
+  const { user } = useAuth();
+  const [logoError, setLogoError] = useState(false);
+
+  const handleStartCreating = () => {
+    if (user) {
+      window.location.href = '/dashboard';
+    } else {
+      window.location.href = '/auth';
+    }
+  };
+
   return (
     <section className="relative min-h-[92vh] flex items-center justify-center bg-background overflow-hidden">
       {/* Gradient auras */}
@@ -14,11 +31,20 @@ export default function Hero() {
         
         {/* Logo */}
         <div className="text-center mb-6">
-          <img
-            src="https://your-cdn-link.com/boom_studio_logo.jpeg"
-            alt="BoomStudio Logo"
-            className="mx-auto w-[72%] max-w-[420px] h-auto drop-shadow-[0_6px_22px_rgba(255,77,90,0.35)]"
-          />
+          {!logoError ? (
+            <img
+              src="/assets/boomstudio-logo.png"
+              alt="BoomStudio Logo"
+              className="mx-auto w-[72%] max-w-[420px] h-auto drop-shadow-[0_6px_22px_rgba(255,77,90,0.35)]"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <div className="mx-auto w-[72%] max-w-[420px] h-24 flex items-center justify-center">
+              <span className="text-2xl font-bold bg-gradient-to-r from-boom-primary to-boom-secondary bg-clip-text text-transparent">
+                BoomStudio Logo
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Brand title */}
@@ -42,26 +68,25 @@ export default function Hero() {
 
         {/* CTA buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a href="#get-started" 
-             className="w-full sm:w-auto px-5 py-3 rounded-full bg-boom-primary text-white font-poppins font-semibold
-                        shadow-[0_6px_20px_rgba(255,77,90,0.45)] hover:opacity-90 transition-all duration-200">
+          <Button 
+            onClick={handleStartCreating}
+            size="lg"
+            className="w-full sm:w-auto font-poppins font-semibold shadow-[0_6px_20px_rgba(255,77,90,0.45)]">
             Start Creating Now
-          </a>
-          <a href="#watch-demo"
-             className="w-full sm:w-auto px-5 py-3 rounded-full bg-white/10 text-white font-poppins font-medium
-                        backdrop-blur hover:bg-white/15 transition-all duration-200">
-            Watch Demo
-          </a>
+          </Button>
+          <Button 
+            variant="secondary"
+            asChild
+            className="w-full sm:w-auto font-poppins font-medium">
+            <Link to="/demo">Watch Demo</Link>
+          </Button>
         </div>
 
         {/* Trust indicators */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 
-                        text-white/60 font-poppins text-xs sm:text-sm">
-          <span>⚡ AI-Powered Clips</span>
-          <span className="hidden sm:inline">•</span>
-          <span>🎨 Auto Editing</span>
-          <span className="hidden sm:inline">•</span>
-          <span>🚀 One-Tap Publishing</span>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-2">
+          <Badge variant="secondary">⚡ AI-Powered Clips</Badge>
+          <Badge variant="secondary">🎬 Auto Editing</Badge>
+          <Badge variant="secondary">📲 One-Tap Publishing</Badge>
         </div>
       </div>
 
