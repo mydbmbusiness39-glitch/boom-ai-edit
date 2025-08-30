@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import Layout from "@/components/Layout/Layout";
+import ProjectUpload from "@/components/ProjectUpload";
 
 const Project = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,23 +24,16 @@ const Project = () => {
           <h1 className="text-3xl font-bold">Project {id}</h1>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Editor</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
-              Edit tools coming next.
+        <div className="space-y-6">
+          <div className="bg-muted/30 rounded-lg p-4">
+            <h2 className="text-lg font-semibold mb-2">Project: {id}</h2>
+            <p className="text-muted-foreground text-sm">
+              Upload clips, images, or PDFs. Edit tools coming next.
             </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              This project workspace will include video editing, AI tools, and collaboration features.
-            </p>
-            <Button onClick={() => navigate('/upload')} className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Upload to this Project
-            </Button>
-          </CardContent>
-        </Card>
+          </div>
+          
+          <ProjectUpload projectId={id || ""} />
+        </div>
       </div>
     </Layout>
   );
