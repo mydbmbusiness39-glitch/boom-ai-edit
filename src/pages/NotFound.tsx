@@ -15,8 +15,8 @@ const NotFound = () => {
     
     // Show toast and redirect to dashboard
     toast({
-      title: "Page Not Found",
-      description: "That page doesn't exist anymore. Taking you to Dashboard.",
+      title: "Page not found",
+      description: "That page doesn't exist anymore. Back to Dashboard.",
       variant: "destructive"
     });
     

@@ -95,7 +95,7 @@ const Demo = () => {
           <div className="text-center">
             <Button asChild size="lg" className="text-lg px-8 py-4">
               <Link to="/dashboard">
-                Open App & Try a Template
+                Try It Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>

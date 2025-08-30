@@ -32,9 +32,13 @@ const Project = () => {
             <p className="text-muted-foreground mb-4">
               Edit tools coming next.
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-6">
               This project workspace will include video editing, AI tools, and collaboration features.
             </p>
+            <Button onClick={() => navigate('/upload')} className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Upload to this Project
+            </Button>
           </CardContent>
         </Card>
       </div>

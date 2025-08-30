@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Demo from "./pages/Demo";
 import Dashboard from "./pages/Dashboard";
 import Project from "./pages/Project";
+import Upload from "./pages/Upload";
+import Billing from "./pages/Billing";
 import Settings from "./pages/Settings";
 import Health from "./pages/Health";
 import NotFound from "./pages/NotFound";
@@ -34,6 +36,8 @@ const App = () => (
               {/* Protected Routes */}
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/project/:id" element={<ProtectedRoute><Project /></ProtectedRoute>} />
+              <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+              <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />

@@ -228,6 +228,14 @@ const Dashboard = () => {
               <Play className="h-4 w-4" />
               Start Session
             </Button>
+            <Button onClick={() => navigate('/upload')} variant="outline" className="flex items-center gap-2">
+              <FolderOpen className="h-4 w-4" />
+              Upload Media
+            </Button>
+            <Button onClick={() => navigate('/billing')} variant="outline" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Billing
+            </Button>
             <Button onClick={() => navigate('/settings')} variant="outline" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
               Settings

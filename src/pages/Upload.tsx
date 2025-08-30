@@ -1,296 +1,180 @@
-import { useState, useRef, DragEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload as UploadIcon, Video, Image, Music, X, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Upload as UploadIcon, ArrowLeft, File, Video } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthProvider";
 import Layout from "@/components/Layout/Layout";
-import VideoUpload from "@/components/VideoProcessing/VideoUpload";
-import { ClipDetection } from "@/components/VideoProcessing/ClipDetection";
-import { AITwin } from "@/components/VideoProcessing/AITwin";
-import { BatchProcessing } from "@/components/VideoProcessing/BatchProcessing";
-import { SocialShare } from "@/components/VideoProcessing/SocialShare";
-import { TestAIFlow } from "@/components/VideoProcessing/TestAIFlow";
-
-interface UploadedFile {
-  id: string;
-  file: File;
-  preview?: string;
-  type: 'video' | 'image' | 'audio';
-}
 
 const Upload = () => {
+  const { toast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [selectedMusic, setSelectedMusic] = useState<string | null>(null);
-  const [isDragActive, setIsDragActive] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
 
-  const handleFiles = (files: FileList | null) => {
-    if (!files) return;
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0 || !user) return;
 
-    // Filter for videos and images only (1-5 videos or 1 image)
-    const validFiles = Array.from(files).filter(file => {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-      return isVideo || isImage;
-    });
+    setUploading(true);
+    const uploadedFiles = [];
 
-    const videoFiles = validFiles.filter(f => f.type.startsWith('video/'));
-    const imageFiles = validFiles.filter(f => f.type.startsWith('image/'));
+    try {
+      for (const file of Array.from(files)) {
+        const fileName = `${user.id}/${Date.now()}-${file.name}`;
+        
+        const { data, error } = await supabase.storage
+          .from('uploads')
+          .upload(fileName, file);
 
-    // Validation: 1-5 videos OR 1 image
-    if (videoFiles.length > 0 && imageFiles.length > 0) {
-      alert('Please upload either videos OR images, not both');
-      return;
+        if (error) throw error;
+        
+        uploadedFiles.push({
+          name: file.name,
+          size: file.size,
+          path: data.path
+        });
+      }
+
+      toast({
+        title: "Upload successful",
+        description: `${uploadedFiles.length} file(s) uploaded successfully.`
+      });
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload files. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setUploading(false);
     }
-    if (videoFiles.length > 5) {
-      alert('Maximum 5 videos allowed');
-      return;
-    }
-    if (imageFiles.length > 1) {
-      alert('Only 1 image allowed');
-      return;
-    }
-
-    const newFiles = validFiles.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-      type: file.type.startsWith('video/') ? 'video' as const : 'image' as const
-    }));
-
-    setUploadedFiles(prev => [...prev, ...newFiles]);
   };
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+  const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragActive(true);
-  };
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragActive(false);
-  };
-
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragActive(false);
-    handleFiles(e.dataTransfer.files);
-  };
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleFiles(e.target.files);
-  };
-
-  const openFileDialog = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removeFile = (id: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== id));
-  };
-
-  const getFileIcon = (type: string) => {
-    switch (type) {
-      case 'video': return <Video className="h-6 w-6" />;
-      case 'image': return <Image className="h-6 w-6" />;
-      case 'audio': return <Music className="h-6 w-6" />;
-      default: return <UploadIcon className="h-6 w-6" />;
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    handleFileUpload(e.dataTransfer.files);
   };
 
   return (
     <Layout>
-      <div className="container max-w-6xl mx-auto p-6 space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">
-            Upload Your Media
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Upload videos, images, and audio files to get started with your AI-powered video editing project
-          </p>
+      <div className="container max-w-4xl mx-auto p-6 space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Upload</h1>
+            <p className="text-muted-foreground">Add clips, then auto-edit.</p>
+          </div>
         </div>
 
-        <Card className="border-dashed border-2 border-border hover:border-primary/50 transition-colors">
-          <CardContent className="p-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UploadIcon className="h-5 w-5" />
+              Upload Media Files
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div
-              className={cn(
-                "flex flex-col items-center justify-center space-y-4 py-12 cursor-pointer transition-all",
-                isDragActive && "scale-105 opacity-70"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
+              className={`border-2 border-dashed rounded-lg p-12 text-center transition-colors ${
+                dragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/25 hover:border-muted-foreground/50"
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
               onDrop={handleDrop}
-              onClick={openFileDialog}
             >
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="video/*,image/*"
-                onChange={handleFileInput}
-                className="hidden"
-              />
-              <div className="relative">
-                <UploadIcon className="h-16 w-16 text-muted-foreground" />
-                {isDragActive && (
-                  <div className="absolute inset-0 h-16 w-16 text-boom-primary animate-pulse" />
-                )}
-              </div>
-              
-              <div className="text-center space-y-2">
-                <p className="text-lg font-semibold">
-                  {isDragActive ? "Drop your files here!" : "Drag & drop files here"}
+              <div className="mx-auto flex max-w-[420px] flex-col items-center justify-center text-center">
+                <div className="mb-4 rounded-full bg-muted p-4">
+                  <Video className="h-8 w-8 text-muted-foreground" />
+                </div>
+                
+                <h3 className="mb-2 text-lg font-medium">
+                  Drop your videos here
+                </h3>
+                
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Or click to browse and select files from your computer
                 </p>
-                <p className="text-muted-foreground">
-                  Or click to select files • 1-5 videos (MP4, MOV) or 1 image (PNG, JPG)
-                </p>
+                
+                <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
+                  <File className="h-3 w-3" />
+                  <span>Supports: MP4, MOV, AVI, MKV (Max 100MB per file)</span>
+                </div>
+                
+                <label htmlFor="file-upload">
+                  <Button
+                    variant="outline"
+                    disabled={uploading}
+                    className="cursor-pointer"
+                  >
+                    {uploading ? "Uploading..." : "Choose Files"}
+                  </Button>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    accept="video/*"
+                    multiple
+                    onChange={(e) => handleFileUpload(e.target.files)}
+                    disabled={uploading}
+                  />
+                </label>
               </div>
-
-              <Button variant="outline" className="mt-4" type="button">
-                <Plus className="h-4 w-4 mr-2" />
-                Choose Files
-              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {uploadedFiles.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <span>Uploaded Files</span>
-                <Badge variant="secondary">{uploadedFiles.length}</Badge>
-              </CardTitle>
+              <CardTitle className="text-lg">Next Steps</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {uploadedFiles.map((uploadedFile) => (
-                  <div
-                    key={uploadedFile.id}
-                    className="relative group border border-border rounded-lg p-4 hover:border-primary/50 transition-colors"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => removeFile(uploadedFile.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-
-                    <div className="flex items-start space-x-3">
-                      <div className="text-boom-primary">
-                        {getFileIcon(uploadedFile.type)}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{uploadedFile.file.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatFileSize(uploadedFile.file.size)}
-                        </p>
-                        <Badge variant="outline" className="mt-2">
-                          {uploadedFile.type}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {uploadedFile.preview && (
-                      <div className="mt-3">
-                        <img
-                          src={uploadedFile.preview}
-                          alt={uploadedFile.file.name}
-                          className="w-full h-24 object-cover rounded"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Music Selection */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-lg font-semibold mb-4">Choose Music</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card 
-                    className={`cursor-pointer transition-all ${selectedMusic === 'auto' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                    onClick={() => setSelectedMusic('auto')}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-primary" />
-                      <p className="font-medium">Auto Music</p>
-                      <p className="text-sm text-muted-foreground">AI-generated soundtrack</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card 
-                    className={`cursor-pointer transition-all ${selectedMusic === 'upbeat' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                    onClick={() => setSelectedMusic('upbeat')}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-secondary" />
-                      <p className="font-medium">Upbeat Pop</p>
-                      <p className="text-sm text-muted-foreground">Energetic and modern</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card 
-                    className={`cursor-pointer transition-all ${selectedMusic === 'chill' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                    onClick={() => setSelectedMusic('chill')}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-accent" />
-                      <p className="font-medium">Chill Ambient</p>
-                      <p className="text-sm text-muted-foreground">Relaxed and atmospheric</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-6">
-                <Button 
-                  className="bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
-                  disabled={uploadedFiles.length === 0 || !selectedMusic}
-                  onClick={() => {
-                    // Store data in localStorage for next step
-                    localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
-                    localStorage.setItem('selectedMusic', selectedMusic);
-                    navigate('/style');
-                  }}
-                >
-                  Continue to Style Selection
-                </Button>
-              </div>
+            <CardContent className="text-sm text-muted-foreground space-y-2">
+              <p>• Upload your raw footage</p>
+              <p>• AI will analyze and suggest edits</p>
+              <p>• Review and customize the timeline</p>
+              <p>• Export optimized clips for each platform</p>
             </CardContent>
           </Card>
-        )}
 
-        {/* Phase 2 AI Features */}
-        <div className="space-y-8 mt-12">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">
-              Phase 2: AI Processing Features
-            </h2>
-            <p className="text-muted-foreground">
-              Experience the future of AI-powered video editing with these advanced features
-            </p>
-          </div>
-          
-          <ClipDetection />
-          <AITwin />
-          <BatchProcessing />
-          <SocialShare />
-          <TestAIFlow />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Tips</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground space-y-2">
+              <p>• Use good lighting for best results</p>
+              <p>• Keep clips under 10 minutes for faster processing</p>
+              <p>• Multiple angles? Upload them all!</p>
+              <p>• Audio will be automatically enhanced</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </Layout>
