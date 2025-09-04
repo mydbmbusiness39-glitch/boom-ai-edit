@@ -12,14 +12,14 @@ const Navigation = () => {
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
     { href: "/dashboard", label: "Dashboard", icon: Brain },
-    { href: "/test-dashboard", label: "Test Dashboard", icon: Monitor, badge: "Debug" },
+    { href: "/test-dashboard", label: "Test Dashboard", icon: Monitor },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/status", label: "Status", icon: Activity },
-    { href: "/test-settings", label: "Test Settings", icon: Shield, badge: "Debug" },
+    { href: "/test-settings", label: "Test Settings", icon: Shield },
   ];
 
   return (
@@ -35,7 +35,7 @@ const Navigation = () => {
       </div>
 
       <div className="flex items-center space-x-1">
-        {navItems.map(({ href, label, icon: Icon, badge }) => {
+        {navItems.map(({ href, label, icon: Icon, badge }: any) => {
           const isActive = location.pathname === href;
           
           return (

@@ -20,23 +20,6 @@ export default function Hero() {
                       bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl
                       shadow-[0_10px_50px_rgba(0,0,0,0.45)]">
         
-        {/* Logo */}
-        <div className="text-center mb-6">
-          {!logoError ? (
-            <img
-              src="/assets/boomstudio-logo.png"
-              alt="BoomStudio Logo"
-              className="mx-auto w-[72%] max-w-[420px] h-auto drop-shadow-[0_6px_22px_rgba(255,77,90,0.35)]"
-              onError={() => setLogoError(true)}
-            />
-          ) : (
-            <div className="mx-auto w-[72%] max-w-[420px] h-24 flex items-center justify-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-boom-primary to-boom-secondary bg-clip-text text-transparent">
-                BoomStudio Logo
-              </span>
-            </div>
-          )}
-        </div>
 
         {/* Brand title */}
         <div className="text-center mb-4">
