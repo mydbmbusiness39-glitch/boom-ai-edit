@@ -41,9 +41,7 @@ const TestDashboard = () => {
   }, [user]);
 
   const loadTestData = () => {
-    console.log('🔧 Loading Test Dashboard Data');
-    
-    // Mock projects data
+    // Load projects data
     const mockProjects: TestProject[] = [
       {
         id: 'p1',
@@ -98,7 +96,6 @@ const TestDashboard = () => {
   };
 
   const createTestSession = () => {
-    console.log('🔧 Creating Test Session');
     const newSession: TestSession = {
       id: `s${Date.now()}`,
       userId: user?.id || 'test',
@@ -122,16 +119,10 @@ const TestDashboard = () => {
   return (
     <Layout>
       <div className="container max-w-6xl mx-auto p-6 space-y-8">
-        {/* Debug Header */}
-        <div className="bg-boom-accent/10 border border-boom-accent/20 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Settings className="h-5 w-5 text-boom-accent" />
-            <h1 className="text-xl font-bold text-boom-accent">Phase 2 Testing Dashboard</h1>
-            <Badge variant="outline" className="text-boom-accent border-boom-accent">v2.1-test</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Debug mode active • User: {user?.email || 'Not authenticated'} • Console logging enabled
-          </p>
+        {/* Dashboard Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">Manage your projects and activities</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -141,7 +132,7 @@ const TestDashboard = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Database className="h-5 w-5" />
-                  Test Projects
+                  Projects
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -179,7 +170,7 @@ const TestDashboard = () => {
                   Create Test Session
                 </Button>
                 <Button 
-                  onClick={() => console.log('🔧 Refresh Test Data')}
+                  onClick={() => loadTestData()}
                   className="w-full justify-start"
                   variant="outline"
                 >
@@ -192,21 +183,19 @@ const TestDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Debug Info
+                  <Activity className="h-5 w-5" />
+                  Statistics
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="text-sm">
-                  <span className="font-medium">User ID:</span>
-                  <br />
-                  <code className="text-xs bg-muted p-1 rounded">{user?.id?.slice(0, 8) || 'none'}...</code>
+                  <span className="font-medium">Active Projects:</span> {projects.filter(p => p.status === 'active').length}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Projects:</span> {projects.length}
+                  <span className="font-medium">Total Projects:</span> {projects.length}
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium">Sessions:</span> {sessions.length}
+                  <span className="font-medium">Recent Activities:</span> {sessions.length}
                 </div>
               </CardContent>
             </Card>
