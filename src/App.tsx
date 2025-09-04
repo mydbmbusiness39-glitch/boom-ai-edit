@@ -15,6 +15,13 @@ import Upload from "./pages/Upload";
 import Billing from "./pages/Billing";
 import Settings from "./pages/Settings";
 import Health from "./pages/Health";
+import Editor from "./pages/Editor";
+import Analytics from "./pages/Analytics";
+import ClipPost from "./pages/ClipPost";
+import AiStudio from "./pages/AiStudio";
+import Status from "./pages/Status";
+import TestDashboard from "./pages/TestDashboard";
+import TestSettings from "./pages/TestSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +46,13 @@ const App = () => (
               <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
               <Route path="/billing" element={<ProtectedRoute><Billing /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/editor" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/clip-post" element={<ProtectedRoute><ClipPost /></ProtectedRoute>} />
+              <Route path="/ai-studio" element={<ProtectedRoute><AiStudio /></ProtectedRoute>} />
+              <Route path="/status" element={<ProtectedRoute><Status /></ProtectedRoute>} />
+              <Route path="/test-dashboard" element={<ProtectedRoute><TestDashboard /></ProtectedRoute>} />
+              <Route path="/test-settings" element={<ProtectedRoute><TestSettings /></ProtectedRoute>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
