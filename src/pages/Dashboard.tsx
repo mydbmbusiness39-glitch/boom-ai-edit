@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
 import Layout from "@/components/Layout/Layout";
+import GitHubImport from "@/components/GitHubImport";
 
 interface Project {
   id: string;
@@ -211,6 +212,18 @@ const Dashboard = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* GitHub Import */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Import Project</h2>
+          <GitHubImport onImportComplete={(projectId) => {
+            toast({
+              title: "Project imported",
+              description: "Redirecting to your new project...",
+            });
+            setTimeout(() => navigate(`/project/${projectId}`), 1500);
+          }} />
         </div>
 
         {/* Divider */}
