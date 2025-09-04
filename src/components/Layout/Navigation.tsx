@@ -29,9 +29,6 @@ const Navigation = () => {
           <Zap className="h-8 w-8 text-boom-primary" />
           <div className="absolute inset-0 h-8 w-8 text-boom-primary animate-pulse opacity-50" />
         </div>
-        <span className="text-2xl font-bold bg-gradient-to-r from-boom-primary via-boom-secondary to-boom-accent bg-clip-text text-transparent">
-          BoomStudio
-        </span>
       </div>
 
       <div className="flex items-center space-x-1">
