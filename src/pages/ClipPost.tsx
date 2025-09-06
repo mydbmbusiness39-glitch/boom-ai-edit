@@ -40,7 +40,7 @@ const ClipPost = () => {
       id: "tiktok", 
       name: "TikTok", 
       icon: Camera,
-      color: "bg-black text-white",
+      color: "bg-foreground text-background",
       format: "9:16 (1080x1920)",
       maxDuration: 60,
       description: "Vertical video optimized for mobile viewing"
@@ -49,7 +49,7 @@ const ClipPost = () => {
       id: "youtube-shorts", 
       name: "YouTube Shorts", 
       icon: Camera,
-      color: "bg-red-500 text-white",
+      color: "bg-primary text-primary-foreground",
       format: "9:16 (1080x1920)",
       maxDuration: 60,
       description: "YouTube's short-form vertical video format"
@@ -58,7 +58,7 @@ const ClipPost = () => {
       id: "instagram-reels", 
       name: "Instagram Reels", 
       icon: Camera,
-      color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white",
+      color: "bg-secondary text-secondary-foreground",
       format: "9:16 (1080x1920)",
       maxDuration: 90,
       description: "Instagram's short-form video feature"
@@ -67,7 +67,7 @@ const ClipPost = () => {
       id: "linkedin", 
       name: "LinkedIn", 
       icon: Briefcase,
-      color: "bg-blue-600 text-white",
+      color: "bg-accent text-accent-foreground",
       format: "16:9 or 1:1 (1200x1200)",
       maxDuration: 600,
       description: "Professional content for business networking"
@@ -256,11 +256,11 @@ const ClipPost = () => {
         </div>
 
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="upload">Upload & Setup</TabsTrigger>
-            <TabsTrigger value="platforms">Platform Selection</TabsTrigger>
-            <TabsTrigger value="content">AI Content</TabsTrigger>
-            <TabsTrigger value="publish">Preview & Publish</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 md:gap-0 h-auto md:h-10 p-1">
+            <TabsTrigger value="upload" className="text-xs md:text-sm px-2 py-2 md:px-3">Upload & Setup</TabsTrigger>
+            <TabsTrigger value="platforms" className="text-xs md:text-sm px-2 py-2 md:px-3">Platform Selection</TabsTrigger>
+            <TabsTrigger value="content" className="text-xs md:text-sm px-2 py-2 md:px-3">AI Content</TabsTrigger>
+            <TabsTrigger value="publish" className="text-xs md:text-sm px-2 py-2 md:px-3">Preview & Publish</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-6">
@@ -394,7 +394,7 @@ const ClipPost = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid gap-4">
                   {platforms.map((platform) => {
                     const Icon = platform.icon;
                     const isSelected = clipSettings.platforms.includes(platform.id);
@@ -403,9 +403,9 @@ const ClipPost = () => {
                       <div
                         key={platform.id}
                         onClick={() => !isProcessing && togglePlatform(platform.id)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all touch-manipulation ${
                           isSelected 
-                            ? 'border-primary bg-primary/5' 
+                            ? 'border-primary bg-primary/10' 
                             : 'border-muted hover:border-primary/50'
                         } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
