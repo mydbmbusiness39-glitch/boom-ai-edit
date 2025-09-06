@@ -481,6 +481,66 @@ const ClipPost = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Sample Video Preview */}
+                {videoFile && (
+                  <div className="mb-6 p-4 bg-muted/50 rounded-lg">
+                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      Clip Preview
+                    </h4>
+                    <div className="grid md:grid-cols-2 gap-4 items-start">
+                      <div className="space-y-2">
+                        <div className="aspect-[9/16] bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 rounded-lg flex items-center justify-center border-2 border-dashed border-primary/30 max-w-[200px] mx-auto">
+                          <div className="text-center space-y-2">
+                            <Camera className="h-8 w-8 mx-auto text-primary" />
+                            <p className="text-xs text-muted-foreground px-2">
+                              AI will extract the most engaging {clipSettings.duration}s clip
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-center text-muted-foreground">
+                          {clipSettings.duration}s • {clipSettings.style} style
+                        </p>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Badge variant="secondary" className="text-xs">
+                            AI Optimizations
+                          </Badge>
+                          <ul className="text-xs text-muted-foreground space-y-1">
+                            <li>• Auto-crops to optimal aspect ratio</li>
+                            <li>• Detects best moment for viral potential</li>
+                            <li>• Adds platform-specific captions</li>
+                            <li>• Optimizes audio levels</li>
+                          </ul>
+                        </div>
+                        {clipSettings.platforms.length > 0 && (
+                          <div className="space-y-2">
+                            <Badge variant="outline" className="text-xs">
+                              Formats for {clipSettings.platforms.length} platform{clipSettings.platforms.length > 1 ? 's' : ''}
+                            </Badge>
+                            <div className="flex flex-wrap gap-1">
+                              {clipSettings.platforms.slice(0, 3).map(platformId => {
+                                const platform = platforms.find(p => p.id === platformId);
+                                return platform ? (
+                                  <Badge key={platformId} variant="outline" className="text-xs">
+                                    {platform.name}
+                                  </Badge>
+                                ) : null;
+                              })}
+                              {clipSettings.platforms.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{clipSettings.platforms.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {Object.keys(platformContent).length === 0 && !isGeneratingContent ? (
                   <div className="text-center py-8 space-y-4">
                     <Sparkles className="h-12 w-12 mx-auto text-muted-foreground" />
