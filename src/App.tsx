@@ -23,6 +23,7 @@ import Status from "./pages/Status";
 import TestDashboard from "./pages/TestDashboard";
 import TestSettings from "./pages/TestSettings";
 import VoiceDemo from "./pages/VoiceDemo";
+import TTSDemo from "./pages/TTSDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,7 +37,8 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<TTSDemo />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/demo" element={<Demo />} />
               <Route path="/voice-demo" element={<VoiceDemo />} />
