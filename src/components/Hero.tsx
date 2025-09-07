@@ -12,14 +12,6 @@ export default function Hero() {
                       bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl
                       shadow-[0_10px_50px_rgba(0,0,0,0.45)]">
         
-        {/* Logo */}
-        <div className="text-center mb-6">
-          <img
-            src="https://your-cdn-link.com/boom_studio_logo.jpeg"
-            alt="BoomStudio Logo"
-            className="mx-auto w-[72%] max-w-[420px] h-auto drop-shadow-[0_6px_22px_rgba(255,77,90,0.35)]"
-          />
-        </div>
 
         {/* Brand title */}
         <div className="text-center mb-4">
