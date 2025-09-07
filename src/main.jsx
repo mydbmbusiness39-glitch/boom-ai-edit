@@ -1,120 +1,63 @@
-// Simple TTS Demo UI
-class TTSDemo {
-  constructor() {
-    this.form = document.getElementById('ttsForm');
-    this.textInput = document.getElementById('textInput');
-    this.voiceSelect = document.getElementById('voiceSelect');
-    this.generateBtn = document.getElementById('generateBtn');
-    this.loading = document.getElementById('loading');
-    this.error = document.getElementById('error');
-    this.success = document.getElementById('success');
-    this.audioPlayer = document.getElementById('audioPlayer');
-    
-    this.init();
-  }
-  
-  init() {
-    this.form.addEventListener('submit', this.handleSubmit.bind(this));
-    
-    // Add some sample text
-    this.textInput.value = "Hello! Welcome to BOOM AI Text-to-Speech demo. This is a simple example of converting text to natural-sounding speech.";
-  }
-  
-  async handleSubmit(e) {
-    e.preventDefault();
-    
-    const text = this.textInput.value.trim();
-    const voiceId = this.voiceSelect.value;
-    
-    if (!text) {
-      this.showError('Please enter some text');
-      return;
-    }
-    
-    this.setLoading(true);
-    this.hideMessages();
-    
-    try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text, voiceId })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate speech');
-      }
-      
-      if (data.success && data.audioContent) {
-        this.playAudio(data.audioContent);
-        this.showSuccess('Speech generated successfully!');
-      } else {
-        throw new Error('Invalid response from server');
-      }
-      
-    } catch (error) {
-      console.error('TTS Error:', error);
-      this.showError(error.message || 'Failed to generate speech');
-    } finally {
-      this.setLoading(false);
-    }
-  }
-  
-  playAudio(base64Audio) {
-    const audioBlob = this.base64ToBlob(base64Audio, 'audio/mpeg');
-    const audioUrl = URL.createObjectURL(audioBlob);
-    
-    this.audioPlayer.src = audioUrl;
-    this.audioPlayer.style.display = 'block';
-    this.audioPlayer.play();
-    
-    // Clean up URL when audio ends
-    this.audioPlayer.onended = () => {
-      URL.revokeObjectURL(audioUrl);
-    };
-  }
-  
-  base64ToBlob(base64, mimeType) {
-    const byteCharacters = atob(base64);
-    const byteNumbers = new Array(byteCharacters.length);
-    
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    
-    const byteArray = new Uint8Array(byteNumbers);
-    return new Blob([byteArray], { type: mimeType });
-  }
-  
-  setLoading(isLoading) {
-    this.generateBtn.disabled = isLoading;
-    this.loading.style.display = isLoading ? 'block' : 'none';
-    this.generateBtn.textContent = isLoading ? 'Generating...' : 'Generate Speech';
-  }
-  
-  showError(message) {
-    this.error.textContent = message;
-    this.error.style.display = 'block';
-    this.success.style.display = 'none';
-  }
-  
-  showSuccess(message) {
-    this.success.textContent = message;
-    this.success.style.display = 'block';
-    this.error.style.display = 'none';
-  }
-  
-  hideMessages() {
-    this.error.style.display = 'none';
-    this.success.style.display = 'none';
-  }
-}
+import React from "react";
+import { createRoot } from "react-dom/client";
 
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  new TTSDemo();
-});
+function App() {
+  const [text, setText] = React.useState("Hello! Welcome to BOOM AI.");
+  const [log, setLog] = React.useState("");
+  const append = (m) => setLog((x) => x + m + "\n");
+
+  async function speak() {
+    try {
+      const r = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const buf = await r.arrayBuffer();
+      const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
+      const a = new Audio(url);
+      await a.play();
+      append("Spoke your text.");
+    } catch (e) { append("TTS error: " + e.message); }
+  }
+
+  async function record(ms = 4000) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const rec = new MediaRecorder(stream); const chunks = [];
+    rec.ondataavailable = e => chunks.push(e.data);
+    rec.start(); await new Promise(r => setTimeout(r, ms)); rec.stop();
+    await new Promise(r => rec.onstop = r);
+    return new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
+  }
+
+  async function transcribeAndSpeak() {
+    try {
+      append("Recording 4s…");
+      const blob = await record(4000);
+      const fd = new FormData();
+      fd.append("audio", blob, "clip.webm");
+      const r = await fetch("/api/stt", { method: "POST", body: fd });
+      if (!r.ok) throw new Error(await r.text());
+      const data = await r.json();
+      const said = data.text || JSON.stringify(data);
+      append("You said: " + said);
+      setText(said);
+      await speak();
+    } catch (e) { append("STT error: " + e.message); }
+  }
+
+  return (
+    <div style={{ fontFamily: "system-ui, Arial", padding: 24, maxWidth: 600, margin: "0 auto" }}>
+      <h1>🎙️ BOOM AI TTS</h1>
+      <label>Enter Text:</label>
+      <textarea value={text} onChange={e => setText(e.target.value)} rows={6} style={{width:"100%",margin:"8px 0"}} />
+      <div style={{display:"flex", gap: 12, marginBottom: 12}}>
+        <button onClick={speak}>🔊 Generate Speech</button>
+        <button onClick={transcribeAndSpeak}>🎤 Record 4s → Transcribe → Speak</button>
+      </div>
+      <pre style={{background:"#fafafa",border:"1px solid #eee",padding:12,borderRadius:8,whiteSpace:"pre-wrap"}}>{log}</pre>
+    </div>
+  );
+}
+createRoot(document.getElementById("root")).render(<App />);

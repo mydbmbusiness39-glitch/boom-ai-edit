@@ -1,72 +1,57 @@
-import express from 'express';
-import cors from 'cors';
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-
-dotenv.config();
+import express from "express";
+import cors from "cors";
+import multer from "multer";
+import fetch from "node-fetch";
 
 const app = express();
-const PORT = process.env.PORT || 3001;
-
 app.use(cors());
 app.use(express.json());
 
-// Text-to-Speech endpoint using ElevenLabs
-app.post('/api/tts', async (req, res) => {
+const ELEVEN_API_KEY = process.env.ELEVENLABS_API_KEY;
+const VOICE_ID = process.env.ELEVENLABS_VOICE_ID || "Rachel";
+const STT_MODEL = process.env.ELEVENLABS_STT_MODEL_ID || "scribe_v1";
+
+// TTS: text -> mp3
+app.post("/api/tts", async (req, res) => {
   try {
-    const defaultVoiceId = process.env.ELEVENLABS_VOICE_ID || '9BWtsMINqrJLrRacOk9x';
-    const { text, voiceId = defaultVoiceId } = req.body;
-    
-    if (!text) {
-      return res.status(400).json({ error: 'Text is required' });
-    }
-
-    const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY;
-    if (!ELEVENLABS_API_KEY) {
-      return res.status(500).json({ error: 'ElevenLabs API key not configured' });
-    }
-
-    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
+    const { text, voice_id, voice_settings } = req.body || {};
+    if (!text) return res.status(400).send("Missing 'text'");
+    const url = `https://api.elevenlabs.io/v1/text-to-speech/${voice_id || VOICE_ID}`;
+    const r = await fetch(url, {
+      method: "POST",
       headers: {
-        'Accept': 'audio/mpeg',
-        'Content-Type': 'application/json',
-        'xi-api-key': ELEVENLABS_API_KEY
+        "xi-api-key": ELEVEN_API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "audio/mpeg"
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_multilingual_v2',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.5
-        }
+        voice_settings: voice_settings ?? { stability: 0.5, similarity_boost: 0.75 }
       })
     });
+    if (!r.ok) return res.status(r.status).send(await r.text());
+    res.setHeader("Content-Type", "audio/mpeg");
+    r.body.pipe(res);
+  } catch (e) { res.status(500).send(e.message || "Server error"); }
+});
 
-    if (!response.ok) {
-      throw new Error('TTS generation failed');
-    }
-
-    const audioBuffer = await response.arrayBuffer();
-    const base64Audio = Buffer.from(audioBuffer).toString('base64');
-
-    res.json({
-      success: true,
-      audioContent: base64Audio,
-      message: 'Speech generated successfully'
+// STT: audio file -> text
+const upload = multer();
+app.post("/api/stt", upload.single("audio"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No audio file" });
+    const form = new FormData();
+    form.set("model_id", STT_MODEL);
+    form.set("file", new Blob([req.file.buffer]), req.file.originalname || "clip.webm");
+    const r = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+      method: "POST",
+      headers: { "xi-api-key": ELEVEN_API_KEY },
+      body: form
     });
-
-  } catch (error) {
-    console.error('TTS error:', error);
-    res.status(500).json({ error: 'TTS generation failed', details: error.message });
-  }
+    if (!r.ok) return res.status(r.status).send(await r.text());
+    res.json(await r.json());
+  } catch (e) { res.status(500).send(e.message || "Server error"); }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`API up on http://localhost:${PORT}`));
