@@ -206,14 +206,13 @@ const AiStudio = () => {
     setCurrentProject("script-to-video");
 
     try {
-      const { data, error } = await supabase.functions.invoke('ai-script-to-video', {
+      const { data, error } = await supabase.functions.invoke('generate-host-video', {
         body: {
-          script: scriptToVideo.script,
-          style: scriptToVideo.style,
-          duration: scriptToVideo.duration,
-          aspectRatio: scriptToVideo.aspect_ratio,
-          voiceModel: scriptToVideo.voice_model,
-          backgroundMusic: scriptToVideo.background_music
+          avatarId: scriptToVideo.voice_model || 'default',
+          scriptType: 'custom',
+          customText: scriptToVideo.script,
+          stylePrompt: scriptToVideo.style,
+          brandColors: ['#3B82F6', '#10B981']
         }
       });
 
