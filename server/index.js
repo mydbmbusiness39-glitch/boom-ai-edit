@@ -14,7 +14,8 @@ app.use(express.json());
 // Text-to-Speech endpoint using ElevenLabs
 app.post('/api/tts', async (req, res) => {
   try {
-    const { text, voiceId = '9BWtsMINqrJLrRacOk9x' } = req.body;
+    const defaultVoiceId = process.env.ELEVENLABS_VOICE_ID || '9BWtsMINqrJLrRacOk9x';
+    const { text, voiceId = defaultVoiceId } = req.body;
     
     if (!text) {
       return res.status(400).json({ error: 'Text is required' });
