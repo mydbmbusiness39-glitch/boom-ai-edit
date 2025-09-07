@@ -11,6 +11,7 @@ const Navigation = () => {
 
   const navItems = [
     { href: "/", label: "Home", icon: Zap },
+    { href: "/voice-demo", label: "Voice Demo", icon: Volume2 },
     { href: "/dashboard", label: "Dashboard", icon: Brain },
     { href: "/test-dashboard", label: "Test Dashboard", icon: Monitor },
     { href: "/upload", label: "Upload", icon: Upload },

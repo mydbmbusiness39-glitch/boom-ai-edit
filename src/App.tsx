@@ -22,6 +22,7 @@ import AiStudio from "./pages/AiStudio";
 import Status from "./pages/Status";
 import TestDashboard from "./pages/TestDashboard";
 import TestSettings from "./pages/TestSettings";
+import VoiceDemo from "./pages/VoiceDemo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
               <Route path="/demo" element={<Demo />} />
+              <Route path="/voice-demo" element={<VoiceDemo />} />
               <Route path="/health" element={<Health />} />
               
               {/* Protected Routes */}
