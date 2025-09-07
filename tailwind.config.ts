@@ -61,9 +61,6 @@ export default {
 				'boom-secondary': 'hsl(var(--boom-secondary))',
 				'boom-accent': 'hsl(var(--boom-accent))',
 				'boom-white': 'hsl(var(--boom-white))',
-				// Neon colors for backwards compatibility
-				'neon-purple': 'hsl(var(--neon-purple))',
-				'neon-green': 'hsl(var(--neon-green))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

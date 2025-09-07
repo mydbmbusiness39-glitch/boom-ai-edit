@@ -67,10 +67,6 @@
     /* BOOM Transitions */
     --transition-boom: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* Neon colors for backwards compatibility */
-    --neon-purple: 249 65% 59%;          /* Same as boom-secondary */
-    --neon-green: 43 100% 50%;           /* Same as boom-accent */
-
     --sidebar-background: 0 0% 98%;
 
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -96,15 +92,5 @@
 
   body {
     @apply bg-background text-foreground;
-  }
-  
-  /* Hide scrollbar for mobile tabs */
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
   }
 }

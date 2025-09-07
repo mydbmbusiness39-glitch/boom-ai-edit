@@ -13,7 +13,7 @@ import { Job, JobStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 
 const Status = () => {
-  const { id: jobId } = useParams<{ id?: string }>();
+  const { jobId } = useParams<{ jobId: string }>();
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);

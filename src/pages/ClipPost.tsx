@@ -40,7 +40,7 @@ const ClipPost = () => {
       id: "tiktok", 
       name: "TikTok", 
       icon: Camera,
-      color: "bg-foreground text-background",
+      color: "bg-black text-white",
       format: "9:16 (1080x1920)",
       maxDuration: 60,
       description: "Vertical video optimized for mobile viewing"
@@ -49,7 +49,7 @@ const ClipPost = () => {
       id: "youtube-shorts", 
       name: "YouTube Shorts", 
       icon: Camera,
-      color: "bg-primary text-primary-foreground",
+      color: "bg-red-500 text-white",
       format: "9:16 (1080x1920)",
       maxDuration: 60,
       description: "YouTube's short-form vertical video format"
@@ -58,7 +58,7 @@ const ClipPost = () => {
       id: "instagram-reels", 
       name: "Instagram Reels", 
       icon: Camera,
-      color: "bg-secondary text-secondary-foreground",
+      color: "bg-gradient-to-r from-purple-500 to-pink-500 text-white",
       format: "9:16 (1080x1920)",
       maxDuration: 90,
       description: "Instagram's short-form video feature"
@@ -67,7 +67,7 @@ const ClipPost = () => {
       id: "linkedin", 
       name: "LinkedIn", 
       icon: Briefcase,
-      color: "bg-accent text-accent-foreground",
+      color: "bg-blue-600 text-white",
       format: "16:9 or 1:1 (1200x1200)",
       maxDuration: 600,
       description: "Professional content for business networking"
@@ -256,11 +256,11 @@ const ClipPost = () => {
         </div>
 
         <Tabs defaultValue="upload" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-1 md:gap-0 h-auto md:h-10 p-1">
-            <TabsTrigger value="upload" className="text-xs md:text-sm px-2 py-2 md:px-3">Upload & Setup</TabsTrigger>
-            <TabsTrigger value="platforms" className="text-xs md:text-sm px-2 py-2 md:px-3">Platform Selection</TabsTrigger>
-            <TabsTrigger value="content" className="text-xs md:text-sm px-2 py-2 md:px-3">AI Content</TabsTrigger>
-            <TabsTrigger value="publish" className="text-xs md:text-sm px-2 py-2 md:px-3">Preview & Publish</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="upload">Upload & Setup</TabsTrigger>
+            <TabsTrigger value="platforms">Platform Selection</TabsTrigger>
+            <TabsTrigger value="content">AI Content</TabsTrigger>
+            <TabsTrigger value="publish">Preview & Publish</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-6">
@@ -394,7 +394,7 @@ const ClipPost = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   {platforms.map((platform) => {
                     const Icon = platform.icon;
                     const isSelected = clipSettings.platforms.includes(platform.id);
@@ -403,9 +403,9 @@ const ClipPost = () => {
                       <div
                         key={platform.id}
                         onClick={() => !isProcessing && togglePlatform(platform.id)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all touch-manipulation ${
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                           isSelected 
-                            ? 'border-primary bg-primary/10' 
+                            ? 'border-primary bg-primary/5' 
                             : 'border-muted hover:border-primary/50'
                         } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
@@ -481,66 +481,6 @@ const ClipPost = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {/* Sample Video Preview */}
-                {videoFile && (
-                  <div className="mb-6 p-4 bg-muted/50 rounded-lg">
-                    <h4 className="font-medium mb-3 flex items-center gap-2">
-                      <Eye className="h-4 w-4" />
-                      Clip Preview
-                    </h4>
-                    <div className="grid md:grid-cols-2 gap-4 items-start">
-                      <div className="space-y-2">
-                        <div className="aspect-[9/16] bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 rounded-lg flex items-center justify-center border-2 border-dashed border-primary/30 max-w-[200px] mx-auto">
-                          <div className="text-center space-y-2">
-                            <Camera className="h-8 w-8 mx-auto text-primary" />
-                            <p className="text-xs text-muted-foreground px-2">
-                              AI will extract the most engaging {clipSettings.duration}s clip
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-center text-muted-foreground">
-                          {clipSettings.duration}s • {clipSettings.style} style
-                        </p>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="space-y-2">
-                          <Badge variant="secondary" className="text-xs">
-                            AI Optimizations
-                          </Badge>
-                          <ul className="text-xs text-muted-foreground space-y-1">
-                            <li>• Auto-crops to optimal aspect ratio</li>
-                            <li>• Detects best moment for viral potential</li>
-                            <li>• Adds platform-specific captions</li>
-                            <li>• Optimizes audio levels</li>
-                          </ul>
-                        </div>
-                        {clipSettings.platforms.length > 0 && (
-                          <div className="space-y-2">
-                            <Badge variant="outline" className="text-xs">
-                              Formats for {clipSettings.platforms.length} platform{clipSettings.platforms.length > 1 ? 's' : ''}
-                            </Badge>
-                            <div className="flex flex-wrap gap-1">
-                              {clipSettings.platforms.slice(0, 3).map(platformId => {
-                                const platform = platforms.find(p => p.id === platformId);
-                                return platform ? (
-                                  <Badge key={platformId} variant="outline" className="text-xs">
-                                    {platform.name}
-                                  </Badge>
-                                ) : null;
-                              })}
-                              {clipSettings.platforms.length > 3 && (
-                                <Badge variant="outline" className="text-xs">
-                                  +{clipSettings.platforms.length - 3} more
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
                 {Object.keys(platformContent).length === 0 && !isGeneratingContent ? (
                   <div className="text-center py-8 space-y-4">
                     <Sparkles className="h-12 w-12 mx-auto text-muted-foreground" />

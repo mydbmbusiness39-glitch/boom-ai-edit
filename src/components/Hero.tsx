@@ -1,12 +1,4 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-
 export default function Hero() {
-  const navigate = useNavigate();
-  const [logoError, setLogoError] = useState(false);
-
   return (
     <section className="relative min-h-[92vh] flex items-center justify-center bg-background overflow-hidden">
       {/* Gradient auras */}
@@ -20,6 +12,14 @@ export default function Hero() {
                       bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl
                       shadow-[0_10px_50px_rgba(0,0,0,0.45)]">
         
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <img
+            src="https://your-cdn-link.com/boom_studio_logo.jpeg"
+            alt="BoomStudio Logo"
+            className="mx-auto w-[72%] max-w-[420px] h-auto drop-shadow-[0_6px_22px_rgba(255,77,90,0.35)]"
+          />
+        </div>
 
         {/* Brand title */}
         <div className="text-center mb-4">
@@ -42,25 +42,26 @@ export default function Hero() {
 
         {/* CTA buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button 
-            onClick={() => navigate('/dashboard')}
-            size="lg"
-            className="w-full sm:w-auto font-poppins font-semibold shadow-[0_6px_20px_rgba(255,77,90,0.45)]">
+          <a href="#get-started" 
+             className="w-full sm:w-auto px-5 py-3 rounded-full bg-boom-primary text-white font-poppins font-semibold
+                        shadow-[0_6px_20px_rgba(255,77,90,0.45)] hover:opacity-90 transition-all duration-200">
             Start Creating Now
-          </Button>
-          <Button 
-            variant="secondary"
-            onClick={() => navigate('/demo')}
-            className="w-full sm:w-auto font-poppins font-medium">
+          </a>
+          <a href="#watch-demo"
+             className="w-full sm:w-auto px-5 py-3 rounded-full bg-white/10 text-white font-poppins font-medium
+                        backdrop-blur hover:bg-white/15 transition-all duration-200">
             Watch Demo
-          </Button>
+          </a>
         </div>
 
         {/* Trust indicators */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2 gap-y-2">
-          <Badge variant="secondary">⚡ AI-Powered Clips</Badge>
-          <Badge variant="secondary">🎬 Auto Editing</Badge>
-          <Badge variant="secondary">📲 One-Tap Publishing</Badge>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 
+                        text-white/60 font-poppins text-xs sm:text-sm">
+          <span>⚡ AI-Powered Clips</span>
+          <span className="hidden sm:inline">•</span>
+          <span>🎨 Auto Editing</span>
+          <span className="hidden sm:inline">•</span>
+          <span>🚀 One-Tap Publishing</span>
         </div>
       </div>
 

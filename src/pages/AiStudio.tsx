@@ -206,13 +206,14 @@ const AiStudio = () => {
     setCurrentProject("script-to-video");
 
     try {
-      const { data, error } = await supabase.functions.invoke('generate-host-video', {
+      const { data, error } = await supabase.functions.invoke('ai-script-to-video', {
         body: {
-          avatarId: scriptToVideo.voice_model || 'default',
-          scriptType: 'custom',
-          customText: scriptToVideo.script,
-          stylePrompt: scriptToVideo.style,
-          brandColors: ['#3B82F6', '#10B981']
+          script: scriptToVideo.script,
+          style: scriptToVideo.style,
+          duration: scriptToVideo.duration,
+          aspectRatio: scriptToVideo.aspect_ratio,
+          voiceModel: scriptToVideo.voice_model,
+          backgroundMusic: scriptToVideo.background_music
         }
       });
 
@@ -463,11 +464,11 @@ const AiStudio = () => {
 
   return (
     <Layout>
-      <div className="container max-w-7xl mx-auto p-3 sm:p-6 space-y-6 sm:space-y-8">
+      <div className="container max-w-7xl mx-auto p-6 space-y-8">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center space-x-2">
-            <Brain className="h-8 w-8 text-boom-secondary" />
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-boom-secondary to-boom-accent bg-clip-text text-transparent">
+            <Brain className="h-8 w-8 text-neon-purple" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
               AI Studio
             </h1>
           </div>
@@ -477,17 +478,15 @@ const AiStudio = () => {
         </div>
 
         <Tabs defaultValue="brand-studio" className="space-y-6">
-          <div className="overflow-x-auto scrollbar-hide">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-1 min-w-max">
-              <TabsTrigger value="script-to-video" className="text-xs sm:text-sm">Script → Video</TabsTrigger>
-              <TabsTrigger value="viral-optimizer" className="text-xs sm:text-sm">Viral</TabsTrigger>
-              <TabsTrigger value="smart-analysis" className="text-xs sm:text-sm">Analysis</TabsTrigger>
-              <TabsTrigger value="video-enhancer" className="text-xs sm:text-sm">Enhance</TabsTrigger>
-              <TabsTrigger value="brand-studio" className="text-xs sm:text-sm">Brand</TabsTrigger>
-              <TabsTrigger value="trend-analyzer" className="text-xs sm:text-sm">Trends</TabsTrigger>
-              <TabsTrigger value="projects" className="text-xs sm:text-sm">Projects</TabsTrigger>
-            </TabsList>
-          </div>
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="script-to-video">Script → Video</TabsTrigger>
+            <TabsTrigger value="viral-optimizer">Viral Optimizer</TabsTrigger>
+            <TabsTrigger value="smart-analysis">Smart Analysis</TabsTrigger>
+            <TabsTrigger value="video-enhancer">Video Enhancer</TabsTrigger>
+            <TabsTrigger value="brand-studio">Brand Studio</TabsTrigger>
+            <TabsTrigger value="trend-analyzer">Trend Analyzer</TabsTrigger>
+            <TabsTrigger value="projects">AI Projects</TabsTrigger>
+          </TabsList>
 
           {/* Script to Video Tab */}
           <TabsContent value="script-to-video" className="space-y-6">
@@ -837,7 +836,7 @@ const AiStudio = () => {
                   <Button
                     onClick={runSmartAnalysis}
                     disabled={!smartAnalysis.video_url.trim() || (isGenerating && currentProject === "smart-analysis")}
-                    className="w-full bg-gradient-to-r from-boom-secondary to-boom-accent text-background"
+                    className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background"
                     size="lg"
                   >
                     {isGenerating && currentProject === "smart-analysis" ? (
@@ -864,7 +863,7 @@ const AiStudio = () => {
                     <div className="space-y-6">
                       {/* Summary */}
                       {analysisResults.analysis_summary && (
-                        <div className="bg-gradient-to-r from-boom-secondary/10 to-boom-accent/10 p-4 rounded-lg">
+                        <div className="bg-gradient-to-r from-neon-purple/10 to-neon-green/10 p-4 rounded-lg">
                           <h4 className="font-medium mb-3">Analysis Summary</h4>
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
@@ -1134,7 +1133,7 @@ const AiStudio = () => {
                   <Button
                     onClick={runVideoEnhancement}
                     disabled={!videoEnhancement.video_url.trim() || (isGenerating && currentProject === "video-enhancement")}
-                    className="w-full bg-gradient-to-r from-boom-secondary to-boom-accent text-background"
+                    className="w-full bg-gradient-to-r from-neon-purple to-neon-green text-background"
                     size="lg"
                   >
                     {isGenerating && currentProject === "video-enhancement" ? (
@@ -1339,7 +1338,7 @@ const AiStudio = () => {
 
                     <div className="space-y-3">
                       <Label>Brand Colors</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Primary</Label>
                           <div className="flex space-x-2">
@@ -1358,7 +1357,7 @@ const AiStudio = () => {
                                 ...prev,
                                 brand_colors: { ...prev.brand_colors, primary: e.target.value }
                               }))}
-                              className="text-xs flex-1"
+                              className="text-xs"
                             />
                           </div>
                         </div>
@@ -1380,7 +1379,7 @@ const AiStudio = () => {
                                 ...prev,
                                 brand_colors: { ...prev.brand_colors, secondary: e.target.value }
                               }))}
-                              className="text-xs flex-1"
+                              className="text-xs"
                             />
                           </div>
                         </div>
@@ -1402,7 +1401,7 @@ const AiStudio = () => {
                                 ...prev,
                                 brand_colors: { ...prev.brand_colors, accent: e.target.value }
                               }))}
-                              className="text-xs flex-1"
+                              className="text-xs"
                             />
                           </div>
                         </div>
@@ -1411,7 +1410,7 @@ const AiStudio = () => {
 
                     <div className="space-y-3">
                       <Label>Brand Fonts</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-1">
                           <Label className="text-xs">Heading</Label>
                           <Select
@@ -1720,7 +1719,7 @@ const AiStudio = () => {
                     AI-powered analysis of current trends, hashtags, and viral patterns across all major platforms. 
                     Get insights on what's working now and predictions for upcoming trends.
                   </p>
-                  <Button className="bg-gradient-to-r from-boom-secondary to-boom-accent text-background">
+                  <Button className="bg-gradient-to-r from-neon-purple to-neon-green text-background">
                     <Brain className="h-4 w-4 mr-2" />
                     Run Trend Analysis
                   </Button>
