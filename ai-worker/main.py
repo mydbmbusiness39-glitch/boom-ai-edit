@@ -321,6 +321,34 @@ async def health_check():
         "ai_worker_url": AI_WORKER_URL
     }
 
+# ============ RENDER ENDPOINT ============
+# Turns a compiled timeline into a real MP4 via ffmpeg.
+# This is the feature that makes Boom AI Edit a video editor.
+
+class RenderRequest(BaseModel):
+    timeline: Dict[str, Any]
+    output_path: str | None = None  # optional; defaults to a temp file
+
+class RenderResponse(BaseModel):
+    success: bool
+    output: str | None = None
+    duration: float | None = None
+    resolution: str | None = None
+    segments_rendered: int | None = None
+    error: str | None = None
+
+@app.post("/render", response_model=RenderResponse)
+async def render_video(request: RenderRequest):
+    """Render a compiled timeline to MP4 using ffmpeg."""
+    from renderer import render_timeline
+    try:
+        workdir = tempfile.mkdtemp(prefix="boom_render_")
+        out_path = request.output_path or os.path.join(workdir, "output.mp4")
+        result = render_timeline(request.timeline, workdir, out_path)
+        return RenderResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Render failed: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
