@@ -1,63 +1,70 @@
 # BOOM AI EDIT — Full Assessment & Finish Plan
-*Prepared by your BCWA manager / dev partner — 2026-08-05 night shift*
+*Prepared by your BCWA manager / dev partner — 2026-08-05 night shift (updated 2026-08-06)*
 
-## What you've built (the real foundation)
+## 🎯 THE VISION (user-stated, 2026-08-06)
+"Implement pricing until we go from there. I will deploy it when everything is professional done by you to Google and Apple. See the vision?" — **boom-ai-edit is destined for the App Store + Google Play.** Professional polish is the gate to deployment. Everything below serves that.
 
-**Frontend (React + Vite + TypeScript + shadcn/ui):**
-- 26 routed pages — a complete creator-platform UI
-- Real Editor page (timeline, tracks, play controls, chat assistant)
-- OneTapEdit, AiStudio (1,807 lines!), ScriptGenerator, ThumbnailGenerator, VideoDubbing, AIMusicGenerator, AutoUpload, BatchProcessor, TrendSync, Analytics, Dashboard, VoiceCloning, Agency, Marketplace, Community — all present
-- Supabase auth + DB integration
-- ElevenLabs integration planned (speech-to-text endpoint added)
+## 💰 PRICING STRATEGY (decided)
 
-**AI Worker (Python FastAPI) — REAL, working logic:**
-- `/analyze/beats` — BPM + beat timing via librosa ✅ REAL
-- `/analyze/scenes` — scene-change detection via PySceneDetect ✅ REAL
-- `/generate/captions` — LLM hype captions, style-aware ✅ REAL (needs OPENAI_API_KEY)
-- `/timeline/compile` — timeline JSON builder ✅ REAL
-- Docker / Fly.io / Render deploy configs ready
+### Phase 1 (now, web/soft-launch): Paid-only tiers
+- **Free:** 1 project, watermark, 5 renders/month (taste only)
+- **Pro — $19.99/mo:** unlimited renders, no watermark, AI captions, poster templates, all AI tools
+- **Business — $49/mo:** everything in Pro + team seats (3), white-label export, priority render queue
+- **Why paid-first:** no free-rider server costs at small scale; every user is real money; business pricing is less price-sensitive. Switch to freemium only at scale (CapCut model).
 
-## What's missing (the gaps to CapCut)
+### Phase 2 (App Store/Play launch): Store-native billing
+- **Pro $19.99/mo or $99.99/yr** (Apple IAP + Google Play Billing)
+- **Free tier returns** with watermark (the storefront marketing engine)
+- RevenueCat or store SDKs for cross-platform billing
 
-1. **NO actual video rendering.** The worker analyzes and compiles timelines, but nothing renders the final MP4 (no ffmpeg/moviepy/Remotion in the pipeline). This is THE core feature of a video editor — without it, users get JSON, not videos.
-2. **Mock placeholders:** AIMusicGenerator (mock tracks), Agency (mock creators), ThumbnailGenerator (placeholder images), VideoDubbing (placeholder audio) — UI exists, real integrations don't.
-3. **No caption burn-in** (we have this working in our BCWA ffmpeg pipeline!).
-4. **No real auto-upload** to YouTube/TikTok/FB (needs platform APIs).
-5. **No tests passing end-to-end** — needs verification.
+### The wedge (what beats CapCut)
+AI short-form poster videos for blue-collar creators/business owners — one-click "poster format" template + auto-captions + AI hook generator. Nobody owns "AI video for the trades."
 
-## The plan (priority order)
+## 🗺️ ROADMAP TO APP STORE (priority order)
 
-### PHASE 1 — Make it render (the CapCut core)
-- [ ] Add a **render engine** to ai-worker: ffmpeg-based compositor (we already run ffmpeg for BCWA — same skill)
-- [ ] Wire `/timeline/compile` → actual MP4 output (concat clips, add music, burn captions, watermark)
-- [ ] Status polling from the Editor (the `/status/:jobId` route already exists!)
+### PHASE 1 — Make it render (the CapCut core) ✅ IN PROGRESS
+- [x] **ffmpeg render engine** (`ai-worker/renderer.py`) — timelines → real MP4: video clips, images, text burn-in, audio mix. TESTED ✅ (real footage render verified)
+- [x] **`/render` endpoint** in `main.py`
+- [x] Test suite `test_render.py` (passing)
+- [ ] Wire `/render` into the frontend Editor (status polling exists at `/status/:jobId`)
+- [ ] Render jobs: queue + progress + cancellation
 
 ### PHASE 2 — Make the mocks real
 - [ ] AIMusicGenerator → real AI music API (Suno/Udio) or procedural stems
-- [ ] ThumbnailGenerator → real image gen (we have FAL/FLUX via Nous!)
-- [ ] VideoDubbing → ElevenLabs multilingual TTS (API key exists in .env)
+- [ ] ThumbnailGenerator → real image gen (FAL/FLUX via Nous)
+- [ ] VideoDubbing → ElevenLabs multilingual TTS (key exists in .env)
 - [ ] VoiceCloning → ElevenLabs clone (BCWA already has the "Hope" clone!)
 
 ### PHASE 3 — The moat (why it beats CapCut)
-- [ ] **One-click "poster-style" template** — our proven BCWA format (backdrop + VO + captions + CTA) as a product feature
-- [ ] **Auto-caption burn-in** from the transcript
-- [ ] **"2 videos a day" batch flow** — the content-machine UX
+- [ ] **One-click "poster-style" template** — our proven BCWA format as a product feature
+- [ ] **Auto-caption burn-in** from transcript
+- [ ] **"2 videos a day" batch flow** — content-machine UX
 - [ ] AI hook generator built in (we have the hook-generator skill!)
 
 ### PHASE 4 — Distribution
 - [ ] Auto-upload to YouTube via API (OAuth)
 - [ ] TikTok/FB later
 
+### PHASE 5 — STORE LAUNCH (the goal)
+- [ ] PWA → Android (TWA) + iOS (WKWebView) wrappers OR React Native/Capacitor port
+- [ ] Apple IAP + Google Play Billing integration (RevenueCat recommended)
+- [ ] Store assets: icons, screenshots, descriptions
+- [ ] App Store + Play Store submissions
+- [ ] Privacy policy + terms pages
+
 ## What I can do NOW (from this machine)
-- I have ffmpeg + caption pipeline PROVEN (we built 6+ BCWA videos)
-- I have ElevenLabs key + voice clone
-- I have FAL image gen + FLUX 3 video gen via Nous
-- I have the hook-generator + voice-builder skills
-- I can code the ai-worker render endpoint (Python) and push to GitHub
+- ffmpeg + caption pipeline PROVEN (6+ BCWA videos)
+- ElevenLabs key + voice clone
+- FAL image gen + FLUX 3 video gen via Nous
+- hook-generator + voice-builder skills
+- Can code render endpoint + pricing page + push to GitHub
 
 ## Reality check (honest)
-- This machine: 1 core, 1 GB RAM, no GPU — can run ffmpeg rendering and small Python, but NOT heavy ML training or large builds. The AI worker is designed to run on Fly.io/Render — that's the right home for it.
-- CapCut is 5+ years and a team ahead. We don't beat them on features — we beat them on **one thing done perfectly for one audience**: AI-assisted short-form for blue-collar creators. That's the wedge.
+- This machine: 1 core, 1 GB RAM, no GPU — runs ffmpeg + small Python, not heavy ML or large builds. AI worker designed for Fly.io/Render — that's its home.
+- CapCut is 5+ years and a team ahead. We beat them on ONE thing done perfectly: AI-assisted short-form for blue-collar creators.
 
-## First concrete step (my pick)
-Add the **ffmpeg render endpoint** to ai-worker (`/render`) that takes a compiled timeline + clips and outputs an MP4 with burned captions. It's the single feature that turns this from "a dashboard" into "a video editor."
+## First concrete steps (in progress)
+1. ✅ Render engine built + tested
+2. ⏳ Pricing page (Free/Pro/Business tiers) — building now
+3. ⏳ Push to GitHub once token access fixed
+

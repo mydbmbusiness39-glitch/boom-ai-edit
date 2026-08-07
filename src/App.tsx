@@ -35,7 +35,8 @@ import Community from "./pages/Community";
 import ThumbnailGenerator from "./pages/ThumbnailGenerator";
 import VideoDubbing from "./pages/VideoDubbing";
 import AIMusicGenerator from "./pages/AIMusicGenerator";
-import NotFound from "./pages/NotFound";
+import NotFound from "@/pages/NotFound";
+import Pricing from "@/pages/Pricing";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route 
             path="/one-tap" 
             element={

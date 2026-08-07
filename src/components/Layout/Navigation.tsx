@@ -17,6 +17,7 @@ const Navigation = () => {
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/status", label: "Status", icon: Activity },
+    { href: "/pricing", label: "Pricing", icon: Store },
   ];
 
   return (
