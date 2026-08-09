@@ -151,7 +151,7 @@ const Pricing = () => {
               <CardFooter>
                 <Button
                   className={cn("w-full", tier.highlight && "bg-neon-purple hover:bg-neon-purple/90")}
-                  onClick={() => navigate("/auth")}
+                  onClick={() => navigate("/dashboard")}
                 >
                   {tier.cta} <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
