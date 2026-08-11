@@ -83,7 +83,7 @@ const Index = () => {
       <Hero />
       <div className="bg-background">
         {/* Features Grid */}
-        <div className="container max-w-6xl mx-auto px-6 pb-20">
+        <div className="container max-w-6xl mx-auto px-6 pb-20" id="features">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Powerful Features
