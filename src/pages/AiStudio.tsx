@@ -1602,10 +1602,10 @@ const AiStudio = () => {
                     <div className="aspect-video bg-muted rounded-lg relative overflow-hidden">
                       <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                         <div className="text-center space-y-2">
-                          <div className="text-2xl font-bold" style={{ fontFamily: brandingSettings.fonts.heading }}>
+                          <div className="text-2xl font-bold text-gray-900" style={{ fontFamily: brandingSettings.fonts.heading }}>
                             Your Video Title
                           </div>
-                          <div className="text-sm text-muted-foreground" style={{ fontFamily: brandingSettings.fonts.body }}>
+                          <div className="text-sm text-gray-600" style={{ fontFamily: brandingSettings.fonts.body }}>
                             Video content preview
                           </div>
                         </div>
