@@ -72,15 +72,17 @@ const ChatAssistant = ({ onCommand, projectData }: ChatAssistantProps) => {
     setIsProcessing(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('chat-editing-assistant', {
-        body: {
+      const res = await fetch('/api/chat-assistant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           message: content.trim(),
           projectData,
           context: messages.slice(-5)
-        }
+        })
       });
-
-      if (error) throw error;
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const data = await res.json();
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
