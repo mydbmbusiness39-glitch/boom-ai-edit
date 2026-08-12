@@ -11,12 +11,15 @@ import Watermark from "@/components/Watermark";
 import ShareModal from "@/components/ShareModal";
 import { Job, JobStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthProvider";
+import { isOwner } from "@/lib/access";
 
 const Status = () => {
   const { jobId } = useParams<{ jobId: string }>();
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const { user } = useAuth();
 
   // Load job data and simulate updates
   useEffect(() => {
@@ -314,13 +317,15 @@ const Status = () => {
                   <Watermark />
                 </div>
                 
-                {/* Watermark Notice for Free Tier */}
+                {/* Watermark Notice for Free Tier (owner sees none) */}
+                {!isOwner(user?.email) && (
                 <div className="bg-muted/50 border border-border rounded-lg p-4" data-cy="watermark-notice">
                   <p className="text-sm text-muted-foreground text-center">
                     <span className="font-medium">Free Tier:</span> This video includes a watermark. 
                     Upgrade to Pro to remove watermarks and unlock more features.
                   </p>
                 </div>
+                )}
                 
                 {/* Action Buttons */}
                 <div className="flex justify-center space-x-4">
