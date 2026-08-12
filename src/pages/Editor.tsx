@@ -64,12 +64,6 @@ const Editor = () => {
     setIsProcessing(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error('No session found');
-        return;
-      }
-
       // Prepare job data
       const jobData = {
         name: `${projectData.style === 'rgb-gamer' ? 'RGB' : 'Luxury'} Video - ${projectData.duration}s`,
@@ -84,16 +78,26 @@ const Editor = () => {
         music: projectData.music
       };
 
-      // Call job creation API
-      const { data, error } = await supabase.functions.invoke('create-job', {
-        body: jobData
+      // Call job creation API (Vercel function)
+      const res = await fetch('/api/create-job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jobData)
       });
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      const data = await res.json();
 
-      if (error) {
-        throw error;
+      console.log('Job created:', data.job.id);
+      
+      // Store job locally so the status page can track it
+      try {
+        localStorage.setItem(`job-${data.job.id}`, JSON.stringify({
+          ...data.job,
+          createdAt: new Date().toISOString()
+        }));
+      } catch (e) {
+        console.warn('Could not persist job locally:', e);
       }
-
-      console.log('Job created:', data.job);
       
       // Navigate to status page
       navigate(`/status/${data.job.id}`);
