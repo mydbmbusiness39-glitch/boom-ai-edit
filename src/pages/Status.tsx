@@ -98,14 +98,24 @@ const Status = () => {
           newStage = "completed";
         }
         
+        // Use the user's actual uploaded video if available (from Upload page)
+        const storedUrls = localStorage.getItem('uploadedFileUrls');
+        let userVideoUrl: string | undefined;
+        try {
+          const urls = storedUrls ? JSON.parse(storedUrls) : [];
+          if (Array.isArray(urls) && urls.length > 0) userVideoUrl = urls[0]?.url;
+        } catch (e) { /* ignore */ }
+        const fallbackUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        const effectiveUrl = userVideoUrl || fallbackUrl;
+
         return {
           ...prev,
           progress: newProgress,
           status: newStatus,
           stage: newStage,
           updatedAt: new Date(),
-          previewUrl: newProgress > 80 ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" : undefined,
-          outputUrl: newStatus === "completed" ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" : undefined
+          previewUrl: newProgress > 80 ? effectiveUrl : undefined,
+          outputUrl: newStatus === "completed" ? effectiveUrl : undefined
         };
       });
     }, 2000);
