@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store, BarChart3, HandHeart, Shield, Trophy, Eye, Globe, Heart, Building } from 'lucide-react';
+import { Upload, Palette, Edit, Activity, Zap, LogOut, Sparkles, TrendingUp, Users, Scissors, Layers, Link2, Volume2, Bot, Monitor, Brain, Store, BarChart3, HandHeart, Shield, Trophy, Eye, Globe, Heart, Building, Repeat } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
 
@@ -12,6 +12,7 @@ const Navigation = () => {
     { href: "/", label: "Home", icon: Zap },
     { href: "/dashboard", label: "Dashboard", icon: Brain },
     { href: "/upload", label: "Upload", icon: Upload },
+    { href: "/repurpose", label: "Repurpose", icon: Repeat },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },

@@ -179,14 +179,14 @@ const VoiceCloning = () => {
       // Upload audio to Supabase Storage
       const fileName = `voice-samples/${Date.now()}-sample.webm`;
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('video-uploads')
+        .from('videoupload')
         .upload(fileName, audioBlob);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('video-uploads')
+        .from('videoupload')
         .getPublicUrl(fileName);
 
       // Get current user

@@ -73,7 +73,7 @@ const EncryptedUpload: React.FC<EncryptedUploadProps> = ({ onUploadComplete }) =
       // Step 5: Upload encrypted file to Supabase Storage
       setProgress(60);
       const { error: uploadError } = await supabase.storage
-        .from('video-uploads')
+        .from('videoupload')
         .upload(filePath, new Blob([encryptedData]), {
           contentType: 'application/octet-stream'
         });

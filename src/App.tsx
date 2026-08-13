@@ -37,6 +37,7 @@ import VideoDubbing from "./pages/VideoDubbing";
 import AIMusicGenerator from "./pages/AIMusicGenerator";
 import NotFound from "@/pages/NotFound";
 import Pricing from "@/pages/Pricing";
+import Repurpose from "./pages/Repurpose";
 
 const queryClient = new QueryClient();
 
@@ -282,7 +283,15 @@ const App = () => (
                </ProtectedRoute>
              } 
            />
-           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+           <Route 
+            path="/repurpose" 
+            element={
+              <ProtectedRoute>
+                <Repurpose />
+              </ProtectedRoute>
+            } 
+          />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
            <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UploadedFile {
   id: string;
@@ -19,6 +20,7 @@ const Upload = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [selectedMusic, setSelectedMusic] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
@@ -254,15 +256,53 @@ const Upload = () => {
               <div className="flex justify-end mt-6">
                 <Button 
                   className="bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
-                  disabled={uploadedFiles.length === 0 || !selectedMusic}
-                  onClick={() => {
-                    // Store data in localStorage for next step
-                    localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
-                    localStorage.setItem('selectedMusic', selectedMusic);
-                    navigate('/style');
+                  disabled={uploadedFiles.length === 0 || !selectedMusic || isUploading}
+                  onClick={async () => {
+                    setIsUploading(true);
+                    try {
+                      // Upload files to Supabase Storage (cloud save — survives refresh)
+                      const uploaded: any[] = [];
+                      const { data: { user } } = await supabase.auth.getUser();
+                      const userId = user?.id || 'anon';
+
+                      for (const f of uploadedFiles) {
+                        const path = `uploads/${userId}/${Date.now()}-${f.file.name}`;
+                        const { data, error } = await supabase.storage
+                          .from('videoupload')
+                          .upload(path, f.file);
+                        if (error) {
+                          console.warn('Upload skipped:', error.message);
+                          continue;
+                        }
+                        const { data: { publicUrl } } = supabase.storage
+                          .from('videoupload')
+                          .getPublicUrl(path);
+                        uploaded.push({
+                          id: f.id,
+                          name: f.file.name,
+                          type: f.type,
+                          url: publicUrl,
+                          size: f.file.size
+                        });
+                      }
+
+                      // Store data for next step (with cloud URLs)
+                      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                      localStorage.setItem('uploadedFileUrls', JSON.stringify(uploaded));
+                      localStorage.setItem('selectedMusic', selectedMusic);
+                      navigate('/style');
+                    } catch (e) {
+                      console.error('Upload error:', e);
+                      // Fallback: still proceed with local files
+                      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                      localStorage.setItem('selectedMusic', selectedMusic);
+                      navigate('/style');
+                    } finally {
+                      setIsUploading(false);
+                    }
                   }}
                 >
-                  Continue to Style Selection
+                  {isUploading ? 'Uploading...' : 'Continue to Style Selection'}
                 </Button>
               </div>
             </CardContent>
