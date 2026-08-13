@@ -37,7 +37,13 @@ import VideoDubbing from "./pages/VideoDubbing";
 import AIMusicGenerator from "./pages/AIMusicGenerator";
 import NotFound from "@/pages/NotFound";
 import Pricing from "@/pages/Pricing";
-import Repurpose from "./pages/Repurpose";
+import { lazy, Suspense } from "react";
+import { Loader2 } from "lucide-react";
+
+// Code-split the Repurpose page: its ffmpeg.wasm engine (~500KB) only loads
+// when the user actually visits /repurpose — keeps the main bundle small and
+// avoids iOS WebKit crashes from a giant initial JS payload.
+const Repurpose = lazy(() => import("./pages/Repurpose"));
 
 const queryClient = new QueryClient();
 
@@ -287,7 +293,16 @@ const App = () => (
             path="/repurpose" 
             element={
               <ProtectedRoute>
-                <Repurpose />
+                <Suspense fallback={
+                  <div className="min-h-screen bg-background flex items-center justify-center">
+                    <div className="text-center space-y-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-neon-purple mx-auto" />
+                      <p className="text-muted-foreground">Loading Repurposer…</p>
+                    </div>
+                  </div>
+                }>
+                  <Repurpose />
+                </Suspense>
               </ProtectedRoute>
             } 
           />
