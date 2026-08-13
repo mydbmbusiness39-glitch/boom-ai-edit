@@ -59,6 +59,8 @@ const Repurpose = () => {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressMap, setProgressMap] = useState<Record<string, RepurposeProgress>>({});
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [results, setResults] = useState<Result[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,8 +103,11 @@ const Repurpose = () => {
     const presets = PLATFORMS.filter(p => selectedPlatforms.includes(p.id));
     const baseName = videoFile.name.replace(/\.[^.]+$/, "");
     const newResults: Result[] = [];
+    setTotalCount(presets.length);
 
-    for (const preset of presets) {
+    for (let i = 0; i < presets.length; i++) {
+      const preset = presets[i];
+      setCurrentIndex(i);
       try {
         const blob = await repurposeVideo(videoFile, preset, (p) => {
           setProgressMap(prev => ({ ...prev, [preset.id]: p }));
@@ -125,6 +130,7 @@ const Repurpose = () => {
       }
     }
 
+    setCurrentIndex(0);
     setIsProcessing(false);
   };
 
@@ -304,6 +310,14 @@ const Repurpose = () => {
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3 mt-6">
+                {isProcessing && totalCount > 0 && (
+                  <div className="w-full mb-2">
+                    <Progress value={(currentIndex / totalCount) * 100} className="h-2" />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {results.length} of {totalCount} done
+                    </p>
+                  </div>
+                )}
                 {allDone && results.length > 1 && (
                   <Button variant="outline" onClick={downloadAll}>
                     <Download className="h-4 w-4 mr-2" />
@@ -319,7 +333,10 @@ const Repurpose = () => {
                   {isProcessing ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Repurposing…
+                      {(() => {
+                        const activePreset = PLATFORMS[currentIndex];
+                        return `Working on ${activePreset ? activePreset.name : ""} (${Math.min(currentIndex + 1, totalCount)} of ${totalCount})…`;
+                      })()}
                     </>
                   ) : allDone ? (
                     <>
