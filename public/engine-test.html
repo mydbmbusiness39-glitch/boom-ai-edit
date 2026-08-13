@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BOOM Repurpose Engine Test</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0f0f1a; color: #eee; padding: 24px; max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 22px; }
+  button { background: linear-gradient(90deg,#7c3aed,#06b6d4); border: 0; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 15px; cursor: pointer; margin: 8px 0; }
+  button:disabled { opacity: .5; cursor: wait; }
+  pre { background: #1a1a2e; padding: 12px; border-radius: 8px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+  video { width: 160px; background: #000; border-radius: 8px; margin: 8px 8px 8px 0; }
+  .row { display: flex; flex-wrap: wrap; align-items: flex-start; }
+  .ok { color: #4ade80; font-weight: 600; }
+  .fail { color: #f87171; font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>🎬 BOOM Repurpose Engine — browser test</h1>
+<p>Tests the exact <code>repurposeEngine.ts</code> pipeline against the deployed wasm core: load → 9:16 crop → MP4 output.</p>
+<button id="run">Run Engine Test (loads 32MB wasm, ~30-60s)</button>
+<div id="log"><pre>idle</pre></div>
+<h3>Results</h3>
+<div id="results" class="row"></div>
+
+<script type="module">
+  import { FFmpeg } from "https://unpkg.com/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js";
+
+  const log = document.getElementById("log").querySelector("pre");
+  const results = document.getElementById("results");
+  const btn = document.getElementById("run");
+
+  function append(msg) {
+    log.textContent += "\n" + msg;
+    console.log("[ENGINE TEST]", msg);
+  }
+
+  async function run() {
+    btn.disabled = true;
+    log.textContent = "start";
+    try {
+      // 1. Load core (same as repurposeEngine.getFFmpeg)
+      append("Loading ffmpeg core…");
+      const ffmpeg = new FFmpeg();
+      ffmpeg.on("log", ({ message }) => {
+        if (message.toLowerCase().includes("error")) append("LOG: " + message.slice(0, 160));
+      });
+      ffmpeg.on("progress", ({ progress }) => {
+        append("  progress: " + (progress * 100).toFixed(0) + "%");
+      });
+
+      const coreJS = await (await fetch("/ffmpeg/ffmpeg-core.js")).blob();
+      const coreWasm = await (await fetch("/ffmpeg/ffmpeg-core.wasm")).blob();
+      await ffmpeg.load({
+        coreURL: URL.createObjectURL(coreJS),
+        wasmURL: URL.createObjectURL(coreWasm),
+      });
+      append("✅ Core loaded");
+
+      // 2. Fetch test clip
+      append("Fetching test clip…");
+      const videoRes = await fetch("/testclip.mp4");
+      append("  status: " + videoRes.status + ", size: " + videoRes.headers.get("content-length"));
+      const videoBlob = await videoRes.blob();
+
+      // 3. Write input (fetchFile equivalent — plain bytes)
+      const buf = new Uint8Array(await videoBlob.arrayBuffer());
+      await ffmpeg.writeFile("input.mp4", buf);
+      append("✅ Input written (" + buf.length + " bytes)");
+
+      // 4. Run 9:16 crop — EXACT command from repurposeEngine
+      append("Running: scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920");
+      await ffmpeg.exec([
+        "-i", "input.mp4",
+        "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+        "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-crf", "23",
+        "-c:a", "aac",
+        "-b:a", "128k",
+        "-movflags", "+faststart",
+        "-y",
+        "output.mp4",
+      ]);
+
+      // 5. Read output
+      const out = await ffmpeg.readFile("output.mp4");
+      append("✅ OUTPUT: " + out.length + " bytes");
+      if (out.length === 0) throw new Error("Empty output");
+
+      const outBlob = new Blob([out], { type: "video/mp4" });
+      const url = URL.createObjectURL(outBlob);
+
+      const v = document.createElement("video");
+      v.src = url;
+      v.controls = true;
+      const lbl = document.createElement("p");
+      lbl.textContent = "9:16 output — " + (out.length / 1024 / 1024).toFixed(2) + " MB";
+      const box = document.createElement("div");
+      box.appendChild(v);
+      box.appendChild(lbl);
+      results.appendChild(box);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "repurposed_9x16.mp4";
+      a.textContent = "⬇ download mp4";
+      results.appendChild(a);
+
+      append("🎉 ENGINE TEST PASSED — real MP4 produced in browser");
+    } catch (e) {
+      append("❌ FAILED: " + (e?.message || e));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Run Again";
+    }
+  }
+  btn.onclick = run;
+</script>
+</body>
+</html>
