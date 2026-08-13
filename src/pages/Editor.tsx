@@ -21,6 +21,7 @@ const Editor = () => {
   const [projectData, setProjectData] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showChatAssistant, setShowChatAssistant] = useState(true);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState<string | null>(null);
 
   // Load project data from localStorage
   useEffect(() => {
@@ -28,6 +29,14 @@ const Editor = () => {
     const selectedMusic = localStorage.getItem('selectedMusic');
     const selectedStyle = localStorage.getItem('selectedStyle');
     const videoDuration = localStorage.getItem('videoDuration');
+
+    // Load cloud video URL (uploaded to Supabase storage)
+    try {
+      const urls = JSON.parse(localStorage.getItem('uploadedFileUrls') || '[]');
+      if (Array.isArray(urls) && urls.length > 0 && urls[0]?.url) {
+        setPreviewVideoUrl(urls[0].url);
+      }
+    } catch (e) { /* ignore */ }
     
     setProjectData({
       files: uploadedFiles,
@@ -182,6 +191,15 @@ const Editor = () => {
             <div className="flex-1 bg-black/50 p-6 flex items-center justify-center">
               <div className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
                 <Watermark />
+                {previewVideoUrl ? (
+                  <video 
+                    src={previewVideoUrl}
+                    className="absolute inset-0 w-full h-full object-contain"
+                    controls
+                    playsInline
+                    data-cy="editor-preview-video"
+                  />
+                ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center space-y-4">
                     <div className="w-24 h-24 bg-gradient-to-br from-neon-purple to-neon-green rounded-full flex items-center justify-center">
@@ -194,6 +212,7 @@ const Editor = () => {
                     <p className="text-white/70">Video Preview Area</p>
                   </div>
                 </div>
+                )}
 
                 {/* Video Controls Overlay */}
                 <div className="absolute bottom-4 left-4 right-4">
