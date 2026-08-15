@@ -36,6 +36,7 @@ import ThumbnailGenerator from "./pages/ThumbnailGenerator";
 import VideoDubbing from "./pages/VideoDubbing";
 import AIMusicGenerator from "./pages/AIMusicGenerator";
 import NotFound from "@/pages/NotFound";
+import AutoMusicSync from "./pages/AutoMusicSync";
 import Pricing from "@/pages/Pricing";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -286,6 +287,23 @@ const App = () => (
              element={
                <ProtectedRoute>
                  <Agency />
+               </ProtectedRoute>
+             } 
+           />
+           <Route 
+             path="/auto-music-sync" 
+             element={
+               <ProtectedRoute>
+                 <Suspense fallback={
+                   <div className="min-h-screen bg-background flex items-center justify-center">
+                     <div className="text-center space-y-4">
+                       <Loader2 className="h-8 w-8 animate-spin text-boom-primary mx-auto" />
+                       <p className="text-muted-foreground">Loading Auto Music Sync…</p>
+                     </div>
+                   </div>
+                 }>
+                   <AutoMusicSync />
+                 </Suspense>
                </ProtectedRoute>
              } 
            />
