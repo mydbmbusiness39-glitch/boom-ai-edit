@@ -10,7 +10,7 @@ echo "=========================="
 
 # Configuration
 STAGING_URL=${STAGING_URL:-"http://localhost:8080"}
-SUPABASE_URL=${VITE_SUPABASE_URL:-"https://qtvdzxxdydgncrfbtejj.supabase.co"}
+SUPABASE_URL=${VITE_SUPABASE_URL:-"https://dgrkcuddnfhkwsclviqk.supabase.co"}
 SUPABASE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY:-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0dmR6eHhkeWRnbmNyZmJ0ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNzkyMjQsImV4cCI6MjA3MDg1NTIyNH0.-CHGNWxYejG-fkQcN19KYcKDolipf8mLOZlvp1b1Uws"}
 
 # Functions

@@ -14,7 +14,7 @@ export default defineConfig({
     responseTimeout: 10000,
     
     env: {
-      SUPABASE_URL: 'https://qtvdzxxdydgncrfbtejj.supabase.co',
+      SUPABASE_URL: 'https://dgrkcuddnfhkwsclviqk.supabase.co',
       SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF0dmR6eHhkeWRnbmNyZmJ0ZWpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUyNzkyMjQsImV4cCI6MjA3MDg1NTIyNH0.-CHGNWxYejG-fkQcN19KYcKDolipf8mLOZlvp1b1Uws',
       TEST_USER_EMAIL: 'cypress-test@example.com',
       TEST_USER_PASSWORD: 'cypress-test-password-123'

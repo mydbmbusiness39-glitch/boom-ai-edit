@@ -252,7 +252,7 @@ const Upload = () => {
           <div className="flex justify-end mt-6">
             <Button 
               className="bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
-              disabled={uploadedFiles.length === 0 || !selectedMusic || isUploading}
+              disabled={uploadedFiles.length === 0 || isUploading}
               onClick={async () => {
                 setIsUploading(true);
                 try {
