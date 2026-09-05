@@ -15,6 +15,28 @@ interface UploadedFile {
   type: 'video' | 'image' | 'audio';
 }
 
+const VIDEO_EXTENSIONS = new Set([
+  '.mp4',
+  '.mov',
+  '.m4v',
+  '.webm',
+]);
+
+const isVideoExtension = (name: string) => {
+  const lower = name.toLowerCase();
+  for (const ext of VIDEO_EXTENSIONS) {
+    if (lower.endsWith(ext)) return true;
+  }
+  return false;
+};
+
+const getFileKind = (file: File) => {
+  if (file.type.startsWith('video/')) return 'video';
+  if (file.type.startsWith('image/')) return 'image';
+  if (isVideoExtension(file.name)) return 'video';
+  return null;
+};
+
 const Upload = () => {
   const navigate = useNavigate();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -26,17 +48,26 @@ const Upload = () => {
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
 
-    // Filter for videos and images only (1-5 videos or 1 image)
-    const validFiles = Array.from(files).filter(file => {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-      return isVideo || isImage;
+    const accepted: File[] = [];
+    const rejected: string[] = [];
+
+    Array.from(files).forEach(file => {
+      const kind = getFileKind(file);
+      if (kind === 'video' || kind === 'image') {
+        accepted.push(file);
+      } else {
+        rejected.push(file.name || 'Unnamed file');
+      }
     });
 
-    const videoFiles = validFiles.filter(f => f.type.startsWith('video/'));
-    const imageFiles = validFiles.filter(f => f.type.startsWith('image/'));
+    if (rejected.length > 0) {
+      alert(`Unsupported file type${rejected.length > 1 ? 's' : ''}: ${rejected.join(', ')}`);
+      if (accepted.length === 0) return;
+    }
 
-    // Validation: 1-5 videos OR 1 image
+    const videoFiles = accepted.filter(f => getFileKind(f) === 'video');
+    const imageFiles = accepted.filter(f => getFileKind(f) === 'image');
+
     if (videoFiles.length > 0 && imageFiles.length > 0) {
       alert('Please upload either videos OR images, not both');
       return;
@@ -50,11 +81,11 @@ const Upload = () => {
       return;
     }
 
-    const newFiles = validFiles.map(file => ({
+    const newFiles = accepted.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
-      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
-      type: file.type.startsWith('video/') ? 'video' as const : 'image' as const
+      preview: getFileKind(file) === 'image' ? URL.createObjectURL(file) : undefined,
+      type: (getFileKind(file) === 'video' ? 'video' : 'image') as 'video' | 'image',
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
@@ -213,100 +244,63 @@ const Upload = () => {
                   </div>
                 ))}
               </div>
-
-              {/* Music Selection */}
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-lg font-semibold mb-4">Choose Music</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card 
-                    className={`cursor-pointer transition-all ${selectedMusic === 'auto' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                    onClick={() => setSelectedMusic('auto')}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-primary" />
-                      <p className="font-medium">Auto Music</p>
-                      <p className="text-sm text-muted-foreground">AI-generated soundtrack</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card 
-                    className={`cursor-pointer transition-all ${selectedMusic === 'upbeat' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                    onClick={() => setSelectedMusic('upbeat')}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-secondary" />
-                      <p className="font-medium">Upbeat Pop</p>
-                      <p className="text-sm text-muted-foreground">Energetic and modern</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card 
-                    className={`cursor-pointer transition-all ${selectedMusic === 'chill' ? 'border-primary ring-2 ring-primary/20' : 'border-border hover:border-primary/50'}`}
-                    onClick={() => setSelectedMusic('chill')}
-                  >
-                    <CardContent className="p-4 text-center">
-                      <Music className="h-8 w-8 mx-auto mb-2 text-boom-accent" />
-                      <p className="font-medium">Chill Ambient</p>
-                      <p className="text-sm text-muted-foreground">Relaxed and atmospheric</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="flex justify-end mt-6">
-                <Button 
-                  className="bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
-                  disabled={uploadedFiles.length === 0 || !selectedMusic || isUploading}
-                  onClick={async () => {
-                    setIsUploading(true);
-                    try {
-                      // Upload files to Supabase Storage (cloud save — survives refresh)
-                      const uploaded: any[] = [];
-                      const { data: { user } } = await supabase.auth.getUser();
-                      const userId = user?.id || 'anon';
-
-                      for (const f of uploadedFiles) {
-                        const path = `uploads/${userId}/${Date.now()}-${f.file.name}`;
-                        const { data, error } = await supabase.storage
-                          .from('videoupload')
-                          .upload(path, f.file);
-                        if (error) {
-                          console.warn('Upload skipped:', error.message);
-                          continue;
-                        }
-                        const { data: { publicUrl } } = supabase.storage
-                          .from('videoupload')
-                          .getPublicUrl(path);
-                        uploaded.push({
-                          id: f.id,
-                          name: f.file.name,
-                          type: f.type,
-                          url: publicUrl,
-                          size: f.file.size
-                        });
-                      }
-
-                      // Store data for next step (with cloud URLs)
-                      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
-                      localStorage.setItem('uploadedFileUrls', JSON.stringify(uploaded));
-                      localStorage.setItem('selectedMusic', selectedMusic);
-                      navigate('/style');
-                    } catch (e) {
-                      console.error('Upload error:', e);
-                      // Fallback: still proceed with local files
-                      localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
-                      localStorage.setItem('selectedMusic', selectedMusic);
-                      navigate('/style');
-                    } finally {
-                      setIsUploading(false);
-                    }
-                  }}
-                >
-                  {isUploading ? 'Uploading...' : 'Continue to Style Selection'}
-                </Button>
-              </div>
             </CardContent>
           </Card>
+        )}
+
+        {uploadedFiles.length > 0 && (
+          <div className="flex justify-end mt-6">
+            <Button 
+              className="bg-gradient-to-r from-boom-primary to-boom-secondary text-white hover:shadow-lg hover:shadow-boom-primary/25"
+              disabled={uploadedFiles.length === 0 || !selectedMusic || isUploading}
+              onClick={async () => {
+                setIsUploading(true);
+                try {
+                  // Upload files to Supabase Storage (cloud save — survives refresh)
+                  const uploaded: any[] = [];
+                  const { data: { user } } = await supabase.auth.getUser();
+                  const userId = user?.id || 'anon';
+
+                  for (const f of uploadedFiles) {
+                    const path = `uploads/${userId}/${Date.now()}-${f.file.name}`;
+                    const { data, error } = await supabase.storage
+                      .from('videoupload')
+                      .upload(path, f.file);
+                    if (error) {
+                      console.warn('Upload skipped:', error.message);
+                      continue;
+                    }
+                    const { data: { publicUrl } } = supabase.storage
+                      .from('videoupload')
+                      .getPublicUrl(path);
+                    uploaded.push({
+                      id: f.id,
+                      name: f.file.name,
+                      type: f.type,
+                      url: publicUrl,
+                      size: f.file.size
+                    });
+                  }
+
+                  // Store data for next step (with cloud URLs)
+                  localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                  localStorage.setItem('uploadedFileUrls', JSON.stringify(uploaded));
+                  localStorage.setItem('selectedMusic', selectedMusic);
+                  navigate('/style');
+                } catch (e) {
+                  console.error('Upload error:', e);
+                  // Fallback: still proceed with local files
+                  localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                  localStorage.setItem('selectedMusic', selectedMusic);
+                  navigate('/style');
+                } finally {
+                  setIsUploading(false);
+                }
+              }}
+            >
+              {isUploading ? 'Uploading...' : 'Continue to Style Selection'}
+            </Button>
+          </div>
         )}
       </div>
     </Layout>
