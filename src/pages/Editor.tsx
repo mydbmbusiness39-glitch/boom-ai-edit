@@ -415,14 +415,18 @@ const Editor = () => {
 
       const jobId = data.job?.id;
       console.log('[DIAGNOSTIC] BOOM jobId resolved', { jobId });
-      if (!jobId) {
-        throw new Error("No job ID returned from create-job");
+
+      if (!jobId || typeof jobId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(jobId)) {
+        console.error('[DIAGNOSTIC] BOOM hard fail: invalid job ID', { jobId });
+        toast({
+          title: "Couldn't create your video",
+          description: "The server returned an invalid job ID. Please try again.",
+          variant: "destructive",
+        });
+        throw new Error("Invalid job ID returned from create-job");
       }
 
-      // Persist only the job ID for navigation; Status page queries jobs_new
       localStorage.setItem("currentJobId", jobId);
-
-      // Navigate to real status page
       navigate(`/status/${jobId}`);
     } catch (error: any) {
       console.error("Error creating job:", error);
