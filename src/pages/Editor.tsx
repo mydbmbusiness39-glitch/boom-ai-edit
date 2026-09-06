@@ -197,10 +197,23 @@ const Editor = () => {
   // Persist captions + style
 
   const handleBoomClick = async () => {
-    if (!projectData) return;
+    console.log('[DIAGNOSTIC] BOOM handler entered', {
+      hasProjectData: !!projectData,
+      hasUser: !!user,
+      hasSession: !!session,
+      filesCount: projectData?.files?.length || 0,
+      style: projectData?.style,
+      duration: projectData?.duration,
+    });
+
+    if (!projectData) {
+      console.log('[DIAGNOSTIC] BOOM early return: missing projectData');
+      return;
+    }
 
     // Auth guard: require logged-in user
     if (!user || !session) {
+      console.log('[DIAGNOSTIC] BOOM early return: auth guard failed');
       toast({
         title: "Please sign in",
         description: "You need to be signed in to create a video.",
@@ -243,6 +256,7 @@ const Editor = () => {
           const path = `uploads/${user.id}/${Date.now()}-${fileObj.name}`;
           const { error } = await supabase.storage.from("videoupload").upload(path, fileObj);
           if (error) {
+            console.log('[DIAGNOSTIC] BOOM early return: storage upload failed', { fileName: fileObj.name, error: error.message });
             toast({
               title: "Upload failed",
               description: `Could not upload ${fileObj.name}. Please try again.`,
@@ -269,6 +283,7 @@ const Editor = () => {
       }
 
       if (cloudUrls.length === 0) {
+        console.log('[DIAGNOSTIC] BOOM early return: cloudUrls empty');
         toast({
           title: "No files to render",
           description: "Please upload media files before creating a video.",
@@ -330,6 +345,7 @@ const Editor = () => {
             resolution: { width: 1080, height: 1920 },
           });
         } catch (compileErr: any) {
+          console.log('[DIAGNOSTIC] BOOM early return: timeline compile failed', { message: compileErr?.message || 'Unknown compile error' });
           toast({
             title: "Timeline compile failed",
             description: compileErr?.message || "Unknown compile error",
@@ -352,11 +368,24 @@ const Editor = () => {
       };
 
       // Call real create-job Edge Function with user JWT
+      console.log('[DIAGNOSTIC] BOOM invoking create-job', {
+        name,
+        filesCount: filesPayload.length,
+        style_id: projectData.style,
+        duration: projectData.duration,
+        hasTimeline: !!compiledTimeline,
+      });
       const { data, error } = await supabase.functions.invoke("create-job", {
         body: jobData,
         headers: {
-          Authorization: `Bearer ***}`,
+          Authorization: `Bearer *** ***}`,
         },
+      });
+      console.log('[DIAGNOSTIC] BOOM create-job response', {
+        hasError: !!error,
+        errorMessage: error?.message || null,
+        dataKeys: data ? Object.keys(data) : [],
+        jobId: data?.job?.id || null,
       });
 
       if (error) {
@@ -385,6 +414,7 @@ const Editor = () => {
       }
 
       const jobId = data.job?.id;
+      console.log('[DIAGNOSTIC] BOOM jobId resolved', { jobId });
       if (!jobId) {
         throw new Error("No job ID returned from create-job");
       }

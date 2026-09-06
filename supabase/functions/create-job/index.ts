@@ -18,6 +18,11 @@ serve(async (req)=>{
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
+    console.log('[DIAGNOSTIC] create-job request received', {
+      hasAuthHeader: !!authHeader,
+      method: req.method,
+      contentType: req.headers.get('content-type'),
+    });
     if (!authHeader) {
       throw new Error('No authorization header');
     }
@@ -31,10 +36,23 @@ serve(async (req)=>{
     });
     // Get user
     const { data: { user }, error: userError } = await userSupabase.auth.getUser();
+    console.log('[DIAGNOSTIC] create-job auth result', {
+      userId: user?.id || null,
+      userError: userError?.message || null,
+    });
     if (userError || !user) {
       throw new Error('User not authenticated');
     }
     const jobRequest = await req.json();
+    console.log('[DIAGNOSTIC] create-job payload parsed', {
+      userId: user.id,
+      name: jobRequest.name,
+      filesCount: Array.isArray(jobRequest.files?.media) ? jobRequest.files.media.length : 0,
+      style_id: jobRequest.style_id,
+      duration: jobRequest.duration,
+      caption_style: jobRequest.caption_style,
+      hasTimeline: !!jobRequest.files?.timeline,
+    });
     console.log('Creating job for user:', user.id);
     // Check job limit
     const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
@@ -51,7 +69,7 @@ serve(async (req)=>{
       throw new Error('Daily job limit reached (5 jobs per day for free tier)');
     }
     // Create new job
-    const { data: newJob, error: createError } = await supabase.from('jobs_new').insert({
+    const insertPayload = {
       name: jobRequest.name,
       user_id: user.id,
       files: {
@@ -63,7 +81,13 @@ serve(async (req)=>{
       status: 'pending',
       progress: 0,
       watermarked: profile.plan === 'free' // Free tier gets watermark
-    }).select().single();
+    };
+    console.log('[DIAGNOSTIC] create-job insert attempted', insertPayload);
+    const { data: newJob, error: createError } = await supabase.from('jobs_new').insert(insertPayload).select().single();
+    console.log('[DIAGNOSTIC] create-job insert result', {
+      newJobId: newJob?.id || null,
+      createError: createError?.message || null,
+    });
     if (createError) {
       throw new Error(`Failed to create job: ${createError.message}`);
     }

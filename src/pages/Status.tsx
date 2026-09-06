@@ -82,6 +82,14 @@ const Status = () => {
           error: data.error || undefined,
         };
 
+        console.log('[DIAGNOSTIC] Status fetchJob mapped row', {
+          jobId: mappedJob.id,
+          status: mappedJob.status,
+          progress: mappedJob.progress,
+          outputUrlPresent: !!mappedJob.outputUrl,
+          outputUrl: mappedJob.outputUrl || null,
+        });
+
         setJob(mappedJob);
         setIsLoading(false);
 
