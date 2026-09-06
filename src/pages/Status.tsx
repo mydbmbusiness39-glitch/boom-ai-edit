@@ -25,9 +25,21 @@ const Status = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
   // Load real job data from jobs_new and poll for updates
   useEffect(() => {
     if (!jobId) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (!UUID_REGEX.test(jobId)) {
+      try {
+        localStorage.removeItem("currentJobId");
+      } catch {}
+      setPollError(`Invalid job ID: "${jobId}". Expected a UUID.`);
+      setJob(null);
       setIsLoading(false);
       return;
     }
