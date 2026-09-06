@@ -106,3 +106,51 @@ export interface RenderJob {
   startedAt?: Date;
   completedAt?: Date;
 }
+// Smart Captions Phase 1
+export interface CaptionSegment {
+  text: string;
+  start: number;   // seconds
+  end: number;     // seconds
+}
+
+export type CaptionStylePreset = 'classic' | 'bold' | 'minimal';
+
+export interface CaptionStyleConfig {
+  id: CaptionStylePreset;
+  name: string;
+  fontSize: number;
+  fontColor: string;
+  borderWidth: number;
+  borderColor: string;
+  yOffset: number;     // pixels from bottom
+}
+
+export const CAPTION_STYLES: Record<CaptionStylePreset, CaptionStyleConfig> = {
+  classic: {
+    id: 'classic',
+    name: 'Classic',
+    fontSize: 48,
+    fontColor: 'white',
+    borderWidth: 3,
+    borderColor: 'black',
+    yOffset: 0,   // calculated from fontsize*1.6 baseline
+  },
+  bold: {
+    id: 'bold',
+    name: 'Bold',
+    fontSize: 60,
+    fontColor: 'yellow',
+    borderWidth: 5,
+    borderColor: 'black',
+    yOffset: 0,
+  },
+  minimal: {
+    id: 'minimal',
+    name: 'Minimal',
+    fontSize: 36,
+    fontColor: 'white',
+    borderWidth: 1,
+    borderColor: 'black',
+    yOffset: -40,  // slightly higher
+  },
+};

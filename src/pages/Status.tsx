@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { CheckCircle, Clock, AlertCircle, Download, RefreshCw, Zap, Share2, Play } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { CheckCircle, Clock, AlertCircle, Download, RefreshCw, Share2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -13,114 +13,97 @@ import { Job, JobStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
 import { isOwner } from "@/lib/access";
+import { useToast } from "@/hooks/use-toast";
 
 const Status = () => {
   const { jobId } = useParams<{ jobId: string }>();
+  const navigate = useNavigate();
   const [job, setJob] = useState<Job | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [pollError, setPollError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { toast } = useToast();
 
-  // Load job data and simulate updates
+  // Load real job data from jobs_new and poll for updates
   useEffect(() => {
-    // Try to load job data from localStorage
-    const jobData = localStorage.getItem(`job-${jobId}`);
-    
-    const mockJob: Job = jobData ? {
-      id: jobId || "job-123",
-      name: "Video Project",
-      status: "processing" as JobStatus,
-      progress: 0,
-      createdAt: new Date(JSON.parse(jobData).createdAt),
-      updatedAt: new Date(),
-      estimatedCompletionTime: new Date(Date.now() + 1000 * 60 * 2), // 2 minutes from now
-      renderSettings: {
-        quality: "high",
-        format: "mp4",
-        bitrate: 5000
-      },
-      timeline: {
-        id: "timeline-1",
-        jobId: jobId || "job-123",
-        items: [],
-        duration: parseInt(JSON.parse(jobData).duration || '15'),
-        fps: 30,
-        resolution: { width: 1080, height: 1920 } // 9:16 aspect ratio
-      },
-      assets: [],
-      stage: "uploading"
-    } : {
-      id: jobId || "job-123",
-      name: "Sample Video Project",
-      status: "processing" as JobStatus,
-      progress: 45,
-      createdAt: new Date(Date.now() - 1000 * 60 * 5),
-      updatedAt: new Date(),
-      estimatedCompletionTime: new Date(Date.now() + 1000 * 60 * 2),
-      renderSettings: {
-        quality: "high",
-        format: "mp4",
-        bitrate: 5000
-      },
-      timeline: {
-        id: "timeline-1",
-        jobId: jobId || "job-123",
-        items: [],
-        duration: 15,
-        fps: 30,
-        resolution: { width: 1080, height: 1920 } // 9:16 aspect ratio
-      },
-      assets: [],
-      stage: "processing"
+    if (!jobId) {
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    let pollInterval: ReturnType<typeof setInterval>;
+
+    const fetchJob = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("jobs_new")
+          .select(
+            "id, name, status, progress, output_url, files, style_id, duration, created_at, updated_at, watermarked, error"
+          )
+          .eq("id", jobId)
+          .single();
+
+        if (!isMounted) return;
+
+        if (error || !data) {
+          // Job not found or auth failed
+          setPollError("Job not found or you no longer have access.");
+          setIsLoading(false);
+          return;
+        }
+
+        setPollError(null);
+
+        // Map backend row to frontend Job shape
+        const mappedJob: Job = {
+          id: data.id,
+          name: data.name || "Video Project",
+          status: (data.status as JobStatus) || "pending",
+          timeline: {
+            id: `timeline-${data.id}`,
+            jobId: data.id,
+            items: [],
+            duration: data.duration || 15,
+            fps: 30,
+            resolution: { width: 1080, height: 1920 },
+          },
+          assets: [],
+          outputUrl: data.output_url || undefined,
+          progress: data.progress || 0,
+          createdAt: new Date(data.created_at),
+          updatedAt: new Date(data.updated_at),
+          renderSettings: {
+            quality: "high",
+            format: "mp4",
+            bitrate: 5000,
+          },
+          error: data.error || undefined,
+        };
+
+        setJob(mappedJob);
+        setIsLoading(false);
+
+        // Stop polling once completed or failed
+        if (mappedJob.status === "completed" || mappedJob.status === "failed") {
+          clearInterval(pollInterval);
+        }
+      } catch (e: any) {
+        if (!isMounted) return;
+        setPollError(e.message || "Failed to load job status.");
+        setIsLoading(false);
+      }
     };
 
-    setJob(mockJob);
-    setIsLoading(false);
+    // Initial fetch + polling
+    fetchJob();
+    pollInterval = setInterval(fetchJob, 3000);
 
-    // Poll status every 2 seconds
-    const interval = setInterval(() => {
-      setJob(prev => {
-        if (!prev || prev.status === "completed") return prev;
-        
-        const newProgress = Math.min((prev.progress || 0) + Math.random() * 15, 100);
-        let newStatus: JobStatus = prev.status;
-        let newStage = prev.stage;
-        
-        // Stage progression
-        if (newProgress > 20 && prev.stage === "uploading") {
-          newStage = "analyzing";
-        } else if (newProgress > 40 && prev.stage === "analyzing") {
-          newStage = "processing";
-        } else if (newProgress > 60 && prev.stage === "processing") {
-          newStage = "rendering";
-        } else if (newProgress >= 100) {
-          newStatus = "completed";
-          newStage = "completed";
-        }
-        
-        // Use the user's actual uploaded video if available (from Upload page)
-        const storedUrls = localStorage.getItem('uploadedFileUrls');
-        let userVideoUrl: string | undefined;
-        try {
-          const urls = storedUrls ? JSON.parse(storedUrls) : [];
-          if (Array.isArray(urls) && urls.length > 0) userVideoUrl = urls[0]?.url;
-        } catch (e) { /* ignore */ }
-        const fallbackUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
-        const effectiveUrl = userVideoUrl || fallbackUrl;
-
-        return {
-          ...prev,
-          progress: newProgress,
-          status: newStatus,
-          stage: newStage,
-          updatedAt: new Date(),
-          previewUrl: newProgress > 80 ? effectiveUrl : undefined,
-          outputUrl: newStatus === "completed" ? effectiveUrl : undefined
-        };
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(pollInterval);
+    };
   }, [jobId]);
 
   const getStatusIcon = (status: JobStatus) => {
@@ -151,15 +134,13 @@ const Status = () => {
     }
   };
 
-  const formatTimeRemaining = (date: Date) => {
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
-    const minutes = Math.max(0, Math.ceil(diff / (1000 * 60)));
-    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-  };
-
   const handleShare = () => {
     setShowShareModal(true);
+  };
+
+  // Auth/session loss during polling
+  const handleReauth = () => {
+    navigate("/auth", { replace: true });
   };
 
   if (isLoading) {
@@ -183,8 +164,11 @@ const Status = () => {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
             <h1 className="text-2xl font-bold">Job Not Found</h1>
             <p className="text-muted-foreground">
-              The job with ID "{jobId}" could not be found.
+              {pollError || `The job with ID "${jobId}" could not be found.`}
             </p>
+            <Button variant="outline" onClick={() => navigate("/editor")}>
+              Back to Editor
+            </Button>
           </div>
         </div>
       </Layout>
@@ -213,26 +197,21 @@ const Status = () => {
                   <p className="text-muted-foreground">Job ID: {job.id}</p>
                 </div>
               </div>
-              
+
               <Badge className={cn("text-sm px-3 py-1", getStatusColor(job.status))} data-cy="job-status">
                 {job.status.toUpperCase()}
               </Badge>
             </div>
           </CardHeader>
-          
+
           <CardContent className="space-y-6">
             {job.status !== "completed" && job.status !== "failed" && (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span>Stage: {job.stage}</span>
+                  <span>Processing</span>
                   <span className="font-mono" data-cy="progress-percentage">{Math.round(job.progress || 0)}%</span>
                 </div>
                 <Progress value={job.progress || 0} className="h-3" data-cy="progress-bar" />
-                {job.estimatedCompletionTime && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    Estimated completion: {formatTimeRemaining(job.estimatedCompletionTime)}
-                  </p>
-                )}
               </div>
             )}
 
@@ -244,8 +223,8 @@ const Status = () => {
                   Preview Available
                 </h3>
                 <div className="relative">
-                  <video 
-                    controls 
+                  <video
+                    controls
                     className="w-full rounded-lg"
                     src={job.previewUrl}
                     data-cy="preview-video"
@@ -274,10 +253,6 @@ const Status = () => {
                     <span>{job.timeline.fps} fps</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Quality:</span>
-                    <span className="capitalize">{job.renderSettings.quality}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Format:</span>
                     <span className="uppercase">{job.renderSettings.format}</span>
                   </div>
@@ -295,10 +270,6 @@ const Status = () => {
                     <span className="text-muted-foreground">Last Updated:</span>
                     <span>{job.updatedAt.toLocaleTimeString()}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Assets:</span>
-                    <span>{job.assets.length} files</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -313,11 +284,11 @@ const Status = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Final Video */}
                 <div className="relative">
-                  <video 
-                    controls 
+                  <video
+                    controls
                     className="w-full rounded-lg"
                     src={job.outputUrl}
                     data-cy="output-video"
@@ -326,20 +297,27 @@ const Status = () => {
                   </video>
                   <Watermark />
                 </div>
-                
+
                 {/* Watermark Notice for Free Tier (owner sees none) */}
-                {!isOwner(user?.email) && (
-                <div className="bg-muted/50 border border-border rounded-lg p-4" data-cy="watermark-notice">
-                  <p className="text-sm text-muted-foreground text-center">
-                    <span className="font-medium">Free Tier:</span> This video includes a watermark. 
-                    Upgrade to Pro to remove watermarks and unlock more features.
-                  </p>
-                </div>
+                {job.watermarked && !isOwner(user?.email) && (
+                  <div className="bg-muted/50 border border-border rounded-lg p-4" data-cy="watermark-notice">
+                    <p className="text-sm text-muted-foreground text-center">
+                      <span className="font-medium">Free Tier:</span> This video includes a watermark.
+                      Upgrade to Pro to remove watermarks and unlock more features.
+                    </p>
+                  </div>
                 )}
-                
+
+                {/* iPhone Export Guidance */}
+                {job.status === "completed" && job.outputUrl && (
+                  <p className="text-xs text-muted-foreground text-center" data-cy="export-guidance">
+                    For full quality, save to Files — not Photos.
+                  </p>
+                )}
+
                 {/* Action Buttons */}
                 <div className="flex justify-center space-x-4">
-                  <Button 
+                  <Button
                     size="lg"
                     variant="outline"
                     onClick={handleShare}
@@ -348,10 +326,19 @@ const Status = () => {
                     <Share2 className="h-5 w-5 mr-2" />
                     Share
                   </Button>
-                  <Button 
+                  <Button
                     size="lg"
                     className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-green/25"
-                    onClick={() => window.open(job.outputUrl, '_blank')}
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = job.outputUrl as string;
+                      link.target = '_blank';
+                      link.rel = 'noopener noreferrer';
+                      link.download = 'boom-export.mp4';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
                     data-cy="download-button"
                   >
                     <Download className="h-5 w-5 mr-2" />
@@ -372,9 +359,9 @@ const Status = () => {
                     <p className="text-sm text-muted-foreground mb-4" data-cy="error-message">
                       {job.error || "An unexpected error occurred during rendering"}
                     </p>
-                    <Button variant="outline">
+                    <Button variant="outline" onClick={() => navigate('/editor')}>
                       <RefreshCw className="h-4 w-4 mr-2" />
-                      Retry Render
+                      Back to Editor
                     </Button>
                   </div>
                 </div>
