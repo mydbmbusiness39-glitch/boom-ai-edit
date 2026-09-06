@@ -283,14 +283,28 @@ const Upload = () => {
                   }
 
                   // Store data for next step (with cloud URLs)
-                  localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                  const serializableFiles = uploadedFiles.map((f) => ({
+                    id: f.id,
+                    name: f.file?.name || f.name,
+                    type: f.type,
+                    size: f.file?.size || f.size || 0,
+                    preview: f.preview,
+                  }));
+                  localStorage.setItem('uploadedFiles', JSON.stringify(serializableFiles));
                   localStorage.setItem('uploadedFileUrls', JSON.stringify(uploaded));
                   localStorage.setItem('selectedMusic', selectedMusic);
                   navigate('/style');
                 } catch (e) {
                   console.error('Upload error:', e);
-                  // Fallback: still proceed with local files
-                  localStorage.setItem('uploadedFiles', JSON.stringify(uploadedFiles));
+                  // Fallback: still proceed with metadata-only local files
+                  const serializableFiles = uploadedFiles.map((f) => ({
+                    id: f.id,
+                    name: f.file?.name || f.name,
+                    type: f.type,
+                    size: f.file?.size || f.size || 0,
+                    preview: f.preview,
+                  }));
+                  localStorage.setItem('uploadedFiles', JSON.stringify(serializableFiles));
                   localStorage.setItem('selectedMusic', selectedMusic);
                   navigate('/style');
                 } finally {
