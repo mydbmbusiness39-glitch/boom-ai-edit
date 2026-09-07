@@ -2,7 +2,9 @@ const fs = require('fs');
 const path = require('path');
 
 const statusPath = path.join(__dirname, '..', 'src', 'pages', 'Status.tsx');
-const bundlePath = path.join(__dirname, '..', 'dist', 'assets', 'index-CDjdhBUw.js');
+const bundlePattern = path.join(__dirname, '..', 'dist', 'assets', 'index-*.js');
+const bundleFiles = fs.readdirSync(path.dirname(bundlePattern)).filter(f => f.startsWith('index-') && f.endsWith('.js'));
+const bundlePath = path.join(path.dirname(bundlePattern), bundleFiles[bundleFiles.length - 1]);
 
 let failed = false;
 function assert(cond, msg) {

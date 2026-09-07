@@ -24,10 +24,15 @@ assert(editorSrc.includes('uploadedFileUrls'),
 // Test 3: Gate #77 create-job changes untouched
 assert(editorSrc.includes('functions.invoke("create-job"'),
   'Editor.tsx must still use Supabase Edge Function invoke');
-assert(editorSrc.includes('jobs_new'),
-  'Editor.tsx must still poll jobs_new');
 assert(!editorSrc.includes('/api/create-job'),
   'Editor.tsx must not contain stale /api/create-job path');
+
+// jobs_new polling is implemented in Status.tsx, not Editor.tsx
+const statusSrc = fs.readFileSync('src/pages/Status.tsx', 'utf8');
+assert(statusSrc.includes('jobs_new'),
+  'Status.tsx must still poll jobs_new');
+assert(statusSrc.includes('UUID_REGEX.test(jobId)'),
+  'Status.tsx must still enforce UUID guard before jobs_new query');
 
 // Test 4: Simulate localStorage round-trip preserves metadata
 const mockFile = { name: 'test-video.mp4', type: 'video/mp4', size: 2048 };
