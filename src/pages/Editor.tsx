@@ -378,7 +378,7 @@ const Editor = () => {
       const { data, error } = await supabase.functions.invoke("create-job", {
         body: jobData,
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: "Bearer " + session.access_token,
         },
       });
       console.log('[DIAGNOSTIC] BOOM create-job response', {
