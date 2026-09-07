@@ -97,13 +97,13 @@ const Editor = () => {
     const baseDuration = sourceDuration();
     const items: EditItem[] = projectData.files.map((file: any, index: number) => ({
       id: `file-${index}`,
-      name: file.file.name,
+      name: file.file?.name || file.name,
       type: file.type,
       startTime: 0,
       duration: baseDuration,
       track: index,
       color: file.type === 'video' ? "bg-neon-purple/20 border-neon-purple" : "bg-blue-500/20 border-blue-500",
-      sourceName: file.file.name,
+      sourceName: file.file?.name || file.name,
     }));
     if (projectData.music) {
       items.push({
@@ -1016,7 +1016,7 @@ const Editor = () => {
                             <div className="space-y-1">
                               {projectData.files.map((file: any, index: number) => (
                                 <p key={index} className="text-sm text-muted-foreground truncate">
-                                  {file.file.name}
+                                  {file.file?.name || file.name}
                                 </p>
                               ))}
                             </div>
