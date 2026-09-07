@@ -272,8 +272,11 @@ const Editor = () => {
             size: fileObj.size,
           });
         }
-      } else if (uploadedFileUrls.length > 0) {
-        // Use the URLs from the Upload page (already in public bucket)
+      }
+
+      if (cloudUrls.length === 0 && uploadedFileUrls.length > 0) {
+        // Fallback to already-uploaded public URLs when local File objects
+        // are unavailable after reload.
         cloudUrls = uploadedFileUrls.map((u: any) => ({
           name: u.name,
           type: u.type,

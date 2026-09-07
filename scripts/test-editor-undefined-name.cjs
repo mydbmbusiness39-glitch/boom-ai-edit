@@ -37,8 +37,22 @@ if (unsafeCount === 0) {
   tests.push(`FAIL: ${unsafeCount} unsafe file.file.name in source`);
 }
 
+// Test 5: Fallback to uploadedFileUrls when cloudUrls is empty
+if (/if \(cloudUrls\.length === 0 && uploadedFileUrls\.length > 0\)/.test(editorSource)) {
+  tests.push('PASS: fallback to uploadedFileUrls present');
+} else {
+  tests.push('FAIL: fallback to uploadedFileUrls missing');
+}
+
+// Test 6: Fallback assigns cloudUrls from uploadedFileUrls
+if (/cloudUrls = uploadedFileUrls\.map\(/.test(editorSource)) {
+  tests.push('PASS: uploadedFileUrls mapped to cloudUrls');
+} else {
+  tests.push('FAIL: uploadedFileUrls not mapped to cloudUrls');
+}
+
 console.log(tests.join('\n'));
 const passed = tests.filter(t => t.startsWith('PASS')).length;
 const failed = tests.filter(t => t.startsWith('FAIL')).length;
-console.log(`\nEDITOR_UNDEFINED_NAME_TESTS=${passed}/${passed+failed}`);
+console.log(`\nEDITOR_RENDER_TESTS=${passed}/${passed+failed}`);
 if (failed > 0) process.exit(1);
