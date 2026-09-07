@@ -304,9 +304,8 @@ const Editor = () => {
         size: u.size,
       }));
 
-      // Map local EditItems to worker TimelineItem contract.
-      // Resolve each EditItem to exactly one uploaded source URL by name.
-      // Fail safely if source mapping is missing/ambiguous.
+      // Build timeline items that conform to the worker contract.
+      // Normalize source mapping so reloaded metadata-only files still resolve.
       const sourceIndex = new Map<string, { url: string; type: string }>();
       const ambiguous = new Set<string>();
       for (const u of cloudUrls) {
@@ -316,26 +315,25 @@ const Editor = () => {
       }
       const ambiguousNames = Array.from(ambiguous);
       const timelineItems = (editItems || []).map((item: any, idx: number) => {
-        const src = sourceIndex.get(item.sourceName || item.name);
+        const rawSource = item.sourceName || item.name;
+        const src = sourceIndex.get(rawSource);
         if (!src) {
-          throw new Error(`Edit source missing: ${item.sourceName || item.name}`);
+          throw new Error(`Edit source missing: ${rawSource}`);
         }
-        if (ambiguousNames.includes(item.sourceName || item.name)) {
-          throw new Error(`Ambiguous source mapping: ${item.sourceName || item.name}`);
+        if (ambiguousNames.includes(rawSource)) {
+          throw new Error(`Ambiguous source mapping: ${rawSource}`);
         }
-        return {
+        const content = { src: src.url, name: rawSource, type: src.type };
+        const timelineItem: any = {
           id: item.id,
-          type: item.type === "audio" ? "audio" : "video",
+          type: item.type === 'audio' ? 'audio' : 'video',
           start_time: Number(item.startTime || 0),
-          end_time: Number(item.startTime + item.duration),
+          end_time: Number((item.startTime || 0) + (item.duration || 0)),
           track: Number(item.track || 0),
-          content: {
-            src: src.url,
-            name: item.sourceName || item.name,
-            type: src.type,
-          },
+          content,
           effects: [],
         };
+        return timelineItem;
       });
 
       let compiledTimeline: any = null;
@@ -378,6 +376,7 @@ const Editor = () => {
         duration: projectData.duration,
         hasTimeline: !!compiledTimeline,
       });
+      console.log('[DIAGNOSTIC] BEFORE create-job invoke');
       const { data, error } = await supabase.functions.invoke("create-job", {
         body: jobData,
         headers: {
