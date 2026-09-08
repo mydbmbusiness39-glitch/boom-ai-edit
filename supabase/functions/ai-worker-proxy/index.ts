@@ -12,15 +12,31 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const traceId = req.headers.get('x-trace-id') || 'no-trace';
+
   try {
-    const AI_WORKER_URL = Deno.env.get('AI_WORKER_URL') || 'http://localhost:8000';
+    console.log('[DIAGNOSTIC] ai-worker-proxy request entry', {
+      traceId,
+      method: req.method,
+      url: req.url
+    });
+
+    const AI_WORKER_URL = Deno.env.get('AI_WORKER_URL');
+    console.log('[DIAGNOSTIC] ai-worker-proxy env/bootstrap', {
+      traceId,
+      aiWorkerUrl: AI_WORKER_URL || 'UNSET'
+    });
+
     const url = new URL(req.url);
     const path = url.pathname.replace('/functions/v1/ai-worker-proxy', '');
-    
+
     // Forward request to AI worker service
-    const targetUrl = `${AI_WORKER_URL}${path}`;
-    console.log(`Proxying request to: ${targetUrl}`);
-    
+    const targetUrl = `${AI_WORKER_URL || 'http://localhost:8000'}${path}`;
+    console.log('[DIAGNOSTIC] ai-worker-proxy proxying', {
+      traceId,
+      targetUrl
+    });
+
     const forwardedRequest = new Request(targetUrl, {
       method: req.method,
       headers: req.headers,
@@ -29,7 +45,13 @@ serve(async (req) => {
 
     const response = await fetch(forwardedRequest);
     const data = await response.text();
-    
+
+    console.log('[DIAGNOSTIC] ai-worker-proxy worker response', {
+      traceId,
+      workerStatus: response.status,
+      contentType: response.headers.get('Content-Type')
+    });
+
     return new Response(data, {
       status: response.status,
       headers: {
@@ -37,13 +59,19 @@ serve(async (req) => {
         'Content-Type': response.headers.get('Content-Type') || 'application/json',
       },
     });
-    
+
   } catch (error) {
-    console.error('AI Worker proxy error:', error);
+    console.error('[DIAGNOSTIC] ai-worker-proxy caught exception', {
+      traceId,
+      name: error?.name || 'unknown',
+      message: error?.message || 'unknown',
+      stack: error?.stack || 'unknown'
+    });
     return new Response(
       JSON.stringify({ 
         error: 'AI Worker service unavailable',
-        message: error.message 
+        message: error.message,
+        traceId
       }),
       { 
         status: 500,

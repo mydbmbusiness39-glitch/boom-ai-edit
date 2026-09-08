@@ -51,19 +51,63 @@ export interface TimelineResponse {
   estimated_render_time: number;
 }
 
+function generateTraceId(): string {
+  try {
+    const crypto = globalThis.crypto || (globalThis as any).window?.crypto;
+    const bytes = crypto ? crypto.getRandomValues(new Uint8Array(16)) : new Uint8Array(16);
+    const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    return `trace-${hex}`;
+  } catch (e) {
+    return `trace-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+  }
+}
+
 class AIWorkerClient {
   private async callWorker(endpoint: string, options: RequestInit = {}) {
+    const traceId = generateTraceId();
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Trace-Id': traceId,
+      ...(options.headers || {})
+    };
+
+    console.log('[DIAGNOSTIC] ai-worker-proxy invoke start', {
+      endpoint,
+      traceId,
+      method: options.method || 'POST'
+    });
+
     const { data, error } = await supabase.functions.invoke('ai-worker-proxy', {
       body: {
         path: endpoint,
         ...options
-      }
+      },
+      headers
     });
 
     if (error) {
-      throw new Error(`AI Worker error: ${error.message}`);
+      const errorShape: any = {
+        name: error?.constructor?.name || error?.name || 'unknown',
+        message: error?.message || 'unknown',
+        status: error?.status || null,
+        code: error?.code || null,
+        details: error?.details || null,
+        hint: error?.hint || null
+      };
+      console.log('[DIAGNOSTIC] ai-worker-proxy invoke error', {
+        endpoint,
+        traceId,
+        errorShape,
+        raw: typeof error === 'object' ? JSON.stringify(error).slice(0, 500) : String(error).slice(0, 500)
+      });
+      throw new Error(`AI Worker error: ${error.message || 'Unknown error'}`);
     }
 
+    console.log('[DIAGNOSTIC] ai-worker-proxy invoke success', {
+      endpoint,
+      traceId,
+      dataKeys: data ? Object.keys(data) : []
+    });
     return data;
   }
 
