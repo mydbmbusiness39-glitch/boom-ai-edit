@@ -226,6 +226,17 @@ const Editor = () => {
     setIsProcessing(true);
 
     try {
+      // Normalize persisted project metadata before any array access.
+      if (!Array.isArray(projectData.files)) {
+        toast({
+          title: "Couldn't load your project files",
+          description: "Please re-upload your media files and try again.",
+          variant: "destructive",
+        });
+        throw new Error("Invalid projectData.files: expected array");
+      }
+      const rawFiles = (projectData.files || []) as any[];
+
       // Determine source URLs for files.media.
       // Prefer the cloud URLs already uploaded by the Upload page;
       // fall back to uploading any files that only exist as raw File objects.
@@ -235,7 +246,6 @@ const Editor = () => {
         if (stored) uploadedFileUrls = JSON.parse(stored);
       } catch (e) { /* ignore */ }
 
-      const rawFiles = (projectData.files || []) as any[];
       const missingFiles = rawFiles.filter((f) => !f.url && !f.file?.url);
       const alreadyClouded = rawFiles.filter((f) => f.url && f.url.startsWith("http"));
 
