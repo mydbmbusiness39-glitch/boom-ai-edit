@@ -314,27 +314,41 @@ const Editor = () => {
         sourceIndex.set(key, { url: u.url, type: u.type });
       }
       const ambiguousNames = Array.from(ambiguous);
-      const timelineItems = (editItems || []).map((item: any, idx: number) => {
-        const rawSource = item.sourceName || item.name;
-        const src = sourceIndex.get(rawSource);
-        if (!src) {
-          throw new Error(`Edit source missing: ${rawSource}`);
-        }
-        if (ambiguousNames.includes(rawSource)) {
-          throw new Error(`Ambiguous source mapping: ${rawSource}`);
-        }
-        const content = { src: src.url, name: rawSource, type: src.type };
-        const timelineItem: any = {
-          id: item.id,
-          type: item.type === 'audio' ? 'audio' : 'video',
-          start_time: Number(item.startTime || 0),
-          end_time: Number((item.startTime || 0) + (item.duration || 0)),
-          track: Number(item.track || 0),
-          content,
-          effects: [],
-        };
-        return timelineItem;
-      });
+      let timelineItems: any[] = [];
+      try {
+        timelineItems = (editItems || []).map((item: any, idx: number) => {
+          const rawSource = item.sourceName || item.name;
+          let src = sourceIndex.get(rawSource);
+          if (!src && cloudUrls.length === (editItems || []).length) {
+            src = cloudUrls[idx];
+          }
+          if (!src) {
+            throw new Error(`Edit source missing: ${rawSource}`);
+          }
+          if (ambiguousNames.includes(rawSource)) {
+            throw new Error(`Ambiguous source mapping: ${rawSource}`);
+          }
+          const content = { src: src.url, name: rawSource, type: src.type };
+          const timelineItem: any = {
+            id: item.id,
+            type: item.type === 'audio' ? 'audio' : 'video',
+            start_time: Number(item.startTime || 0),
+            end_time: Number((item.startTime || 0) + (item.duration || 0)),
+            track: Number(item.track || 0),
+            content,
+            effects: [],
+          };
+          return timelineItem;
+        });
+      } catch (preCompileErr: any) {
+        console.log('[DIAGNOSTIC] BOOM early return: pre-compile timeline mapping failed', { message: preCompileErr?.message || 'Unknown error' });
+        toast({
+          title: "Couldn't create your video",
+          description: preCompileErr?.message || 'Unknown error',
+          variant: "destructive",
+        });
+        throw preCompileErr;
+      }
 
       let compiledTimeline: any = null;
       if (timelineItems.length > 0) {
