@@ -326,7 +326,7 @@ const Editor = () => {
       const ambiguousNames = Array.from(ambiguous);
       let timelineItems: any[] = [];
       try {
-        timelineItems = (editItems || []).map((item: any, idx: number) => {
+        timelineItems = (editItems || []).filter((item: any) => item.id !== 'music' && !(item.sourceName || item.name).startsWith('Music:')).map((item: any, idx: number) => {
           const rawSource = item.sourceName || item.name;
           let src = sourceIndex.get(rawSource);
           if (!src && cloudUrls.length === (editItems || []).length) {
