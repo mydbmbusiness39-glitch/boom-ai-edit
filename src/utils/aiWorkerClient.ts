@@ -62,28 +62,46 @@ function generateTraceId(): string {
   }
 }
 
-class AIWorkerClient {
-  private async callWorker(endpoint: string, options: RequestInit = {}) {
-    const traceId = generateTraceId();
-    const headers = {
-      'Content-Type': 'application/json',
+/** JSON object sent to supabase.functions.invoke. path wins if payload also has path. */
+export function buildAiWorkerInvokeBody(
+  endpoint: string,
+  payload: Record<string, unknown> = {}
+): Record<string, unknown> {
+  return {
+    ...payload,
+    path: endpoint,
+  };
+}
+
+/**
+ * supabase-js FunctionsClient.invoke serializes `body` to JSON only when
+ * headers do not already contain Content-Type. Do not set Content-Type here.
+ */
+export function buildAiWorkerInvokeOptions(
+  endpoint: string,
+  payload: Record<string, unknown> = {},
+  traceId: string = generateTraceId()
+): { body: Record<string, unknown>; headers: Record<string, string> } {
+  return {
+    body: buildAiWorkerInvokeBody(endpoint, payload),
+    headers: {
       'X-Trace-Id': traceId,
-      ...(options.headers || {})
-    };
+    },
+  };
+}
+
+class AIWorkerClient {
+  private async callWorker(endpoint: string, payload: Record<string, unknown> = {}) {
+    const traceId = generateTraceId();
+    const invoke = buildAiWorkerInvokeOptions(endpoint, payload, traceId);
 
     console.log('[DIAGNOSTIC] ai-worker-proxy invoke start', {
       endpoint,
       traceId,
-      method: options.method || 'POST'
+      method: 'POST'
     });
 
-    const { data, error } = await supabase.functions.invoke('ai-worker-proxy', {
-      body: {
-        path: endpoint,
-        ...options
-      },
-      headers
-    });
+    const { data, error } = await supabase.functions.invoke('ai-worker-proxy', invoke);
 
     if (error) {
       const errorShape: any = {
@@ -115,10 +133,7 @@ class AIWorkerClient {
     const formData = new FormData();
     formData.append('file', audioFile);
 
-    return this.callWorker('/analyze/beats', {
-      method: 'POST',
-      body: formData
-    });
+    return this.callWorker('/analyze/beats');
   }
 
   async analyzeScenes(videoFile: File): Promise<ScenesAnalysis> {
@@ -135,11 +150,9 @@ class AIWorkerClient {
 
   async generateCaptions(request: CaptionsRequest): Promise<CaptionsResponse> {
     return this.callWorker('/generate/captions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(request)
+      style: request.style,
+      duration: request.duration,
+      ...(request.context !== undefined ? { context: request.context } : {}),
     });
   }
 
@@ -149,20 +162,12 @@ class AIWorkerClient {
     // The active app path historically sent nested { metadata, tracks }.
     // We accept either shape and always send flat on the wire.
     const body = normalizeTimelineRequest(request);
-    return this.callWorker('/timeline/compile', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    });
+    return this.callWorker('/timeline/compile', body);
   }
 
 
   async healthCheck(): Promise<any> {
-    return this.callWorker('/health', {
-      method: 'GET'
-    });
+    return this.callWorker('/health');
   }
 }
 
