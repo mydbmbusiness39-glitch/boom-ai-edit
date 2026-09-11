@@ -52,7 +52,7 @@ const Status = () => {
         const { data, error } = await supabase
           .from("jobs_new")
           .select(
-            "id, name, status, progress, output_url, files, style_id, duration, created_at, updated_at, watermarked, error"
+            "id, name, status, progress, output_url, files, style_id, duration, created_at, updated_at, watermarked"
           )
           .eq("id", jobId)
           .single();
@@ -91,7 +91,7 @@ const Status = () => {
             format: "mp4",
             bitrate: 5000,
           },
-          error: data.error || undefined,
+          error: undefined,
         };
 
         console.log('[DIAGNOSTIC] Status fetchJob mapped row', {
