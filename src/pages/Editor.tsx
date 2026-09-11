@@ -28,6 +28,51 @@ type EditItem = {
 
 const DEFAULT_PROJECT_DURATION = 15;
 
+const isHttpUrl = (value: unknown): value is string =>
+  typeof value === "string" && /^https?:\/\//i.test(value.trim());
+
+/** True only for values URL.createObjectURL() accepts. JSON-revived localStorage objects fail this. */
+export const isObjectUrlSource = (value: unknown): value is Blob => {
+  if (value == null || (typeof value !== "object" && typeof value !== "function")) return false;
+  try {
+    if (typeof File !== "undefined" && value instanceof File) return true;
+    if (typeof Blob !== "undefined" && value instanceof Blob) return true;
+    if (typeof MediaSource !== "undefined" && value instanceof MediaSource) return true;
+  } catch {
+    return false;
+  }
+  return false;
+};
+
+/**
+ * Resolve a playable media src without throwing createObjectURL on rehydrated metadata.
+ * Priority: existing video.url → persisted cloud URL → object URL from a real File/Blob → explicit error.
+ */
+export const resolveEditorMediaSrc = (input: {
+  videoUrl?: unknown;
+  persistedUrls?: unknown;
+  file?: unknown;
+}): string => {
+  if (isHttpUrl(input.videoUrl)) return input.videoUrl.trim();
+
+  const persisted = Array.isArray(input.persistedUrls) ? input.persistedUrls : [];
+  for (const entry of persisted) {
+    const url =
+      typeof entry === "string"
+        ? entry
+        : entry && typeof entry === "object"
+          ? (entry as { url?: unknown }).url
+          : undefined;
+    if (isHttpUrl(url)) return url.trim();
+  }
+
+  if (typeof URL !== "undefined" && typeof URL.createObjectURL === "function" && isObjectUrlSource(input.file)) {
+    return URL.createObjectURL(input.file);
+  }
+
+  throw new Error("No playable media source. Re-upload your video.");
+};
+
 const Editor = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
@@ -262,8 +307,8 @@ const Editor = () => {
       if (missingFiles.length > 0) {
         for (const f of missingFiles) {
           const fileObj = f.file;
-          if (!fileObj) continue;
-          const path = `uploads/${user.id}/${Date.now()}-${fileObj.name}`;
+          if (!isObjectUrlSource(fileObj)) continue;
+          const path = `uploads/${user.id}/${Date.now()}-${fileObj.name || "upload"}`;
           const { error } = await supabase.storage.from("videoupload").upload(path, fileObj);
           if (error) {
             console.log('[DIAGNOSTIC] BOOM early return: storage upload failed', { fileName: fileObj.name, error: error.message });
@@ -498,7 +543,29 @@ const Editor = () => {
       }
 
       const thumbnailPromises: Promise<string>[] = [];
-      const src = typeof window !== 'undefined' ? (video?.url || (file instanceof File ? URL.createObjectURL(file) : '')) : '';
+      let src = "";
+      if (typeof window !== "undefined") {
+        try {
+          let persistedUrls: unknown = [];
+          try {
+            persistedUrls = JSON.parse(localStorage.getItem("uploadedFileUrls") || "[]");
+          } catch {
+            persistedUrls = [];
+          }
+          src = resolveEditorMediaSrc({
+            videoUrl: video?.url,
+            persistedUrls,
+            file,
+          });
+        } catch (srcErr: any) {
+          toast({
+            title: "Couldn't load video source",
+            description: srcErr?.message || "Re-upload your video.",
+            variant: "destructive",
+          });
+          throw srcErr;
+        }
+      }
       if (src && typeof document !== 'undefined') {
         for (let i = 0; i < Math.min(6, scenes?.scenes?.length || 3); i++) {
           thumbnailPromises.push(new Promise((resolve) => {
