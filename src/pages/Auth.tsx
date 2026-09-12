@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import Layout from '@/components/Layout/Layout';
 
 const Auth = () => {
-  const { user, signIn, signUp, resetPassword, updatePassword, isRecovery } = useAuth();
+  const { user, loading: authLoading, signIn, signUp, resetPassword, updatePassword, isRecovery } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -22,13 +22,11 @@ const Auth = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Redirect if already authenticated
-  if (user) {
-    return <Navigate to="/" replace />;
-  }
-
   // When user clicks the reset email link, Supabase fires PASSWORD_RECOVERY
   // → switch to the set-new-password form automatically
+  // MUST run before any conditional return (Rules of Hooks). Live crash:
+  // authenticated "Start Creating Now" → /auth → user hydrates → this return
+  // skipped useEffect → React "Rendered fewer hooks" → black #0B0D12 viewport.
   useEffect(() => {
     if (isRecovery) {
       setMode('newpassword');
@@ -36,6 +34,19 @@ const Auth = () => {
       setSuccess(null);
     }
   }, [isRecovery]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  // Authenticated Create Now / /auth visits go to upload, not home.
+  if (user) {
+    return <Navigate to="/upload" replace />;
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,4 +1,10 @@
+import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthProvider";
+
 export default function Hero() {
+  const { user } = useAuth();
+  const createNowTo = user ? "/upload" : "/auth";
+
   return (
     <section className="relative min-h-[92vh] flex items-center justify-center bg-background overflow-hidden">
       {/* Gradient auras */}
@@ -34,11 +40,11 @@ export default function Hero() {
 
         {/* CTA buttons */}
         <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <a href="/auth" 
+          <Link to={createNowTo}
              className="w-full sm:w-auto px-5 py-3 rounded-full bg-boom-primary text-white font-poppins font-semibold
                         shadow-[0_6px_20px_rgba(255,77,90,0.45)] hover:opacity-90 transition-all duration-200">
             Start Creating Now
-          </a>
+          </Link>
           <a href="#features"
              className="w-full sm:w-auto px-5 py-3 rounded-full bg-white/10 text-white font-poppins font-medium
                         backdrop-blur hover:bg-white/15 transition-all duration-200">
