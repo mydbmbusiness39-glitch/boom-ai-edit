@@ -537,10 +537,19 @@ const Editor = () => {
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (seconds: number, spanSeconds?: number) => {
+    const safe = Number.isFinite(seconds) && seconds > 0 ? seconds : 0;
+    const total = Math.floor(safe);
+    const span = Number.isFinite(spanSeconds) && spanSeconds > 0 ? spanSeconds : safe;
+    const useHours = span >= 3600 || total >= 3600;
+    const hrs = Math.floor(total / 3600);
+    const mins = Math.floor((total % 3600) / 60);
+    const secs = total % 60;
+    const ss = String(secs).padStart(2, "0");
+    if (useHours) {
+      return `${hrs}:${String(mins).padStart(2, "0")}:${ss}`;
+    }
+    return `${mins}:${ss}`;
   };
 
   const runAnalysis = async () => {
@@ -885,9 +894,9 @@ const Editor = () => {
                       </div>
 
                       <div className="flex items-center space-x-2 text-white text-sm">
-                        <span>{formatTime(currentTime)}</span>
+                        <span>{formatTime(currentTime, previewDuration)}</span>
                         <span>/</span>
-                        <span>{formatTime(previewDuration)}</span>
+                        <span>{formatTime(previewDuration, previewDuration)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
