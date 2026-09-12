@@ -94,8 +94,10 @@ const Editor = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const { toast } = useToast();
+  const previewVideoRef = useRef<HTMLVideoElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [previewDuration, setPreviewDuration] = useState(0);
   const [volume, setVolume] = useState([80]);
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
   const [projectData, setProjectData] = useState<any>(null);
@@ -644,8 +646,93 @@ const Editor = () => {
     }
   };
 
-  const togglePlayback = () => {
-    setIsPlaying(!isPlaying);
+  useEffect(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setPreviewDuration(0);
+  }, [previewVideoUrl]);
+
+  const readMediaDuration = (video: HTMLVideoElement): number => {
+    const duration = video.duration;
+    return Number.isFinite(duration) && duration > 0 ? duration : 0;
+  };
+
+  const applyPreviewVolumeToMedia = (video: HTMLVideoElement, percent: number) => {
+    const pct = Math.min(100, Math.max(0, percent));
+    video.muted = pct === 0;
+    video.volume = pct / 100;
+  };
+
+  const syncPreviewTime = (video: HTMLVideoElement) => {
+    setCurrentTime(Number.isFinite(video.currentTime) ? video.currentTime : 0);
+  };
+
+  const handlePreviewLoadedMetadata = () => {
+    const video = previewVideoRef.current;
+    if (!video) return;
+    setPreviewDuration(readMediaDuration(video));
+    syncPreviewTime(video);
+    applyPreviewVolumeToMedia(video, volume[0] ?? 80);
+    setIsPlaying(!video.paused && !video.ended);
+  };
+
+  const handlePreviewDurationChange = () => {
+    const video = previewVideoRef.current;
+    if (!video) return;
+    setPreviewDuration(readMediaDuration(video));
+  };
+
+  const handlePreviewTimeUpdate = () => {
+    const video = previewVideoRef.current;
+    if (video) syncPreviewTime(video);
+  };
+
+  const handlePreviewPlay = () => setIsPlaying(true);
+  const handlePreviewPause = () => setIsPlaying(false);
+  const handlePreviewEnded = () => {
+    const video = previewVideoRef.current;
+    setIsPlaying(false);
+    if (video) syncPreviewTime(video);
+  };
+
+  const handlePreviewVolumeChange = () => {
+    const video = previewVideoRef.current;
+    if (!video) return;
+    setVolume([video.muted ? 0 : Math.round((Number.isFinite(video.volume) ? video.volume : 1) * 100)]);
+  };
+
+  const seekPreview = (seconds: number) => {
+    const video = previewVideoRef.current;
+    const max = video && readMediaDuration(video) > 0 ? readMediaDuration(video) : previewDuration;
+    const next = Math.max(0, max > 0 ? Math.min(seconds, max) : seconds);
+    if (video) video.currentTime = next;
+    setCurrentTime(next);
+  };
+
+  const changePreviewVolume = (value: number[]) => {
+    const pct = value[0] ?? 0;
+    setVolume([pct]);
+    const video = previewVideoRef.current;
+    if (video) applyPreviewVolumeToMedia(video, pct);
+  };
+
+  const togglePlayback = async () => {
+    const video = previewVideoRef.current;
+    if (!video) return;
+    try {
+      if (video.paused || video.ended) {
+        await video.play();
+      } else {
+        video.pause();
+      }
+    } catch (err) {
+      setIsPlaying(false);
+      toast({
+        title: "Playback failed",
+        description: err instanceof Error ? err.message : "Could not play preview.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditingCommand = (command: any) => {
@@ -719,12 +806,20 @@ const Editor = () => {
               <div className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
                 <Watermark />
                 {previewVideoUrl ? (
-                  <video 
+                  <video
+                    ref={previewVideoRef}
                     src={previewVideoUrl}
                     className="absolute inset-0 w-full h-full object-contain"
-                    controls
                     playsInline
+                    preload="metadata"
                     data-cy="editor-preview-video"
+                    onLoadedMetadata={handlePreviewLoadedMetadata}
+                    onDurationChange={handlePreviewDurationChange}
+                    onTimeUpdate={handlePreviewTimeUpdate}
+                    onPlay={handlePreviewPlay}
+                    onPause={handlePreviewPause}
+                    onEnded={handlePreviewEnded}
+                    onVolumeChange={handlePreviewVolumeChange}
                   />
                 ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -746,10 +841,11 @@ const Editor = () => {
                   <div className="bg-black/80 rounded-lg p-4 space-y-3">
                     <Slider
                       value={[currentTime]}
-                      onValueChange={(value) => setCurrentTime(value[0])}
-                      max={60}
-                      step={1}
+                      onValueChange={(value) => seekPreview(value[0])}
+                      max={previewDuration > 0 ? previewDuration : 1}
+                      step={0.1}
                       className="w-full"
+                      data-cy="editor-preview-seek"
                     />
                     
                     <div className="flex items-center justify-between">
@@ -758,6 +854,7 @@ const Editor = () => {
                           variant="ghost"
                           size="icon"
                           className="text-white hover:bg-white/20"
+                          onClick={() => seekPreview(Math.max(0, currentTime - 5))}
                         >
                           <SkipBack className="h-5 w-5" />
                         </Button>
@@ -767,6 +864,7 @@ const Editor = () => {
                           size="icon"
                           className="text-white hover:bg-white/20"
                           onClick={togglePlayback}
+                          data-cy="editor-preview-play"
                         >
                           {isPlaying ? (
                             <Pause className="h-5 w-5" />
@@ -779,6 +877,7 @@ const Editor = () => {
                           variant="ghost"
                           size="icon"
                           className="text-white hover:bg-white/20"
+                          onClick={() => seekPreview(currentTime + 5)}
                         >
                           <SkipForward className="h-5 w-5" />
                         </Button>
@@ -787,17 +886,18 @@ const Editor = () => {
                       <div className="flex items-center space-x-2 text-white text-sm">
                         <span>{formatTime(currentTime)}</span>
                         <span>/</span>
-                        <span>{formatTime(60)}</span>
+                        <span>{formatTime(previewDuration)}</span>
                       </div>
 
                       <div className="flex items-center space-x-2">
                         <Volume2 className="h-5 w-5 text-white" />
                         <Slider
                           value={volume}
-                          onValueChange={setVolume}
+                          onValueChange={changePreviewVolume}
                           max={100}
                           step={1}
                           className="w-20"
+                          data-cy="editor-preview-volume"
                         />
                       </div>
                     </div>
