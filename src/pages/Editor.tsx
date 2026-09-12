@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { aiWorkerClient } from "@/utils/aiWorkerClient";
 import { parseSourceDuration, SOURCE_DURATION_STORAGE_KEY } from "@/pages/Upload";
+import { readEdgeFunctionError } from "@/utils/edgeFunctionError";
 
 type EditItem = {
   id: string;
@@ -489,7 +490,7 @@ const Editor = () => {
       });
 
       if (error) {
-        const message = error.message || "Unknown error";
+        const message = await readEdgeFunctionError(error);
         if (message.includes("Daily job limit")) {
           toast({
             title: "Daily limit reached",
