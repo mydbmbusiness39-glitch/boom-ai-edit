@@ -156,6 +156,55 @@ class AIWorkerClient {
     });
   }
 
+  /**
+   * Source-audio transcription via worker /transcribe (Whisper, paid).
+   * Fail-closed: unpaid 403, missing/silent audio, provider errors.
+   * Does not call /generate/captions (LLM hype strings, no timing).
+   */
+  async transcribeSource(file: File, accessToken: string): Promise<{
+    captions: Array<{ text: string; start: number; end: number }>;
+    duration: number;
+  }> {
+    const base = (import.meta as any).env?.VITE_SUPABASE_URL || "";
+    const target = `${base}/functions/v1/ai-worker-proxy/transcribe`;
+    const form = new FormData();
+    form.append("file", file);
+    const resp = await fetch(target, {
+      method: "POST",
+      headers: { Authorization: "Bearer " + accessToken },
+      body: form,
+    });
+    const raw = await resp.text();
+    let parsed: any = null;
+    try { parsed = raw ? JSON.parse(raw) : null; } catch { parsed = null; }
+    if (!resp.ok) {
+      const detail = parsed?.detail || parsed?.error || parsed?.message || raw || `HTTP ${resp.status}`;
+      if (resp.status === 403) {
+        throw new Error("Paid transcription is disabled. Owner authorization required.");
+      }
+      if (resp.status === 401) {
+        throw new Error("Transcription auth failed.");
+      }
+      if (resp.status === 422 || /no usable audio|no audio stream|silent/i.test(String(detail))) {
+        throw new Error("Source has no usable audio.");
+      }
+      throw new Error(`Transcription provider unavailable: ${String(detail).slice(0, 180)}`);
+    }
+    const captions = Array.isArray(parsed?.captions) ? parsed.captions : [];
+    const timed = captions
+      .filter((c: any) => c && typeof c === "object" && String(c.text || "").trim())
+      .map((c: any) => ({
+        text: String(c.text).trim(),
+        start: Number(c.start || 0),
+        end: Number(c.end || 0),
+      }))
+      .filter((c: any) => Number.isFinite(c.start) && Number.isFinite(c.end) && c.end > c.start);
+    if (!timed.length) {
+      throw new Error("No speech detected in source audio.");
+    }
+    return { captions: timed, duration: Number(parsed?.duration || 0) };
+  }
+
   async compileTimeline(request: TimelineRequest): Promise<TimelineResponse> {
     // Gate #48: normalize to the worker's flat contract.
     // Worker expects: { items: [...], duration, fps?, resolution? }

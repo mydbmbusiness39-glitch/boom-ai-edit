@@ -269,7 +269,48 @@ const Editor = () => {
     sourceDuration()
   );
 
-  // Persist captions + style
+  useEffect(() => {
+    try { localStorage.setItem("editorCaptions", JSON.stringify(captions)); } catch { /* ignore */ }
+  }, [captions]);
+  useEffect(() => {
+    try { localStorage.setItem("captionStyle", captionStyle); } catch { /* ignore */ }
+  }, [captionStyle]);
+
+  const transcribeSourceAudio = async () => {
+    if (!session?.access_token) {
+      toast({ title: "Sign in required", description: "Transcription needs an authenticated session.", variant: "destructive" });
+      return;
+    }
+    const fileObj = projectData?.files?.[0]?.file;
+    const previewUrl = previewVideoUrl;
+    if (!fileObj && !previewUrl) {
+      toast({ title: "No source media", description: "Upload a video with audio first.", variant: "destructive" });
+      return;
+    }
+    setIsGeneratingCaptions(true);
+    try {
+      let file: File | null = fileObj instanceof File ? fileObj : null;
+      if (!file && previewUrl) {
+        const res = await fetch(previewUrl);
+        if (!res.ok) throw new Error("Could not fetch source media for transcription.");
+        const blob = await res.blob();
+        const name = projectData?.files?.[0]?.name || "source.mp4";
+        file = new File([blob], name, { type: blob.type || "video/mp4" });
+      }
+      if (!file) throw new Error("No source media.");
+      const result = await aiWorkerClient.transcribeSource(file, session.access_token);
+      setCaptions(result.captions);
+      toast({ title: "Captions generated", description: `${result.captions.length} timed segments from source audio.` });
+    } catch (err: any) {
+      toast({
+        title: "Caption generation failed",
+        description: err?.message || "Unknown transcription error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingCaptions(false);
+    }
+  };
 
   const handleBoomClick = async () => {
     console.log('[DIAGNOSTIC] BOOM handler entered', {
@@ -461,6 +502,7 @@ const Editor = () => {
           media: filesPayload,
           music: projectData.music || "auto",
           ...(compiledTimeline ? { timeline: compiledTimeline } : {}),
+          ...(captions.length ? { captions, caption_style: captionStyle } : {}),
         },
         style_id: projectData.style,
         duration: sourceDuration(),
@@ -1032,11 +1074,11 @@ const Editor = () => {
                     <Button
                       size="sm"
                       variant="secondary"
-                      disabled={true}
-                      onClick={() => toast({ title: 'Authorization required', description: 'Transcription requires Owner authorization for a paid Whisper API call.', variant: 'destructive' })}
+                      disabled={isGeneratingCaptions || isProcessing}
+                      onClick={transcribeSourceAudio}
                       data-cy="transcribe-button"
                     >
-                      <Zap className="h-3 w-3 mr-1" /> Transcribe (requires authorization)
+                      <Zap className="h-3 w-3 mr-1" /> {isGeneratingCaptions ? "Transcribing…" : "Transcribe"}
                     </Button>
                   </div>
                 </div>
