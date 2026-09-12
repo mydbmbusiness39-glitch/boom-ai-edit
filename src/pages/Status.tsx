@@ -11,8 +11,6 @@ import Watermark from "@/components/Watermark";
 import ShareModal from "@/components/ShareModal";
 import { Job, JobStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthProvider";
-import { isOwner } from "@/lib/access";
 import { useToast } from "@/hooks/use-toast";
 
 const Status = () => {
@@ -22,7 +20,6 @@ const Status = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
   const [pollError, setPollError] = useState<string | null>(null);
-  const { user } = useAuth();
   const { toast } = useToast();
 
   const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -319,7 +316,7 @@ const Status = () => {
                 </div>
 
                 {/* Watermark Notice for Free Tier (owner sees none) */}
-                {job.watermarked && !isOwner(user?.email) && (
+                {job.watermarked && (
                   <div className="bg-muted/50 border border-border rounded-lg p-4" data-cy="watermark-notice">
                     <p className="text-sm text-muted-foreground text-center">
                       <span className="font-medium">Free Tier:</span> This video includes a watermark.

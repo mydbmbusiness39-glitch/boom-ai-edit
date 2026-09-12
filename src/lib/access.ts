@@ -1,19 +1,85 @@
-// Owner / Creator access — the boss gets everything, always.
-// The owner account (Hopewana) has FULL access to every feature,
-// no plan gating, no watermarks, no limits.
+/**
+ * Account entitlements — mirrors public.account_entitlements(uuid).
+ * Authoritative source is profiles.role + profiles.plan (DB).
+ * create-job quota uses the SQL function, not this module.
+ * Email-string owner hacks are retired.
+ */
 
-export const OWNER_EMAILS = [
-  "mydbmbusiness39@gmail.com",
-  "mydbmbusiness39-glitch", // github-style fallback
-];
+export type AccountRole = "customer" | "owner_admin";
+export type AccountPlan =
+  | "free"
+  | "pro"
+  | "business"
+  | "agency"
+  | "enterprise_internal";
 
-export function isOwner(email: string | null | undefined): boolean {
-  if (!email) return false;
-  const normalized = email.trim().toLowerCase();
-  return OWNER_EMAILS.some((o) => normalized === o.toLowerCase());
+export type Entitlements = {
+  role: AccountRole;
+  plan: AccountPlan;
+  dailyJobLimit: number | null;
+  watermark: boolean;
+  aiTwin: boolean;
+  socialPublish: boolean;
+  adminTest: boolean;
+};
+
+export type ProfileTierFields = {
+  role?: string | null;
+  plan?: string | null;
+  tier?: string | null;
+};
+
+const CUSTOMER_PLANS: AccountPlan[] = ["free", "pro", "business", "agency"];
+
+export function resolveEntitlements(profile: ProfileTierFields | null | undefined): Entitlements {
+  const roleRaw = (profile?.role || "customer").trim();
+  const planRaw = (profile?.plan || profile?.tier || "free").trim();
+
+  if (roleRaw === "owner_admin" || planRaw === "enterprise_internal") {
+    return {
+      role: "owner_admin",
+      plan: "enterprise_internal",
+      dailyJobLimit: null,
+      watermark: false,
+      aiTwin: true,
+      socialPublish: true,
+      adminTest: true,
+    };
+  }
+
+  const plan = (CUSTOMER_PLANS.includes(planRaw as AccountPlan) ? planRaw : "free") as AccountPlan;
+  if (plan === "free") {
+    return {
+      role: "customer",
+      plan: "free",
+      dailyJobLimit: 5,
+      watermark: true,
+      aiTwin: false,
+      socialPublish: false,
+      adminTest: false,
+    };
+  }
+  return {
+    role: "customer",
+    plan,
+    dailyJobLimit: null,
+    watermark: false,
+    aiTwin: plan === "business" || plan === "agency",
+    socialPublish: plan === "business" || plan === "agency",
+    adminTest: false,
+  };
 }
 
-export function getEffectivePlan(email: string | null | undefined): "business" | "pro" | "free" {
-  if (isOwner(email)) return "business"; // owner = everything unlocked
-  return "free"; // everyone else starts free until payments wired
+export function isOwnerAdmin(profile: ProfileTierFields | null | undefined): boolean {
+  return resolveEntitlements(profile).role === "owner_admin";
+}
+
+/** @deprecated Quota is SQL account_entitlements. Prefer isOwnerAdmin(profile). */
+export function isOwner(_email: string | null | undefined): boolean {
+  return false;
+}
+
+/** @deprecated Use resolveEntitlements(profile).plan */
+export function getEffectivePlan(profile: ProfileTierFields | null | undefined): AccountPlan {
+  return resolveEntitlements(profile).plan;
 }

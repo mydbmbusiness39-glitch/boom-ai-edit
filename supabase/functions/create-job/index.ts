@@ -54,33 +54,38 @@ serve(async (req)=>{
       hasTimeline: !!jobRequest.files?.timeline,
     });
     console.log('Creating job for user:', user.id);
-    // Check job limit
-    const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-    if (profileError) {
-      throw new Error(`Profile not found: ${profileError.message}`);
+    // Profile must exist (fail-closed). Quota/watermark from account_entitlements only.
+    const { data: profile, error: profileError } = await supabase.from('profiles').select('id').eq('id', user.id).single();
+    if (profileError || !profile) {
+      throw new Error(`Profile not found: ${profileError?.message || 'no row'}`);
     }
-    // Check if user can create more jobs (free tier: 5 per day)
-    const today = new Date().toISOString().split('T')[0];
-    const { data: todayJobs, error: jobCountError } = await supabase.from('jobs_new').select('id').eq('user_id', user.id).gte('created_at', `${today}T00:00:00.000Z`).lt('created_at', `${today}T23:59:59.999Z`);
-    if (jobCountError) {
-      throw new Error(`Error checking job count: ${jobCountError.message}`);
+    const { data: entitlementRows, error: entitlementError } = await supabase
+      .rpc('account_entitlements', { user_uuid: user.id });
+    if (entitlementError || !entitlementRows || entitlementRows.length === 0) {
+      throw new Error(`Entitlements not found: ${entitlementError?.message || 'no row'}`);
     }
-    if (profile.plan === 'free' && todayJobs.length >= 5) {
-      throw new Error('Daily job limit reached (5 jobs per day for free tier)');
+    const entitlements = entitlementRows[0];
+    const dailyLimit = entitlements.daily_job_limit;
+    if (dailyLimit !== null && dailyLimit !== undefined) {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: todayJobs, error: jobCountError } = await supabase.from('jobs_new').select('id').eq('user_id', user.id).gte('created_at', `${today}T00:00:00.000Z`).lt('created_at', `${today}T23:59:59.999Z`);
+      if (jobCountError) {
+        throw new Error(`Error checking job count: ${jobCountError.message}`);
+      }
+      if ((todayJobs?.length || 0) >= dailyLimit) {
+        throw new Error(`Daily job limit reached (${dailyLimit} jobs per day for ${entitlements.plan} tier)`);
+      }
     }
     // Create new job
     const insertPayload = {
       name: jobRequest.name,
       user_id: user.id,
-      files: {
-        media: jobRequest.files,
-        music: jobRequest.music || 'auto'
-      },
+      files: jobRequest.files,
       style_id: jobRequest.style_id,
       duration: jobRequest.duration,
       status: 'pending',
       progress: 0,
-      watermarked: profile.plan === 'free' // Free tier gets watermark
+      watermarked: entitlements.watermark === true
     };
     console.log('[DIAGNOSTIC] create-job insert attempted', insertPayload);
     const { data: newJob, error: createError } = await supabase.from('jobs_new').insert(insertPayload).select().single();
