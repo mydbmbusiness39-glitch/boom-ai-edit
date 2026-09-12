@@ -37,6 +37,47 @@ const getFileKind = (file: File) => {
   return null;
 };
 
+export const SOURCE_DURATION_STORAGE_KEY = 'sourceVideoDuration';
+
+/** Finite seconds > 0, else null. Never defaults to 15. */
+export const parseSourceDuration = (value: unknown): number | null => {
+  if (value == null || value === '') return null;
+  const n = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return n;
+};
+
+/** HTML video metadata duration for a local File (MOV/MP4). No hardcoded 15s. */
+export const readVideoFileDuration = (file: File): Promise<number | null> =>
+  new Promise((resolve) => {
+    if (typeof document === 'undefined' || getFileKind(file) !== 'video') {
+      resolve(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    const done = (seconds: number | null) => {
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(url);
+      resolve(parseSourceDuration(seconds));
+    };
+    video.onloadedmetadata = () => done(video.duration);
+    video.onerror = () => done(null);
+    video.src = url;
+  });
+
+export const persistSourceDuration = (seconds: number | null) => {
+  if (typeof localStorage === 'undefined') return;
+  const parsed = parseSourceDuration(seconds);
+  if (parsed == null) {
+    localStorage.removeItem(SOURCE_DURATION_STORAGE_KEY);
+    return;
+  }
+  localStorage.setItem(SOURCE_DURATION_STORAGE_KEY, String(parsed));
+};
+
 const Upload = () => {
   const navigate = useNavigate();
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -89,6 +130,13 @@ const Upload = () => {
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
+
+    const firstVideo = videoFiles[0];
+    if (firstVideo) {
+      void readVideoFileDuration(firstVideo).then((seconds) => {
+        persistSourceDuration(seconds);
+      });
+    }
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -293,6 +341,12 @@ const Upload = () => {
                   localStorage.setItem('uploadedFiles', JSON.stringify(serializableFiles));
                   localStorage.setItem('uploadedFileUrls', JSON.stringify(uploaded));
                   localStorage.setItem('selectedMusic', selectedMusic);
+                  const firstVideo = uploadedFiles.find((f) => f.type === 'video')?.file;
+                  if (firstVideo) {
+                    const seconds = await readVideoFileDuration(firstVideo);
+                    persistSourceDuration(seconds);
+                  }
+                  localStorage.removeItem('videoDuration');
                   navigate('/style');
                 } catch (e) {
                   console.error('Upload error:', e);
@@ -306,6 +360,12 @@ const Upload = () => {
                   }));
                   localStorage.setItem('uploadedFiles', JSON.stringify(serializableFiles));
                   localStorage.setItem('selectedMusic', selectedMusic);
+                  const firstVideoFallback = uploadedFiles.find((f) => f.type === 'video')?.file;
+                  if (firstVideoFallback) {
+                    const seconds = await readVideoFileDuration(firstVideoFallback);
+                    persistSourceDuration(seconds);
+                  }
+                  localStorage.removeItem('videoDuration');
                   navigate('/style');
                 } finally {
                   setIsUploading(false);

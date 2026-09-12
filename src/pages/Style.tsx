@@ -7,11 +7,27 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
 import { AIStylePreset } from "@/types";
+import { parseSourceDuration, SOURCE_DURATION_STORAGE_KEY } from "@/pages/Upload";
+
+const FALLBACK_DURATION = 15;
+
+export const readPersistedSourceDuration = (): number | null => {
+  if (typeof localStorage === "undefined") return null;
+  return parseSourceDuration(localStorage.getItem(SOURCE_DURATION_STORAGE_KEY));
+};
+
+export const defaultStyleDuration = (sourceSeconds: number | null, fallback = FALLBACK_DURATION): number => {
+  const parsed = parseSourceDuration(sourceSeconds);
+  return parsed ?? fallback;
+};
 
 const Style = () => {
   const navigate = useNavigate();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
-  const [duration, setDuration] = useState<number>(15);
+  const persistedSource = readPersistedSourceDuration();
+  const [duration, setDuration] = useState<number>(() => defaultStyleDuration(readPersistedSourceDuration()));
+  const sliderMax = Math.max(30, Math.ceil(persistedSource ?? duration));
+  const sliderMin = 1;
 
   const stylePresets: AIStylePreset[] = [
     {
@@ -127,15 +143,16 @@ const Style = () => {
             </div>
             <input
               type="range"
-              min="10"
-              max="30"
+              min={sliderMin}
+              max={sliderMax}
+              step="0.001"
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
               className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>10s</span>
-              <span>30s</span>
+              <span>{sliderMin}s</span>
+              <span>{sliderMax}s</span>
             </div>
           </CardContent>
         </Card>

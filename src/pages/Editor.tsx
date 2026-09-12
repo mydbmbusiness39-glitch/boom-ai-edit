@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { aiWorkerClient } from "@/utils/aiWorkerClient";
+import { parseSourceDuration, SOURCE_DURATION_STORAGE_KEY } from "@/pages/Upload";
 
 type EditItem = {
   id: string;
@@ -27,6 +28,22 @@ type EditItem = {
 };
 
 const DEFAULT_PROJECT_DURATION = 15;
+
+export const resolveJobDuration = ({
+  selectedDuration,
+  sourceDuration,
+  fallback = DEFAULT_PROJECT_DURATION,
+}: {
+  selectedDuration?: unknown;
+  sourceDuration?: unknown;
+  fallback?: number;
+}): number => {
+  const selected = parseSourceDuration(selectedDuration);
+  if (selected != null) return selected;
+  const source = parseSourceDuration(sourceDuration);
+  if (source != null) return source;
+  return fallback;
+};
 
 const isHttpUrl = (value: unknown): value is string =>
   typeof value === "string" && /^https?:\/\//i.test(value.trim());
@@ -107,6 +124,11 @@ const Editor = () => {
     const selectedMusic = localStorage.getItem('selectedMusic');
     const selectedStyle = localStorage.getItem('selectedStyle');
     const videoDuration = localStorage.getItem('videoDuration');
+    const sourceVideoDuration = localStorage.getItem(SOURCE_DURATION_STORAGE_KEY);
+    const resolvedDuration = resolveJobDuration({
+      selectedDuration: videoDuration,
+      sourceDuration: sourceVideoDuration,
+    });
 
     // Load cloud video URL (uploaded to Supabase storage)
     try {
@@ -130,12 +152,17 @@ const Editor = () => {
       files: uploadedFiles,
       music: selectedMusic,
       style: selectedStyle,
-      duration: videoDuration
+      duration: resolvedDuration,
+      sourceDuration: sourceVideoDuration,
+      selectedDuration: videoDuration,
     });
   }, []);
 
   const sourceDuration = () =>
-    parseInt(projectData?.duration || String(DEFAULT_PROJECT_DURATION));
+    resolveJobDuration({
+      selectedDuration: projectData?.selectedDuration ?? projectData?.duration,
+      sourceDuration: projectData?.sourceDuration,
+    });
 
   const buildInitialEditItems = (): EditItem[] => {
     if (!projectData) return [];
@@ -410,7 +437,7 @@ const Editor = () => {
         try {
           compiledTimeline = await aiWorkerClient.compileTimeline({
             items: timelineItems,
-            duration: Number(parseInt(projectData.duration)),
+            duration: sourceDuration(),
             fps: 30,
             resolution: { width: 1080, height: 1920 },
           });
@@ -433,7 +460,7 @@ const Editor = () => {
           ...(compiledTimeline ? { timeline: compiledTimeline } : {}),
         },
         style_id: projectData.style,
-        duration: parseInt(projectData.duration),
+        duration: sourceDuration(),
         caption_style: captionStyle,
       };
 
@@ -877,7 +904,7 @@ const Editor = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        const duration = parseInt(projectData?.duration || '15');
+                        const duration = sourceDuration();
                         const segCount = Math.max(3, Math.floor(duration / 3));
                         const segDur = duration / segCount;
                         const newSegs = Array.from({length: segCount}, (_, i) => ({
