@@ -157,14 +157,19 @@ const Style = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-center pt-8">
-          <Button 
+        <div className="flex flex-col items-center gap-3 pt-8">
+          <Button
             size="lg"
-            className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
             disabled={!selectedStyle}
+            aria-disabled={!selectedStyle}
+            className={cn(
+              selectedStyle
+                ? "bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
+                : "bg-muted text-muted-foreground opacity-60 cursor-not-allowed shadow-none hover:bg-muted hover:shadow-none"
+            )}
             onClick={() => {
-              // Store data in localStorage for next step
-              localStorage.setItem('selectedStyle', selectedStyle!);
+              if (!selectedStyle) return;
+              localStorage.setItem('selectedStyle', selectedStyle);
               localStorage.setItem('videoDuration', duration.toString());
               navigate('/editor');
             }}
@@ -172,6 +177,11 @@ const Style = () => {
             Continue to Editor
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
+          {!selectedStyle && (
+            <p className="text-sm text-muted-foreground" data-cy="select-style-helper">
+              Select a style to continue
+            </p>
+          )}
         </div>
       </div>
     </Layout>
