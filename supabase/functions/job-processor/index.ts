@@ -102,7 +102,7 @@ function injectCaptionItems(timeline, job) {
   const duration = Number(job?.duration) || Number(timeline?.metadata?.duration) || 15;
   const preset = job?.files?.caption_style || 'classic';
   const items = [];
-  for (const cap of raw) {
+  for (const cap of raw){
     if (!cap || typeof cap !== 'object') continue;
     const text = String(cap.text || '').trim();
     if (!text) continue;
@@ -117,7 +117,9 @@ function injectCaptionItems(timeline, job) {
       duration: end - start,
       content: {
         text,
-        style: { preset }
+        style: {
+          preset
+        }
       },
       effects: [],
       z_index: 999
@@ -127,7 +129,7 @@ function injectCaptionItems(timeline, job) {
   return {
     ...timeline,
     tracks: {
-      ...(timeline.tracks || {}),
+      ...timeline.tracks || {},
       track_captions: {
         id: 'track_captions',
         type: 'text',
@@ -215,12 +217,7 @@ serve(async (req)=>{
         nextStage = 'timeline';
         try {
           const existingCaptions = job.files?.captions;
-          const hasTimedCaptions = Array.isArray(existingCaptions)
-            && existingCaptions.length > 0
-            && typeof existingCaptions[0] === 'object'
-            && existingCaptions[0] !== null
-            && 'start' in existingCaptions[0]
-            && 'end' in existingCaptions[0];
+          const hasTimedCaptions = Array.isArray(existingCaptions) && existingCaptions.length > 0 && typeof existingCaptions[0] === 'object' && existingCaptions[0] !== null && 'start' in existingCaptions[0] && 'end' in existingCaptions[0];
           if (hasTimedCaptions) {
             console.log('Preserving existing timed captions; skipping LLM generation.');
           } else {
@@ -364,7 +361,8 @@ serve(async (req)=>{
           // ~30.75s (bdfa585f). The old policy was 12 immediate rechecks (~17s)
           // and exhausted before the upload landed. Bounded wait must exceed
           // expected /task-render duration with margin, then fail closed.
-          const MAX_RENDER_COMPLETE_ATTEMPTS = 48; // ~48 * (1s backoff + invoke) ≈ 2 min
+          // Evidence 29230672: /task-render 149.8s; 48 attempts ~123s wall, artifact 26s later.
+          const MAX_RENDER_COMPLETE_ATTEMPTS = 90; // ~90 * (1s backoff + invoke) ≥ 180s / ~3.5 min wall
           const RENDER_COMPLETE_BACKOFF_MS = 1000; // must stay well under pg_net timeout_milliseconds=5000
           let attempts = Number(body.renderCheck) || 0;
           if (attempts < MAX_RENDER_COMPLETE_ATTEMPTS) {

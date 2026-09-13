@@ -43,7 +43,7 @@ pass("PROCESSOR_INJECTS_TEXT_ITEMS", processor.includes("injectCaptionItems") &&
 pass("PROCESSOR_STAGE_STILL_ADVANCES", processor.includes("nextStage = 'timeline'") && processor.includes("progress = 60"));
 pass("GATE77_UNWRAP", processor.includes("unwrapCompiledTimeline") && processor.includes("NO_PRODUCTION_MEDIA"));
 pass("GATE77_NO_SYNTH_ASSIGN", !processor.includes('src: "/app/test_assets/synth_frame.png"'));
-pass("GATE77_RENDER_COMPLETE", processor.includes("MAX_RENDER_COMPLETE_ATTEMPTS = 48"));
+pass("GATE77_RENDER_COMPLETE", processor.includes("MAX_RENDER_COMPLETE_ATTEMPTS = 90"));
 
 function injectCaptionItems(timeline, job) {
   if (!timeline || typeof timeline !== "object") return timeline;
