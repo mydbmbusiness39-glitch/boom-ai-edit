@@ -21,6 +21,15 @@ export const defaultStyleDuration = (sourceSeconds: number | null, fallback = FA
   return parsed ?? fallback;
 };
 
+/** Visible Style-page label only. Does not change state, storage, or job duration. */
+export const formatStyleDurationLabel = (seconds: unknown): string => {
+  const n = typeof seconds === "number" ? seconds : Number(seconds);
+  if (!Number.isFinite(n) || n <= 0) return `${FALLBACK_DURATION}s`;
+  const tenths = Math.round(n * 10) / 10;
+  if (Number.isInteger(tenths)) return `${tenths}s`;
+  return `${tenths.toFixed(1)}s`;
+};
+
 const Style = () => {
   const navigate = useNavigate();
   const [selectedStyle, setSelectedStyle] = useState<string | null>(null);
@@ -139,7 +148,7 @@ const Style = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <span className="text-3xl font-bold text-neon-purple">{duration}s</span>
+              <span className="text-3xl font-bold text-neon-purple">{formatStyleDurationLabel(duration)}</span>
             </div>
             <input
               type="range"
@@ -151,8 +160,8 @@ const Style = () => {
               className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{sliderMin}s</span>
-              <span>{sliderMax}s</span>
+              <span>{formatStyleDurationLabel(sliderMin)}</span>
+              <span>{formatStyleDurationLabel(sliderMax)}</span>
             </div>
           </CardContent>
         </Card>
