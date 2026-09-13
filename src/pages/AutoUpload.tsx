@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Link2, Settings, Upload, CheckCircle, AlertTriangle, Zap, ExternalLink, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { readEdgeFunctionError } from "@/utils/edgeFunctionError";
 import Layout from "@/components/Layout/Layout";
 
 interface SocialAccount {
@@ -55,10 +56,48 @@ const AutoUpload = () => {
 
   useEffect(() => {
     loadScheduledPosts();
+    loadSocialAccounts();
   }, []);
 
   const loadScheduledPosts = async () => {
     setScheduledPosts([]);
+  };
+
+  // Platform connection state comes from social_accounts (source of truth),
+  // never from hardcoded local flags. Safe columns only — token columns are
+  // never requested by the browser.
+  const loadSocialAccounts = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const uid = sessionData.session?.user?.id;
+      if (!uid) return;
+      const { data, error } = await supabase
+        .from("social_accounts")
+        .select("id,platform,platform_username,display_name,status,created_at")
+        .eq("user_id", uid);
+      if (error) return;
+      const rows = (data || []) as Array<{
+        platform: string;
+        platform_username: string | null;
+        display_name: string | null;
+        status: string;
+      }>;
+      setSocialAccounts((prev) =>
+        prev.map((account) => {
+          const key = account.platform === "YouTube Shorts" ? "youtube" : account.platform.toLowerCase();
+          const match = rows.find((r) => r.platform === key && r.status === "active");
+          return match
+            ? {
+                ...account,
+                connected: true,
+                username: match.display_name || match.platform_username || "Connected",
+              }
+            : { ...account, connected: false, username: "", followers: "" };
+        })
+      );
+    } catch {
+      /* leave state untouched; UI stays accurate to last known DB read */
+    }
   };
 
   const connectPlatform = async (platform: string) => {
@@ -89,7 +128,15 @@ const AutoUpload = () => {
         const started = await supabase.functions.invoke("youtube-oauth", {
           body: { action: "start", redirectUri },
         });
-        if (started.error || started.data?.code === "oauth_not_configured") {
+        if (started.error) {
+          toast({
+            title: "YouTube connection blocked",
+            description: await readEdgeFunctionError(started.error),
+            variant: "destructive",
+          });
+          return;
+        }
+        if (started.data?.code === "oauth_not_configured") {
           toast({
             title: "YouTube setup required",
             description: started.data?.error || "Google Cloud OAuth is not configured",
@@ -98,10 +145,10 @@ const AutoUpload = () => {
           return;
         }
         if (started.data?.authUrl) window.location.href = started.data.authUrl;
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast({
           title: "Connection Failed",
-          description: error.message || `Failed to connect ${platform}`,
+          description: await readEdgeFunctionError(error),
           variant: "destructive",
         });
       } finally {
@@ -136,10 +183,10 @@ const AutoUpload = () => {
         return;
       }
       if (started.data?.authUrl) window.location.href = started.data.authUrl;
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast({
         title: "Connection Failed",
-        description: error.message || `Failed to connect ${platform}`,
+        description: await readEdgeFunctionError(error),
         variant: "destructive",
       });
     } finally {

@@ -364,6 +364,36 @@ async function main() {
     pass("REFRESH_TOKEN_GRANT", refresh.url === "https://oauth2.googleapis.com/token" && refresh.body.includes("grant_type=refresh_token"));
   }
 
+  // ---- Owner GO: connection state from DB, error surfacing, NULL dedupe ----
+  {
+    const autoPath = path.join(root, "src/pages/AutoUpload.tsx");
+    const auto = readFileSync(autoPath, "utf8");
+    pass("AUTOUPLOAD_READS_SOCIAL_ACCOUNTS", auto.includes('.from("social_accounts")'));
+    pass("AUTOUPLOAD_SELECTS_SAFE_COLUMNS", auto.includes('select("id,platform,platform_username,display_name,status,created_at")'));
+    pass("AUTOUPLOAD_NO_TOKEN_COLUMN_IN_SELECT", !/select\([^)]*token[^)]*\)/.test(auto));
+    pass("AUTOUPLOAD_LOADS_ON_MOUNT", auto.includes("loadSocialAccounts();"));
+    pass("AUTOUPLOAD_COUNT_FROM_STATE_NOT_HARDCODED", auto.includes("socialAccounts.filter(account => account.connected).length"));
+    pass("AUTOUPLOAD_MAPS_ACTIVE_STATUS", auto.includes('r.status === "active"'));
+    pass("AUTOUPLOAD_USES_READ_EDGE_FUNCTION_ERROR", auto.includes("readEdgeFunctionError("));
+    pass("AUTOUPLOAD_NO_GENERIC_EDGE_ERROR_DISPLAY", !auto.includes("error.message || `Failed to connect"));
+
+    const ytOauth = readFileSync(path.join(root, "supabase/functions/youtube-oauth/index.ts"), "utf8");
+    pass("OAUTH_NO_NULL_UNSAFE_UPSERT", !ytOauth.includes('upsert(row, { onConflict: "user_id,platform,platform_account_id" })'));
+    pass("OAUTH_UPDATES_EXISTING_ROW", ytOauth.includes('.update(row)') && ytOauth.includes('.eq("id", existingAccount.id)'));
+    pass("OAUTH_INSERTS_WHEN_ABSENT", ytOauth.includes('.insert(row)'));
+    pass("OAUTH_DUPLICATE_409", ytOauth.includes('"duplicate_account"') && ytOauth.includes('"23505"'));
+    pass("OAUTH_NEVER_DELETES_ACCOUNT", !ytOauth.includes('.from("social_accounts").delete'));
+
+    const mig = readFileSync(
+      path.join(root, "supabase/migrations/20260914020000_social_accounts_null_dedupe.sql"),
+      "utf8",
+    );
+    pass("MIG_DEDUPE_INDEX", mig.includes("CREATE UNIQUE INDEX IF NOT EXISTS social_accounts_user_platform_acct_uniq"));
+    pass("MIG_DEDUPE_COALESCE_NULL", mig.includes("COALESCE(platform_account_id, '')"));
+    pass("MIG_DEDUPE_NO_DELETE", !/\bDELETE\b/i.test(mig));
+    pass("MIG_DEDUPE_NO_DROP_TABLE", !/DROP\s+TABLE/i.test(mig));
+  }
+
   if (failed) {
     console.log("TEST_RESULTS=FAIL", failed);
     process.exit(1);

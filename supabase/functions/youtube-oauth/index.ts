@@ -213,13 +213,49 @@ Deno.serve(async (req) => {
       status: "active",
       revoked_at: null,
     };
-    const { data: saved, error: saveErr } = await admin
+    // NULL-dedupe guard: platform_account_id can be NULL (channel metadata needs
+    // youtube.readonly, which is not requested yet). A NULL never satisfies
+    // ON CONFLICT, so an upsert would insert a NEW row on every consent.
+    // Update the existing user+platform row in place instead of duplicating it.
+    const { data: existingAccount } = await admin
       .from("social_accounts")
-      .upsert(row, { onConflict: "user_id,platform,platform_account_id" })
-      .select("id,user_id,platform,platform_account_id,platform_username,display_name,token_expires_at,scopes,status,created_at,updated_at,revoked_at")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("platform", "youtube")
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
-    if (saveErr) return json(500, { error: "Failed to store account", code: "persist_failed" });
-    return json(200, { account: safeAccount(saved as Record<string, unknown>) });
+
+    const safeCols =
+      "id,user_id,platform,platform_account_id,platform_username,display_name,token_expires_at,scopes,status,created_at,updated_at,revoked_at";
+    let saved: Record<string, unknown> | null = null;
+    let saveErrCode: string | null = null;
+    if (existingAccount?.id) {
+      const { data, error } = await admin
+        .from("social_accounts")
+        .update(row)
+        .eq("id", existingAccount.id)
+        .eq("user_id", user.id)
+        .select(safeCols)
+        .maybeSingle();
+      saved = (data as Record<string, unknown> | null) ?? null;
+      saveErrCode = error ? String(error.code || "persist_failed") : null;
+    } else {
+      const { data, error } = await admin
+        .from("social_accounts")
+        .insert(row)
+        .select(safeCols)
+        .maybeSingle();
+      saved = (data as Record<string, unknown> | null) ?? null;
+      saveErrCode = error ? String(error.code || "persist_failed") : null;
+    }
+    if (saveErrCode) {
+      if (saveErrCode === "23505") {
+        return json(409, { error: "This YouTube account is already connected", code: "duplicate_account" });
+      }
+      return json(500, { error: "Failed to store account", code: "persist_failed" });
+    }
+    return json(200, { account: safeAccount(saved) });
   }
 
   return json(400, { error: "Unknown action", code: "bad_action" });
