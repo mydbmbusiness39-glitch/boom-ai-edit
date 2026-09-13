@@ -1051,15 +1051,16 @@ const Editor = () => {
 
             {/* Smart Captions Panel */}
             {showCaptionPanel && (
-              <div className="border-t border-border bg-card/50 p-4 space-y-3" data-cy="smart-captions-panel">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-neon-green flex items-center gap-2">
-                    <Zap className="h-4 w-4" /> Smart Captions
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-2">
+              <div className="border-t border-border bg-card/50 p-4 space-y-3 shrink-0 w-full min-w-0" data-cy="smart-captions-panel">
+                <h3 className="text-sm font-semibold text-neon-green flex items-center gap-2">
+                  <Zap className="h-4 w-4" /> Smart Captions
+                </h3>
+                {/* Full-width stacked actions: Transcribe must not sit in a clipped header row. */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
                     <Button
                       size="sm"
                       variant="outline"
+                      className="w-full"
                       onClick={() => {
                         const duration = sourceDuration();
                         const segCount = Math.max(3, Math.floor(duration / 3));
@@ -1079,13 +1080,13 @@ const Editor = () => {
                     <Button
                       size="sm"
                       variant="secondary"
+                      className="w-full"
                       disabled={isGeneratingCaptions || isProcessing}
                       onClick={transcribeSourceAudio}
                       data-cy="transcribe-button"
                     >
                       <Zap className="h-3 w-3 mr-1" /> {isGeneratingCaptions ? "Transcribing…" : "Transcribe"}
                     </Button>
-                  </div>
                 </div>
 
                 {captions.length === 0 && (
