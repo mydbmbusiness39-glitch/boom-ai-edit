@@ -1,4 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import librosa
@@ -13,6 +14,7 @@ import requests
 import subprocess
 from datetime import datetime
 from media_resolver import resolve_media, cleanup_temp, exact_host_validator
+from whisper_error import sanitize_whisper_error
 
 # Gate #69: durable async render via Cloud Tasks (OIDC), GCP-side only (ADC, no key export)
 import google.auth
@@ -434,17 +436,45 @@ async def transcribe_audio(
                 timeout=120,
             )
         if whisper_resp.status_code != 200:
+            diag = sanitize_whisper_error(
+                whisper_resp.status_code,
+                whisper_resp.text or "",
+                whisper_resp.headers,
+                elapsed_ms=int((_time.monotonic() - t0) * 1000),
+                media_duration_s=media_duration,
+            )
             print(json.dumps({
-                "event": "transcribe",
-                "provider": "openai",
-                "model": "whisper-1",
-                "media_duration_s": media_duration,
-                "elapsed_ms": int((_time.monotonic() - t0) * 1000),
+                "event": diag["event"],
+                "provider": diag["provider"],
+                "model": diag["model"],
                 "whisper_called": True,
                 "retry": False,
-                "worker_status": whisper_resp.status_code,
+                "whisper_http_status": diag["whisper_http_status"],
+                "error_type": diag["error_type"],
+                "error_code": diag["error_code"],
+                "error_reason": diag["error_reason"],
+                "error_message": diag["error_message"],
+                "retry_after": diag["retry_after"],
+                "ratelimit": diag["ratelimit"],
+                "request_id": diag["request_id"],
+                "elapsed_ms": diag["elapsed_ms"],
+                "media_duration_s": diag["media_duration_s"],
             }), flush=True)
-            raise HTTPException(status_code=502, detail=f"Whisper API error: HTTP {whisper_resp.status_code}")
+            return JSONResponse(
+                status_code=502,
+                content={
+                    "detail": diag["detail"],
+                    "error": "Transcription provider unavailable",
+                    "provider": "openai",
+                    "model": "whisper-1",
+                    "whisper_http_status": diag["whisper_http_status"],
+                    "error_type": diag["error_type"],
+                    "error_code": diag["error_code"],
+                    "error_reason": diag["error_reason"],
+                    "retry_after": diag["retry_after"],
+                    "retry": False,
+                },
+            )
         wdata = whisper_resp.json()
         segments = []
         for seg in wdata.get("segments", []):
