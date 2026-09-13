@@ -795,17 +795,20 @@ const Editor = () => {
 
   return (
     <Layout>
-      <div className="h-[calc(100vh-80px)] flex flex-col bg-background">
-        {/* Top Toolbar — wrap on mobile so Captions/BOOM stay in-viewport */}
-        <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-border bg-card">
-          <div className="flex items-center space-x-4 min-w-0">
-            <h1 className="hidden sm:block text-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
+      <div className="h-[calc(100vh-80px)] flex flex-col bg-background w-full max-w-[100vw] overflow-x-hidden">
+        {/* Mobile: 2-col grid so Captions/BOOM stay in the 390px viewport.
+            Desktop sm+: original single-row toolbar. Do not rely on flex-wrap —
+            Navigation overflow expands the page past 390px, so wrap never fires. */}
+        <div className="grid grid-cols-2 gap-2 p-4 border-b border-border bg-card shrink-0 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+          <div className="hidden sm:flex items-center space-x-4 min-w-0">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
               Video Editor
             </h1>
             <Badge variant="outline">Draft Project</Badge>
           </div>
+          <Badge variant="outline" className="sm:hidden justify-self-start">Draft Project</Badge>
           
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="contents sm:flex sm:flex-wrap sm:items-center sm:gap-2">
             <Button variant="outline" size="sm" className="hidden sm:inline-flex">
               <Settings className="h-4 w-4 mr-2" />
               Settings
@@ -813,6 +816,7 @@ const Editor = () => {
             <Button 
               variant="outline" 
               size="sm"
+              className="w-full sm:w-auto"
               onClick={() => setShowAnalysisPanel(!showAnalysisPanel)}
               disabled={isProcessing}
               data-cy="analysis-panel-toggle"
@@ -822,6 +826,7 @@ const Editor = () => {
             <Button 
               variant="outline" 
               size="sm"
+              className="w-full sm:w-auto"
               onClick={() => setShowCaptionPanel(!showCaptionPanel)}
               disabled={isProcessing}
               data-cy="caption-panel-toggle"
@@ -830,7 +835,7 @@ const Editor = () => {
               Captions
             </Button>
             <Button 
-              className="bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
+              className="w-full sm:w-auto bg-gradient-to-r from-neon-purple to-neon-green text-background hover:shadow-lg hover:shadow-neon-purple/25"
               onClick={handleBoomClick}
               disabled={isProcessing || !projectData}
               data-cy="create-job-button"
