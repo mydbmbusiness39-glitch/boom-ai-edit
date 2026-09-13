@@ -127,6 +127,10 @@ const Index = () => {
             })}
           </div>
         </div>
+        <footer className="container max-w-6xl mx-auto px-6 pb-10 text-center text-sm text-muted-foreground space-x-4">
+          <Link to="/terms" className="underline hover:text-foreground">Terms of Service</Link>
+          <Link to="/privacy" className="underline hover:text-foreground">Privacy Policy</Link>
+        </footer>
       </div>
     </Layout>
   );

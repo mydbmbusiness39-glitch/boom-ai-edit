@@ -38,7 +38,9 @@ import VideoDubbing from "./pages/VideoDubbing";
 import AIMusicGenerator from "./pages/AIMusicGenerator";
 import NotFound from "@/pages/NotFound";
 import AutoMusicSync from "./pages/AutoMusicSync";
-import Pricing from "@/pages/Pricing";
+import Pricing from "./pages/Pricing";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import { lazy, Suspense } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -67,6 +69,8 @@ const App = () => (
             }
           />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route 
             path="/one-tap" 
             element={
