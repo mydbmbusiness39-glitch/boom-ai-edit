@@ -20,6 +20,7 @@ import ClipPost from "./pages/ClipPost";
 import BatchProcessor from "./pages/BatchProcessor";
 import AutoUpload from "./pages/AutoUpload";
 import TikTokOAuthCallback from "./pages/TikTokOAuthCallback";
+import YouTubeOAuthCallback from "./pages/YouTubeOAuthCallback";
 import VoiceCloning from "./pages/VoiceCloning";
 import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
@@ -65,6 +66,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <TikTokOAuthCallback />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/youtube-oauth"
+            element={
+              <ProtectedRoute>
+                <YouTubeOAuthCallback />
               </ProtectedRoute>
             }
           />

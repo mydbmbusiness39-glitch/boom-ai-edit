@@ -15,6 +15,7 @@ import subprocess
 from datetime import datetime
 from media_resolver import resolve_media, cleanup_temp, exact_host_validator
 from transcription import transcribe_media
+from youtube_upload import YouTubeUploadError, upload_from_url
 
 # Gate #69: durable async render via Cloud Tasks (OIDC), GCP-side only (ADC, no key export)
 import google.auth
@@ -749,6 +750,42 @@ async def task_render(req: EnqueueRequest, _oidc: str = Depends(require_cloudtas
             os.rmdir(workdir)
         except Exception:
             pass
+
+class YouTubeUploadRequest(BaseModel):
+    publish_job_id: str
+    video_url: str
+    title: str = "Boom Studio Short"
+    description: str = ""
+    privacy: str = "private"
+    access_token: str
+
+
+@app.post("/social/youtube-upload")
+async def social_youtube_upload(req: YouTubeUploadRequest, _auth: bool = Depends(require_worker_auth)):
+    """Resumable YouTube Data API v3 upload. Tokens never logged. No Gate #77 path."""
+    if not req.access_token or not req.video_url:
+        raise HTTPException(status_code=400, detail="video_url and access_token required")
+    if req.privacy not in ("private", "unlisted", "public"):
+        raise HTTPException(status_code=400, detail="privacy must be private, unlisted, or public")
+    workdir = tempfile.mkdtemp(prefix="ytup_")
+    try:
+        result = upload_from_url(
+            video_url=req.video_url,
+            access_token=req.access_token,
+            title=req.title,
+            description=req.description,
+            privacy=req.privacy,
+            workdir=workdir,
+        )
+        return {"ok": True, "publish_job_id": req.publish_job_id, **result}
+    except YouTubeUploadError as e:
+        raise HTTPException(status_code=e.http_status, detail=e.code)
+    finally:
+        try:
+            os.rmdir(workdir)
+        except Exception:
+            pass
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -62,12 +62,51 @@ const AutoUpload = () => {
   };
 
   const connectPlatform = async (platform: string) => {
-    if (platform !== "TikTok") {
+    if (platform !== "TikTok" && platform !== "YouTube Shorts") {
       toast({
         title: "Not available in Gate #78",
-        description: `${platform} is not part of the TikTok MVP.`,
+        description: `${platform} is not part of the current social MVP.`,
         variant: "destructive",
       });
+      return;
+    }
+    if (platform === "YouTube Shorts") {
+      setIsConnecting(platform);
+      try {
+        const { data, error } = await supabase.functions.invoke("youtube-oauth", {
+          body: { action: "status" },
+        });
+        if (error) throw error;
+        if (!data?.configured) {
+          toast({
+            title: "YouTube setup required",
+            description: "Google Cloud OAuth is not configured. OAuth will not start.",
+            variant: "destructive",
+          });
+          return;
+        }
+        const redirectUri = `${window.location.origin}/youtube-oauth`;
+        const started = await supabase.functions.invoke("youtube-oauth", {
+          body: { action: "start", redirectUri },
+        });
+        if (started.error || started.data?.code === "oauth_not_configured") {
+          toast({
+            title: "YouTube setup required",
+            description: started.data?.error || "Google Cloud OAuth is not configured",
+            variant: "destructive",
+          });
+          return;
+        }
+        if (started.data?.authUrl) window.location.href = started.data.authUrl;
+      } catch (error: any) {
+        toast({
+          title: "Connection Failed",
+          description: error.message || `Failed to connect ${platform}`,
+          variant: "destructive",
+        });
+      } finally {
+        setIsConnecting(null);
+      }
       return;
     }
     setIsConnecting(platform);

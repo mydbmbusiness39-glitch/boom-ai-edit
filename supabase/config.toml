@@ -77,6 +77,12 @@ verify_jwt = true
 [functions.tiktok-publish]
 verify_jwt = true
 
+[functions.youtube-oauth]
+verify_jwt = true
+
+[functions.youtube-publish]
+verify_jwt = true
+
 [functions.generate-ai-avatar]
 verify_jwt = true
 
