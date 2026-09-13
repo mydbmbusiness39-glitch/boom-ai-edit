@@ -21,7 +21,7 @@ serve(async (req)=>{
     console.log('[DIAGNOSTIC] create-job request received', {
       hasAuthHeader: !!authHeader,
       method: req.method,
-      contentType: req.headers.get('content-type'),
+      contentType: req.headers.get('content-type')
     });
     if (!authHeader) {
       throw new Error('No authorization header');
@@ -38,7 +38,7 @@ serve(async (req)=>{
     const { data: { user }, error: userError } = await userSupabase.auth.getUser();
     console.log('[DIAGNOSTIC] create-job auth result', {
       userId: user?.id || null,
-      userError: userError?.message || null,
+      userError: userError?.message || null
     });
     if (userError || !user) {
       throw new Error('User not authenticated');
@@ -51,7 +51,7 @@ serve(async (req)=>{
       style_id: jobRequest.style_id,
       duration: jobRequest.duration,
       caption_style: jobRequest.caption_style,
-      hasTimeline: !!jobRequest.files?.timeline,
+      hasTimeline: !!jobRequest.files?.timeline
     });
     console.log('Creating job for user:', user.id);
     // Profile must exist (fail-closed). Quota/watermark from account_entitlements only.
@@ -59,8 +59,9 @@ serve(async (req)=>{
     if (profileError || !profile) {
       throw new Error(`Profile not found: ${profileError?.message || 'no row'}`);
     }
-    const { data: entitlementRows, error: entitlementError } = await supabase
-      .rpc('account_entitlements', { user_uuid: user.id });
+    const { data: entitlementRows, error: entitlementError } = await supabase.rpc('account_entitlements', {
+      user_uuid: user.id
+    });
     if (entitlementError || !entitlementRows || entitlementRows.length === 0) {
       throw new Error(`Entitlements not found: ${entitlementError?.message || 'no row'}`);
     }
@@ -76,13 +77,25 @@ serve(async (req)=>{
         throw new Error(`Daily job limit reached (${dailyLimit} jobs per day for ${entitlements.plan} tier)`);
       }
     }
+    // jobs_new.duration is INTEGER. Frontend source metadata stays fractional.
+    // Ceiling full-source duration so content is not truncated; exact integers (15s override) stay.
+    const normalizeJobDuration = (value, fallback = 15)=>{
+      const n = typeof value === 'number' ? value : Number(value);
+      if (!Number.isFinite(n) || n <= 0) return fallback;
+      return Math.ceil(n);
+    };
+    const jobDuration = normalizeJobDuration(jobRequest.duration);
+    console.log('[DIAGNOSTIC] create-job duration normalized', {
+      raw: jobRequest.duration,
+      normalized: jobDuration
+    });
     // Create new job
     const insertPayload = {
       name: jobRequest.name,
       user_id: user.id,
       files: jobRequest.files,
       style_id: jobRequest.style_id,
-      duration: jobRequest.duration,
+      duration: jobDuration,
       status: 'pending',
       progress: 0,
       watermarked: entitlements.watermark === true
@@ -91,7 +104,7 @@ serve(async (req)=>{
     const { data: newJob, error: createError } = await supabase.from('jobs_new').insert(insertPayload).select().single();
     console.log('[DIAGNOSTIC] create-job insert result', {
       newJobId: newJob?.id || null,
-      createError: createError?.message || null,
+      createError: createError?.message || null
     });
     if (createError) {
       throw new Error(`Failed to create job: ${createError.message}`);
