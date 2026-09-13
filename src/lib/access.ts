@@ -21,6 +21,8 @@ export type Entitlements = {
   aiTwin: boolean;
   socialPublish: boolean;
   adminTest: boolean;
+  paidTranscriptionAllowed: boolean;
+  autoTranscription: boolean;
 };
 
 export type ProfileTierFields = {
@@ -44,6 +46,8 @@ export function resolveEntitlements(profile: ProfileTierFields | null | undefine
       aiTwin: true,
       socialPublish: true,
       adminTest: true,
+      paidTranscriptionAllowed: true,
+      autoTranscription: true,
     };
   }
 
@@ -57,6 +61,8 @@ export function resolveEntitlements(profile: ProfileTierFields | null | undefine
       aiTwin: false,
       socialPublish: false,
       adminTest: false,
+      paidTranscriptionAllowed: false,
+      autoTranscription: false,
     };
   }
   return {
@@ -67,6 +73,8 @@ export function resolveEntitlements(profile: ProfileTierFields | null | undefine
     aiTwin: plan === "business" || plan === "agency",
     socialPublish: plan === "business" || plan === "agency",
     adminTest: false,
+    paidTranscriptionAllowed: false,
+    autoTranscription: false,
   };
 }
 

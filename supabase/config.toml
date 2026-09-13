@@ -38,6 +38,9 @@ verify_jwt = false
 [functions.ai-worker-proxy]
 verify_jwt = true
 
+[functions.transcribe]
+verify_jwt = true
+
 [functions.cleanup-uploads]
 verify_jwt = false
 

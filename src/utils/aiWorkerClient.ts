@@ -166,7 +166,7 @@ class AIWorkerClient {
     duration: number;
   }> {
     const base = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-    const target = `${base}/functions/v1/ai-worker-proxy/transcribe`;
+    const target = `${base}/functions/v1/transcribe`;
     const form = new FormData();
     form.append("file", file);
     const resp = await fetch(target, {
@@ -180,6 +180,9 @@ class AIWorkerClient {
     if (!resp.ok) {
       const detail = parsed?.detail || parsed?.error || parsed?.message || raw || `HTTP ${resp.status}`;
       if (resp.status === 403) {
+        if (/not included in your plan/i.test(String(detail))) {
+          throw new Error("Paid transcription is not included in your plan.");
+        }
         throw new Error("Paid transcription is disabled. Owner authorization required.");
       }
       if (resp.status === 401) {

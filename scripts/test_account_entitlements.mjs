@@ -42,6 +42,8 @@ pass("OWNER_NO_WATERMARK", owner.watermark === false);
 pass("OWNER_AI_TWIN", owner.aiTwin === true);
 pass("OWNER_SOCIAL", owner.socialPublish === true);
 pass("OWNER_ADMIN_TEST", owner.adminTest === true);
+pass("OWNER_PAID_TX", owner.paidTranscriptionAllowed === true);
+pass("OWNER_AUTO_TX", owner.autoTranscription === true);
 pass("IS_OWNER_ADMIN", isOwnerAdmin({ role: "owner_admin", plan: "enterprise_internal" }) === true);
 
 const free = resolveEntitlements({ role: "customer", plan: "free" });
@@ -50,12 +52,14 @@ pass("FREE_5TH_ALLOWED", canCreate(free, 4) === true);
 pass("FREE_6TH_BLOCKED", canCreate(free, 5) === false);
 pass("FREE_WATERMARK", free.watermark === true);
 pass("FREE_NOT_OWNER", isOwnerAdmin(free) === false);
+pass("FREE_TX_BLOCKED", free.paidTranscriptionAllowed === false && free.autoTranscription === false);
 
 const pro = resolveEntitlements({ role: "customer", plan: "pro" });
 pass("PRO_UNLIMITED", pro.dailyJobLimit === null);
 pass("PRO_6TH_ALLOWED", canCreate(pro, 6) === true);
 pass("PRO_NO_WATERMARK", pro.watermark === false);
 pass("PRO_NO_ADMIN", pro.adminTest === false);
+pass("PRO_TX_UNCHANGED_BLOCKED", pro.paidTranscriptionAllowed === false);
 
 const biz = resolveEntitlements({ role: "customer", plan: "business" });
 pass("BUSINESS_UNLIMITED", biz.dailyJobLimit === null);
