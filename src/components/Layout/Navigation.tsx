@@ -15,6 +15,7 @@ const Navigation = () => {
     { href: "/repurpose", label: "Repurpose", icon: Repeat },
     { href: "/auto-music-sync", label: "Music Sync", icon: Music },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
+    { href: "/auto-upload", label: "Auto Upload", icon: Link2 },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/editor", label: "Editor", icon: Edit },
