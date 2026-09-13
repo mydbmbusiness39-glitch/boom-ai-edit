@@ -796,17 +796,17 @@ const Editor = () => {
   return (
     <Layout>
       <div className="h-[calc(100vh-80px)] flex flex-col bg-background">
-        {/* Top Toolbar */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-card">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
+        {/* Top Toolbar — wrap on mobile so Captions/BOOM stay in-viewport */}
+        <div className="flex flex-wrap items-center justify-between gap-2 p-4 border-b border-border bg-card">
+          <div className="flex items-center space-x-4 min-w-0">
+            <h1 className="hidden sm:block text-2xl font-bold bg-gradient-to-r from-neon-purple to-neon-green bg-clip-text text-transparent">
               Video Editor
             </h1>
             <Badge variant="outline">Draft Project</Badge>
           </div>
           
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
@@ -1047,11 +1047,11 @@ const Editor = () => {
             {/* Smart Captions Panel */}
             {showCaptionPanel && (
               <div className="border-t border-border bg-card/50 p-4 space-y-3" data-cy="smart-captions-panel">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold text-neon-green flex items-center gap-2">
                     <Zap className="h-4 w-4" /> Smart Captions
                   </h3>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <Button
                       size="sm"
                       variant="outline"
