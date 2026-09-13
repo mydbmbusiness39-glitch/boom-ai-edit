@@ -25,7 +25,15 @@ Deno.serve(async (req) => {
       throw new Error('Missing Supabase environment variables');
     }
 
-    console.log('Processing clip and post request');
+    console.log('Clip and post is disabled. Use tiktok-publish after owner APPROVE & PUBLISH.');
+    return new Response(
+      JSON.stringify({
+        error: 'clip-and-post is disabled',
+        code: 'disabled',
+        details: 'Gate #78 uses tiktok-publish with owner approval. Mock posting is removed.',
+      }),
+      { status: 410, headers: corsHeaders }
+    );
 
     // Parse form data
     const formData = await req.formData();

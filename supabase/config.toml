@@ -71,6 +71,12 @@ verify_jwt = true
 [functions.social-auth]
 verify_jwt = false
 
+[functions.tiktok-oauth]
+verify_jwt = true
+
+[functions.tiktok-publish]
+verify_jwt = true
+
 [functions.generate-ai-avatar]
 verify_jwt = true
 

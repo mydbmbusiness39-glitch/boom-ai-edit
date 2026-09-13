@@ -58,72 +58,50 @@ const AutoUpload = () => {
   }, []);
 
   const loadScheduledPosts = async () => {
-    // Mock data for demo
-    const mockPosts: ScheduledPost[] = [
-      {
-        id: "post-1",
-        platform: "TikTok",
-        title: "Epic Gaming Moment #47",
-        scheduledFor: "2024-01-15T18:00:00Z",
-        status: "scheduled",
-        videoUrl: "https://example.com/video1.mp4"
-      },
-      {
-        id: "post-2", 
-        platform: "YouTube Shorts",
-        title: "Quick Tutorial: AI Video Magic",
-        scheduledFor: "2024-01-15T20:00:00Z",
-        status: "posted",
-        videoUrl: "https://example.com/video2.mp4"
-      },
-      {
-        id: "post-3",
-        platform: "Instagram Reels", 
-        title: "Behind the Scenes",
-        scheduledFor: "2024-01-16T12:00:00Z",
-        status: "posting",
-        videoUrl: "https://example.com/video3.mp4"
-      }
-    ];
-    setScheduledPosts(mockPosts);
+    setScheduledPosts([]);
   };
 
   const connectPlatform = async (platform: string) => {
-    setIsConnecting(platform);
-    
-    try {
-      // Simulate OAuth flow
-      const { data, error } = await supabase.functions.invoke('social-auth', {
-        body: { platform: platform.toLowerCase().replace(' ', '-') }
-      });
-
-      if (error) throw error;
-
-      // Simulate successful connection
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      setSocialAccounts(prev => prev.map(account => 
-        account.platform === platform 
-          ? { 
-              ...account, 
-              connected: true, 
-              username: `@demo_user_${platform.toLowerCase().replace(' ', '')}`,
-              followers: `${Math.floor(Math.random() * 50000)}K`
-            }
-          : account
-      ));
-
+    if (platform !== "TikTok") {
       toast({
-        title: "Platform Connected!",
-        description: `Successfully connected your ${platform} account`,
+        title: "Not available in Gate #78",
+        description: `${platform} is not part of the TikTok MVP.`,
+        variant: "destructive",
       });
-
+      return;
+    }
+    setIsConnecting(platform);
+    try {
+      const { data, error } = await supabase.functions.invoke("tiktok-oauth", {
+        body: { action: "status" },
+      });
+      if (error) throw error;
+      if (!data?.configured) {
+        toast({
+          title: "TikTok setup required",
+          description: "TikTok developer app is not configured. OAuth will not start.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const redirectUri = `${window.location.origin}/tiktok-oauth`;
+      const started = await supabase.functions.invoke("tiktok-oauth", {
+        body: { action: "start", redirectUri },
+      });
+      if (started.error || started.data?.code === "oauth_not_configured") {
+        toast({
+          title: "TikTok setup required",
+          description: started.data?.error || "TikTok developer app is not configured",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (started.data?.authUrl) window.location.href = started.data.authUrl;
     } catch (error: any) {
-      console.error('Connection error:', error);
       toast({
         title: "Connection Failed",
         description: error.message || `Failed to connect ${platform}`,
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsConnecting(null);

@@ -13,9 +13,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { platform, code, redirectUri }: SocialAuthRequest = await req.json();
-    
-    console.log(`Processing social auth for platform: ${platform}`);
+    return new Response(
+      JSON.stringify({
+        error: 'social-auth is disabled',
+        code: 'disabled',
+        details: 'Use tiktok-oauth. Tokens are never returned to the browser.',
+      }),
+      { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
     // Get platform-specific environment variables
     const platformConfig = getPlatformConfig(platform);

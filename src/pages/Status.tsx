@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import Layout from "@/components/Layout/Layout";
 import Watermark from "@/components/Watermark";
 import ShareModal from "@/components/ShareModal";
+import SocialPublishPanel from "@/components/SocialPublishPanel";
 import { Job, JobStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -371,6 +372,13 @@ const Status = () => {
                     Download
                   </Button>
                 </div>
+                {job.status === "completed" && job.outputUrl && (
+                  <SocialPublishPanel
+                    jobId={job.id}
+                    outputUrl={job.outputUrl}
+                    jobTitle={formatStatusJobTitle(job.name)}
+                  />
+                )}
               </div>
             )}
 

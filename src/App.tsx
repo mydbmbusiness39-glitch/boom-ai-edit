@@ -19,6 +19,7 @@ import CommunityCollab from "./pages/CommunityCollab";
 import ClipPost from "./pages/ClipPost";
 import BatchProcessor from "./pages/BatchProcessor";
 import AutoUpload from "./pages/AutoUpload";
+import TikTokOAuthCallback from "./pages/TikTokOAuthCallback";
 import VoiceCloning from "./pages/VoiceCloning";
 import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
@@ -57,6 +58,14 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route
+            path="/tiktok-oauth"
+            element={
+              <ProtectedRoute>
+                <TikTokOAuthCallback />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/pricing" element={<Pricing />} />
           <Route 
             path="/one-tap" 

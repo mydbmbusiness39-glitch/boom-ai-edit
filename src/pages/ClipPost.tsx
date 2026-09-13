@@ -205,8 +205,8 @@ const ClipPost = () => {
       setProgress(100);
 
       toast({
-        title: "Successfully Posted!",
-        description: `Your clip has been auto-formatted and posted to ${clipSettings.platforms.length} platform(s)`,
+        title: "Preview ready",
+        description: "Clip & Post mock publishing is disabled. Use Status → Social Publish after a real Boom render.",
       });
 
     } catch (error: any) {
@@ -616,9 +616,9 @@ const ClipPost = () => {
                         <CheckCircle className="h-10 w-10 text-green-600" />
                       </div>
                       <div className="space-y-2">
-                        <p className="font-medium text-green-600">Successfully Published!</p>
+                        <p className="font-medium text-green-600">Preview ready</p>
                         <p className="text-sm text-muted-foreground">
-                          Your clip has been auto-formatted and posted to {clipSettings.platforms.length} platform(s)
+                          Mock posting is disabled. Publish from Status after a real Boom render.
                         </p>
                       </div>
                       <Button
