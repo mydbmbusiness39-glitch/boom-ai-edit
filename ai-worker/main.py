@@ -14,7 +14,7 @@ import requests
 import subprocess
 from datetime import datetime
 from media_resolver import resolve_media, cleanup_temp, exact_host_validator
-from whisper_error import sanitize_whisper_error
+from transcription import transcribe_media
 
 # Gate #69: durable async render via Cloud Tasks (OIDC), GCP-side only (ADC, no key export)
 import google.auth
@@ -356,11 +356,11 @@ async def transcribe_audio(
     _auth: bool = Depends(require_worker_auth),
     x_boom_paid_transcription: Optional[str] = Header(default=None),
 ):
-    """Timed captions from source audio via OpenAI Whisper.
+    """Timed captions from source audio via config-driven providers.
 
-    Global ALLOW_PAID_CALLS stays fail-closed. The entitled Edge Function may
-    send X-Boom-Paid-Transcription: entitled after account_entitlements check.
-    One Whisper call per approved request. No retry.
+    Primary: TRANSCRIPTION_PROVIDER (default deepgram). Fallback: openai
+    whisper-1, at most one call per provider. Global ALLOW_PAID_CALLS stays
+    fail-closed. Entitled Edge Function sends X-Boom-Paid-Transcription: entitled.
     """
     import time as _time
     t0 = _time.monotonic()
@@ -368,11 +368,8 @@ async def transcribe_audio(
     request_entitled = (x_boom_paid_transcription or "").strip().lower() == "entitled"
     if not globally_allowed and not request_entitled:
         raise HTTPException(status_code=403, detail="Paid API calls are disabled")
-    if not OPENAI_API_KEY:
-        raise HTTPException(status_code=500, detail="OpenAI API key not configured")
     tmp_path = None
     audio_path = None
-    whisper_called = False
     media_duration = 0.0
     try:
         suffix = os.path.splitext(file.filename or "upload")[1] or ".mp4"
@@ -416,97 +413,77 @@ async def transcribe_audio(
         if silent:
             print(json.dumps({
                 "event": "transcribe",
-                "provider": "openai",
-                "model": "whisper-1",
+                "provider": os.getenv("TRANSCRIPTION_PROVIDER", "deepgram"),
+                "model": None,
                 "media_duration_s": media_duration,
                 "elapsed_ms": int((_time.monotonic() - t0) * 1000),
                 "whisper_called": False,
                 "retry": False,
+                "fallback_used": False,
                 "reason": "silent_source",
             }), flush=True)
             return {"captions": [], "duration": media_duration}
 
         with open(audio_path, "rb") as af:
-            whisper_called = True
-            whisper_resp = requests.post(
-                "https://api.openai.com/v1/audio/transcriptions",
-                headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
-                files={"file": (os.path.basename(audio_path), af, "audio/wav")},
-                data={"model": "whisper-1", "response_format": "verbose_json", "timestamp_granularities": "segment"},
-                timeout=120,
-            )
-        if whisper_resp.status_code != 200:
-            diag = sanitize_whisper_error(
-                whisper_resp.status_code,
-                whisper_resp.text or "",
-                whisper_resp.headers,
-                elapsed_ms=int((_time.monotonic() - t0) * 1000),
-                media_duration_s=media_duration,
-            )
-            print(json.dumps({
-                "event": diag["event"],
-                "provider": diag["provider"],
-                "model": diag["model"],
-                "whisper_called": True,
-                "retry": False,
-                "whisper_http_status": diag["whisper_http_status"],
-                "error_type": diag["error_type"],
-                "error_code": diag["error_code"],
-                "error_reason": diag["error_reason"],
-                "error_message": diag["error_message"],
-                "retry_after": diag["retry_after"],
-                "ratelimit": diag["ratelimit"],
-                "request_id": diag["request_id"],
-                "elapsed_ms": diag["elapsed_ms"],
-                "media_duration_s": diag["media_duration_s"],
-            }), flush=True)
+            audio_bytes = af.read()
+        result = transcribe_media(
+            audio_bytes,
+            media_duration_s=media_duration,
+            entitled=request_entitled or globally_allowed,
+        )
+        elapsed_ms = int((_time.monotonic() - t0) * 1000)
+        log = {
+            "event": "transcribe",
+            "provider": result.provider,
+            "model": result.model,
+            "media_duration_s": media_duration or result.duration,
+            "elapsed_ms": elapsed_ms,
+            "whisper_called": (result.provider_calls or {}).get("openai", 0) > 0,
+            "retry": False,
+            "fallback_used": bool(result.fallback_used),
+            "http_status": result.http_status,
+            "provider_calls": result.provider_calls,
+        }
+        if result.error:
+            log.update({
+                "error_type": result.error.error_type,
+                "error_code": result.error.error_code,
+                "error_reason": result.error.reason,
+            })
+        else:
+            log["segment_count"] = len(result.captions or [])
+        print(json.dumps(log), flush=True)
+        if not result.ok:
+            err = result.error
             return JSONResponse(
                 status_code=502,
                 content={
-                    "detail": diag["detail"],
+                    "detail": (err.detail if err else "Transcription provider unavailable"),
                     "error": "Transcription provider unavailable",
-                    "provider": "openai",
-                    "model": "whisper-1",
-                    "whisper_http_status": diag["whisper_http_status"],
-                    "error_type": diag["error_type"],
-                    "error_code": diag["error_code"],
-                    "error_reason": diag["error_reason"],
-                    "retry_after": diag["retry_after"],
+                    "provider": result.provider,
+                    "model": result.model,
+                    "whisper_http_status": err.status if err and result.provider == "openai" else None,
+                    "error_type": err.error_type if err else None,
+                    "error_code": err.error_code if err else None,
+                    "error_reason": err.reason if err else None,
+                    "retry_after": err.retry_after if err else None,
+                    "fallback_used": bool(result.fallback_used),
                     "retry": False,
                 },
             )
-        wdata = whisper_resp.json()
-        segments = []
-        for seg in wdata.get("segments", []):
-            text = (seg.get("text") or "").strip()
-            if not text:
-                continue
-            start = round(float(seg.get("start", 0)), 2)
-            end = round(float(seg.get("end", 0)), 2)
-            if end > start:
-                segments.append({"text": text, "start": start, "end": end})
-        print(json.dumps({
-            "event": "transcribe",
-            "provider": "openai",
-            "model": "whisper-1",
-            "media_duration_s": media_duration or wdata.get("duration", 0),
-            "elapsed_ms": int((_time.monotonic() - t0) * 1000),
-            "whisper_called": True,
-            "retry": False,
-            "segment_count": len(segments),
-        }), flush=True)
-        return {"captions": segments, "duration": wdata.get("duration", media_duration)}
+        return {"captions": result.captions or [], "duration": result.duration or media_duration}
     except HTTPException:
         raise
     except Exception as e:
         print(json.dumps({
             "event": "transcribe",
-            "provider": "openai",
-            "model": "whisper-1",
+            "provider": os.getenv("TRANSCRIPTION_PROVIDER", "deepgram"),
+            "model": None,
             "media_duration_s": media_duration,
             "elapsed_ms": int((_time.monotonic() - t0) * 1000),
-            "whisper_called": whisper_called,
+            "whisper_called": False,
             "retry": False,
+            "fallback_used": False,
             "error_class": type(e).__name__,
         }), flush=True)
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")

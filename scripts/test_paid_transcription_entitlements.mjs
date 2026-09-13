@@ -29,6 +29,9 @@ const processor = readFileSync(
   "utf8"
 );
 const worker = readFileSync(path.join(root, "ai-worker/main.py"), "utf8");
+const whisper = readFileSync(path.join(root, "ai-worker/transcription/openai_whisper.py"), "utf8");
+const deepgram = readFileSync(path.join(root, "ai-worker/transcription/deepgram_nova.py"), "utf8");
+const txService = readFileSync(path.join(root, "ai-worker/transcription/service.py"), "utf8");
 const createJob = readFileSync(
   path.join(root, "supabase/functions/create-job/index.ts"),
   "utf8"
@@ -95,12 +98,14 @@ pass("EDITOR_PERSIST", editor.includes("captions, caption_style: captionStyle") 
 
 pass("WORKER_HEADER_OVERRIDE", worker.includes("x_boom_paid_transcription"));
 pass("WORKER_GLOBAL_STILL_FALSE_DEFAULT", worker.includes('os.getenv("ALLOW_PAID_CALLS", "FALSE")'));
-pass("WORKER_NO_RETRY", worker.includes('"retry": False'));
-pass("WORKER_ONE_WHISPER", worker.includes("api.openai.com/v1/audio/transcriptions") && (worker.split("api.openai.com/v1/audio/transcriptions").length - 1) === 1);
+pass("WORKER_NO_RETRY", worker.includes('"retry": False') && txService.includes("max_calls_per_provider"));
+pass("WORKER_ONE_WHISPER", whisper.includes("api.openai.com/v1/audio/transcriptions") && (whisper.split("api.openai.com/v1/audio/transcriptions").length - 1) === 1);
 pass("WORKER_422_NO_AUDIO", worker.includes('status_code=422, detail="Source has no usable audio"'));
-pass("WORKER_SILENT_NO_WHISPER", worker.includes('"reason": "silent_source"') && worker.includes("whisper_called\": False"));
-pass("WORKER_TIMED_SEGMENTS", worker.includes('"start": start') && worker.includes('"end": end'));
+pass("WORKER_SILENT_NO_WHISPER", worker.includes('"reason": "silent_source"') && worker.includes('"whisper_called": False'));
+pass("WORKER_TIMED_SEGMENTS", whisper.includes('"text": text, "start": start, "end": end'));
 pass("WORKER_LOG_DURATION", worker.includes("media_duration_s"));
+pass("WORKER_DEEPGRAM_LISTEN", deepgram.includes("api.deepgram.com/v1/listen"));
+pass("WORKER_INTERFACE", worker.includes("from transcription import transcribe_media"));
 
 const ownerMov = decideTranscribe({
   auth: true, entitled: owner.paidTranscriptionAllowed, globallyPaid: false,

@@ -216,11 +216,11 @@ class EndToEndSanitizeTests(unittest.TestCase):
 class SourceContractTests(unittest.TestCase):
     def test_worker_uses_helper_once_no_retry(self):
         main = (ROOT / "ai-worker" / "main.py").read_text()
-        self.assertIn("from whisper_error import sanitize_whisper_error", main)
-        self.assertIn("sanitize_whisper_error(", main)
-        self.assertEqual(main.count("api.openai.com/v1/audio/transcriptions"), 1)
+        whisper = (ROOT / "ai-worker" / "transcription" / "openai_whisper.py").read_text()
+        self.assertIn("from whisper_error import sanitize_whisper_error", whisper)
+        self.assertIn("sanitize_whisper_error(", whisper)
+        self.assertEqual(whisper.count("api.openai.com/v1/audio/transcriptions"), 1)
         self.assertIn('"retry": False', main)
-        self.assertNotIn("whisper_resp = requests.post", main.split("if whisper_resp.status_code != 200:")[1].split("wdata = whisper_resp.json()")[0])
         self.assertIn("ALLOW_PAID_CALLS", main)
         self.assertNotIn('ALLOW_PAID_CALLS", "TRUE"', main)
 
