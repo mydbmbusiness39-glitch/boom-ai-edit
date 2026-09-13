@@ -6,7 +6,11 @@ import { decideYouTubeOAuthStart, safeAccount } from "../_shared/youtube_guards.
 const GOOGLE_AUTHORIZE = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const YT_CHANNELS = "https://www.googleapis.com/youtube/v3/channels?part=snippet,id&mine=true";
-const SCOPES = "https://www.googleapis.com/auth/youtube.upload";
+// youtube.upload  -> required to POST videos.insert
+// youtube.readonly -> channel identity only (id / title via channels.list?mine=true).
+// No broader YouTube scopes are requested.
+const SCOPES =
+  "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly";
 
 function json(status: number, body: Record<string, unknown>) {
   return new Response(JSON.stringify(body), {

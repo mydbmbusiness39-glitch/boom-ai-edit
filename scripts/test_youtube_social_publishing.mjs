@@ -394,6 +394,66 @@ async function main() {
     pass("MIG_DEDUPE_NO_DROP_TABLE", !/DROP\s+TABLE/i.test(mig));
   }
 
+  // ---- Phase C1: channel identity scope ----
+  {
+    const ytOauth = readFileSync(path.join(root, "supabase/functions/youtube-oauth/index.ts"), "utf8");
+    pass("C1_READONLY_SCOPE_ADDED", ytOauth.includes("https://www.googleapis.com/auth/youtube.readonly"));
+    pass("C1_UPLOAD_SCOPE_KEPT", ytOauth.includes("https://www.googleapis.com/auth/youtube.upload"));
+    pass("C1_NO_BROADER_SCOPES", !/auth\/youtube\s*"|youtube\.force-ssl|\/auth\/youtube$/.test(ytOauth));
+    pass("C1_STORES_CHANNEL_ID", ytOauth.includes("platform_account_id: channelId"));
+    pass("C1_STORES_DISPLAY_NAME", ytOauth.includes("display_name: display"));
+    pass("C1_CHANNELS_LIST_MINE", ytOauth.includes("channels?part=snippet,id&mine=true"));
+    pass("C1_UPDATE_IN_PLACE_ONLY", ytOauth.includes('.update(row)') && !ytOauth.includes(".upsert("));
+  }
+
+  // ---- Phase C2: token column privileges ----
+  {
+    const priv = readFileSync(
+      path.join(root, "supabase/migrations/20260914030000_social_accounts_revoke_token_columns.sql"),
+      "utf8",
+    );
+    pass("C2_REVOKES_TABLE_PRIVS_ANON", /REVOKE ALL PRIVILEGES ON public\.social_accounts FROM anon;/i.test(priv));
+    pass("C2_REVOKES_TABLE_PRIVS_AUTHENTICATED", /REVOKE ALL PRIVILEGES ON public\.social_accounts FROM authenticated;/i.test(priv));
+    const grantSection = priv.split("GRANT").slice(1).join("GRANT");
+    pass("C2_REGRANTS_SELECT_SAFE", grantSection.includes("id, user_id, platform, platform_account_id"));
+    pass("C2_GRANTS_EXCLUDE_ACCESS_TOKEN", !grantSection.includes("access_token_encrypted"));
+    pass("C2_GRANTS_EXCLUDE_REFRESH_TOKEN", !grantSection.includes("refresh_token_encrypted"));
+    pass("C2_NO_DELETE_OR_DROP", !/\bDELETE\b/i.test(priv) && !/DROP\s+(TABLE|COLUMN)/i.test(priv));
+    pass("C2_NO_RLS_CHANGE", !/ROW LEVEL SECURITY|DROP POLICY/i.test(priv));
+    pass("C2_TOUCHES_ONLY_SOCIAL_ACCOUNTS", !/publish_jobs|jobs_new|social_oauth_states/.test(priv));
+  }
+
+  // ---- Phase C3: upload worker readiness ----
+  {
+    const worker = readFileSync(path.join(root, "ai-worker/youtube_upload.py"), "utf8");
+    pass("C3_RESUMABLE_INSERT_URL", worker.includes("uploadType=resumable") && worker.includes("part=snippet,status"));
+    pass("C3_VIDEOS_INSERT_ENDPOINT", worker.includes("/upload/youtube/v3/videos"));
+    pass("C3_STREAMS_MEDIA_NOT_RAM", worker.includes("def download_mp4") && worker.includes("1024 * 1024") && worker.includes("max_bytes"));
+    pass("C3_SIZE_CAP_ENFORCED", worker.includes("media_too_large"));
+    pass("C3_NO_TOKEN_LOGGING", !/\bprint\(|logging\.|logger\./.test(worker));
+    const workerMain = readFileSync(path.join(root, "ai-worker/main.py"), "utf8");
+    pass("C3_PRIVACY_VALIDATED", workerMain.includes('if req.privacy not in ("private", "unlisted", "public")'));
+    pass("C3_TEMP_CLEANUP", worker.includes("os.remove(dest)"));
+    pass("C3_CHUNK_MULTIPLE_OF_256K", worker.includes("CHUNK = 8 * 1024 * 1024"));
+
+    const main = readFileSync(path.join(root, "ai-worker/main.py"), "utf8");
+    pass("C3_ROUTE_REQUIRES_WORKER_AUTH", main.includes("require_worker_auth"));
+    pass("C3_ROUTE_NOT_GATE77_PATH", main.includes('@app.post("/social/youtube-upload")'));
+
+    const pub = readFileSync(path.join(root, "supabase/functions/youtube-publish/index.ts"), "utf8");
+    pass("C3_PERSISTS_VIDEO_ID", pub.includes("platform_post_id: videoId") && pub.includes("platform_publish_id: videoId"));
+    pass("C3_PERSISTS_URL", pub.includes("youtube.com/shorts/"));
+    pass("C3_FAILURE_RECORDED", pub.includes('publish_status: "failed"') && pub.includes("error_code"));
+    pass("C3_APPROVAL_REQUIRED_UPSTREAM", pub.includes("assertApproved") && pub.includes("not_approved"));
+    pass("C3_REFRESH_SUPPORTED", pub.includes("buildRefreshTokenRequest") && pub.includes("token_expired"));
+    pass(
+      "C3_NO_BROWSER_TOKEN_EXPOSURE",
+      pub.includes("safeAccount(") &&
+        pub.includes("sanitizeYouTubeError(") &&
+        !/json\(\s*200[^)]*access_token/.test(pub),
+    );
+  }
+
   if (failed) {
     console.log("TEST_RESULTS=FAIL", failed);
     process.exit(1);
