@@ -12,6 +12,15 @@ import ShareModal from "@/components/ShareModal";
 import { Job, JobStatus } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatStyleDurationLabel } from "@/pages/Style";
+
+/** Visible Status labels only. Does not mutate job name or duration. */
+export const formatStatusDurationLabel = formatStyleDurationLabel;
+
+export const formatStatusJobTitle = (name: unknown): string => {
+  const raw = typeof name === "string" ? name : String(name ?? "");
+  return raw.replace(/\s-\s(\d+(?:\.\d+)?)s\s*$/i, (_m, n) => ` - ${formatStyleDurationLabel(Number(n))}`);
+};
 
 const Status = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -210,7 +219,7 @@ const Status = () => {
               <div className="flex items-center space-x-3">
                 {getStatusIcon(job.status)}
                 <div>
-                  <CardTitle className="text-2xl" data-cy="job-title">{job.name}</CardTitle>
+                  <CardTitle className="text-2xl" data-cy="job-title">{formatStatusJobTitle(job.name)}</CardTitle>
                   <p className="text-muted-foreground">Job ID: {job.id}</p>
                 </div>
               </div>
@@ -263,7 +272,7 @@ const Status = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Duration:</span>
-                    <span data-cy="job-duration">{job.timeline.duration}s</span>
+                    <span data-cy="job-duration">{formatStatusDurationLabel(job.timeline.duration)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Frame Rate:</span>
@@ -393,7 +402,7 @@ const Status = () => {
             isOpen={showShareModal}
             onClose={() => setShowShareModal(false)}
             videoUrl={job.outputUrl}
-            jobTitle={job.name}
+            jobTitle={formatStatusJobTitle(job.name)}
             jobId={job.id}
           />
         )}
