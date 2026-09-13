@@ -30,7 +30,7 @@ class TranscribeResult:
     provider: str
     model: str
     fallback_used: bool = False
-    provider_calls: dict = field(default_factory=lambda: {"deepgram": 0, "openai": 0})
+    provider_calls: dict = field(default_factory=lambda: {"elevenlabs": 0, "deepgram": 0, "openai": 0})
     error: Optional[ProviderError] = None
     elapsed_ms: int = 0
     http_status: Optional[int] = None

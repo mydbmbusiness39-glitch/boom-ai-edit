@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / "ai-worker"))
 
 from transcription.config import TranscriptionConfig, load_transcription_config  # noqa: E402
 from transcription.deepgram_nova import captions_from_deepgram  # noqa: E402
+from transcription.elevenlabs_scribe import captions_from_scribe  # noqa: E402
 from transcription.openai_whisper import captions_from_whisper  # noqa: E402
 from transcription.service import (  # noqa: E402
     ProviderError,
@@ -29,26 +30,30 @@ def _cfg(**kwargs):
         openai_key="sk-test",
         openai_allowed=True,
         deepgram_model="nova-3",
+        elevenlabs_key="",
+        elevenlabs_model="scribe_v2",
     )
     base.update(kwargs)
     return TranscriptionConfig(**base)
 
 
 class ConfigTests(unittest.TestCase):
-    def test_defaults_deepgram_then_openai(self):
+    def test_defaults_elevenlabs_then_deepgram_openai(self):
         cfg = load_transcription_config(
             {
                 "TRANSCRIPTION_PROVIDER": "",
                 "TRANSCRIPTION_FALLBACK": "",
+                "ELEVENLABS_API_KEY": "el",
                 "DEEPGRAM_API_KEY": "x",
                 "OPENAI_API_KEY": "y",
                 "ALLOW_PAID_CALLS": "FALSE",
             },
             entitled=True,
         )
-        self.assertEqual(cfg.primary, "deepgram")
-        self.assertEqual(cfg.fallback, "openai")
+        self.assertEqual(cfg.primary, "elevenlabs")
+        self.assertEqual(cfg.fallback, "deepgram,openai")
         self.assertTrue(cfg.openai_allowed)
+        self.assertEqual(cfg.elevenlabs_model, "scribe_v2")
 
     def test_free_not_openai_allowed_without_global(self):
         cfg = load_transcription_config(
@@ -110,6 +115,42 @@ class CaptionNormalizeTests(unittest.TestCase):
         self.assertEqual(captions_from_deepgram({"results": {"utterances": []}}), [])
         self.assertEqual(captions_from_deepgram({}), [])
 
+    def test_scribe_words_mov_shape(self):
+        payload = {
+            "text": "hello from mov second line",
+            "audio_duration_secs": 2.8,
+            "words": [
+                {"type": "word", "text": "hello", "start": 0.12, "end": 0.40},
+                {"type": "word", "text": "from", "start": 0.41, "end": 0.70},
+                {"type": "word", "text": "mov", "start": 0.71, "end": 1.10},
+                {"type": "spacing", "text": " ", "start": 1.10, "end": 1.50},
+                {"type": "word", "text": "second", "start": 1.50, "end": 1.90},
+                {"type": "word", "text": "line", "start": 1.91, "end": 2.40},
+            ],
+        }
+        caps = captions_from_scribe(payload)
+        self.assertEqual(caps[0]["text"], "hello from mov")
+        self.assertEqual(caps[0]["start"], 0.12)
+        self.assertEqual(caps[-1]["text"], "second line")
+        self.assertEqual(caps[-1]["end"], 2.4)
+        self.assertTrue(all("text" in c and "start" in c and "end" in c for c in caps))
+
+    def test_scribe_words_mp4_shape(self):
+        payload = {
+            "text": "hello from mp4",
+            "words": [
+                {"type": "word", "text": "hello", "start": 0.5, "end": 0.9},
+                {"type": "word", "text": "from", "start": 0.95, "end": 1.2},
+                {"type": "word", "text": "mp4", "start": 1.25, "end": 2.0},
+            ],
+        }
+        caps = captions_from_scribe(payload)
+        self.assertEqual(caps, [{"text": "hello from mp4", "start": 0.5, "end": 2.0}])
+
+    def test_scribe_empty_is_not_fabricated(self):
+        self.assertEqual(captions_from_scribe({"text": "", "words": []}), [])
+        self.assertEqual(captions_from_scribe({}), [])
+
     def test_whisper_segments_unchanged(self):
         payload = {"segments": [{"text": " hello ", "start": 0.1, "end": 1.4}], "duration": 12.7}
         caps = captions_from_whisper(payload)
@@ -136,7 +177,8 @@ class FallbackPolicyTests(unittest.TestCase):
         self.assertEqual(result.captions[0]["text"], "dg")
         self.assertFalse(result.fallback_used)
         self.assertEqual(calls, ["deepgram"])
-        self.assertEqual(result.provider_calls, {"deepgram": 1, "openai": 0})
+        self.assertEqual(result.provider_calls.get("deepgram"), 1)
+        self.assertEqual(result.provider_calls.get("openai", 0), 0)
 
     def test_deepgram_temporary_failure_falls_back_once(self):
         calls = []
@@ -156,7 +198,8 @@ class FallbackPolicyTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertTrue(result.fallback_used)
         self.assertEqual(calls, ["deepgram", "openai"])
-        self.assertEqual(result.provider_calls, {"deepgram": 1, "openai": 1})
+        self.assertEqual(result.provider_calls.get("deepgram"), 1)
+        self.assertEqual(result.provider_calls.get("openai"), 1)
 
     def test_no_retry_storm_same_provider(self):
         n = {"deepgram": 0}
@@ -242,6 +285,85 @@ class FallbackPolicyTests(unittest.TestCase):
         cfg = _cfg()
         self.assertEqual(cfg.max_calls_per_provider, 1)
 
+    def test_elevenlabs_success_skips_fallbacks(self):
+        calls = []
+
+        def elevenlabs(_audio):
+            calls.append("elevenlabs")
+            return TranscribeResult(ok=True, captions=[{"text": "el", "start": 0.1, "end": 1.0}], duration=1.0, provider="elevenlabs", model="scribe_v2")
+
+        def deepgram(_audio):
+            calls.append("deepgram")
+            raise AssertionError("deepgram must not be called")
+
+        def openai(_audio):
+            calls.append("openai")
+            raise AssertionError("openai must not be called")
+
+        result = transcribe_media(
+            b"wav", 1.0,
+            _cfg(primary="elevenlabs", fallback="deepgram,openai", elevenlabs_key="el"),
+            {"elevenlabs": elevenlabs, "deepgram": deepgram, "openai": openai},
+        )
+        self.assertTrue(result.ok)
+        self.assertEqual(result.captions[0]["text"], "el")
+        self.assertFalse(result.fallback_used)
+        self.assertEqual(calls, ["elevenlabs"])
+        self.assertEqual(result.provider_calls.get("elevenlabs"), 1)
+        self.assertEqual(result.provider_calls.get("deepgram", 0), 0)
+        self.assertEqual(result.provider_calls.get("openai", 0), 0)
+
+    def test_elevenlabs_temp_fail_skips_unconfigured_deepgram_then_openai(self):
+        calls = []
+
+        def elevenlabs(_audio):
+            calls.append("elevenlabs")
+            return TranscribeResult(
+                ok=False, captions=[], duration=1.0, provider="elevenlabs", model="scribe_v2",
+                error=ProviderError(status=503, reason="http_503", fallback_eligible=True, detail="tmp"),
+            )
+
+        def deepgram(_audio):
+            calls.append("deepgram")
+            raise AssertionError("deepgram unconfigured")
+
+        def openai(_audio):
+            calls.append("openai")
+            return TranscribeResult(ok=True, captions=[{"text": "wh", "start": 0.2, "end": 0.9}], duration=1.0, provider="openai", model="whisper-1")
+
+        result = transcribe_media(
+            b"wav", 1.0,
+            _cfg(primary="elevenlabs", fallback="deepgram,openai", elevenlabs_key="el", deepgram_key=""),
+            {"elevenlabs": elevenlabs, "deepgram": deepgram, "openai": openai},
+        )
+        self.assertTrue(result.ok)
+        self.assertTrue(result.fallback_used)
+        self.assertEqual(calls, ["elevenlabs", "openai"])
+        self.assertEqual(result.provider_calls.get("elevenlabs"), 1)
+        self.assertEqual(result.provider_calls.get("deepgram", 0), 0)
+        self.assertEqual(result.provider_calls.get("openai"), 1)
+
+    def test_missing_elevenlabs_key_skips_without_call(self):
+        called = []
+
+        def elevenlabs(_audio):
+            called.append("elevenlabs")
+            raise AssertionError("no key")
+
+        def openai(_audio):
+            called.append("openai")
+            return TranscribeResult(ok=True, captions=[{"text": "wh", "start": 0, "end": 1}], duration=1, provider="openai", model="whisper-1")
+
+        result = transcribe_media(
+            b"wav", 1.0,
+            _cfg(primary="elevenlabs", fallback="deepgram,openai", elevenlabs_key="", deepgram_key=""),
+            {"elevenlabs": elevenlabs, "openai": openai},
+        )
+        self.assertTrue(result.ok)
+        self.assertNotIn("elevenlabs", called)
+        self.assertEqual(called, ["openai"])
+        self.assertTrue(result.fallback_used)
+
 
 class SourceContractTests(unittest.TestCase):
     def test_interface_exported(self):
@@ -262,6 +384,14 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("utterances=true", src)
         self.assertNotIn("sk-", src)
 
+    def test_scribe_official_stt(self):
+        src = (ROOT / "ai-worker" / "transcription" / "elevenlabs_scribe.py").read_text()
+        self.assertIn("api.elevenlabs.io/v1/speech-to-text", src)
+        self.assertIn("xi-api-key", src)
+        self.assertIn("scribe_v2", src)
+        self.assertNotIn("sk-", src)
+        self.assertNotIn("ELEVENLABS_API_KEY = \"", src)
+
     def test_main_uses_transcribe_media(self):
         main = (ROOT / "ai-worker" / "main.py").read_text()
         self.assertIn("from transcription import transcribe_media", main)
@@ -274,15 +404,18 @@ class SourceContractTests(unittest.TestCase):
         self.assertIn("fallback_used", main)
         self.assertEqual(main.count("api.openai.com/v1/audio/transcriptions"), 0)
 
-    def test_no_hardcoded_deepgram_secret(self):
+    def test_no_hardcoded_secrets(self):
         for rel in [
             "ai-worker/transcription/deepgram_nova.py",
+            "ai-worker/transcription/elevenlabs_scribe.py",
             "ai-worker/transcription/service.py",
             "ai-worker/main.py",
         ]:
             text = (ROOT / rel).read_text()
             self.assertNotIn("DEEPGRAM_API_KEY = \"", text)
+            self.assertNotIn("ELEVENLABS_API_KEY = \"", text)
             self.assertNotRegex(text, r"Token [A-Za-z0-9]{20,}")
+            self.assertNotRegex(text, r"xi-api-key.: .[A-Za-z0-9]{20,}")
 
 
 if __name__ == "__main__":

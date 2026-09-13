@@ -1,4 +1,4 @@
-"""Single transcription interface. Config-driven primary + one fallback. No retry storms."""
+"""Single transcription interface. Config-driven primary + bounded fallbacks. No retry storms."""
 from __future__ import annotations
 
 import os
@@ -6,6 +6,7 @@ from typing import Callable, Dict, Optional
 
 from .config import TranscriptionConfig, load_transcription_config
 from .deepgram_nova import call_deepgram
+from .elevenlabs_scribe import call_elevenlabs
 from .openai_whisper import call_openai
 from .types import ProviderError, TranscribeResult
 
@@ -14,9 +15,21 @@ ProviderFn = Callable[[bytes], TranscribeResult]
 
 def default_providers(cfg: TranscriptionConfig) -> Dict[str, ProviderFn]:
     return {
+        "elevenlabs": lambda audio: call_elevenlabs(audio, cfg),
         "deepgram": lambda audio: call_deepgram(audio, cfg),
         "openai": lambda audio: call_openai(audio, cfg),
     }
+
+
+def _order(cfg: TranscriptionConfig) -> list[str]:
+    names: list[str] = []
+    if cfg.primary:
+        names.append(cfg.primary.strip().lower())
+    for part in (cfg.fallback or "").split(","):
+        name = part.strip().lower()
+        if name and name not in names:
+            names.append(name)
+    return names
 
 
 def transcribe_media(
@@ -28,19 +41,17 @@ def transcribe_media(
 ) -> TranscribeResult:
     cfg = cfg or load_transcription_config(os.environ, entitled=entitled)
     providers = providers or default_providers(cfg)
-    order: list[str] = []
-    if cfg.primary:
-        order.append(cfg.primary)
-    if cfg.fallback and cfg.fallback not in order:
-        order.append(cfg.fallback)
+    order = _order(cfg)
 
-    calls = {"deepgram": 0, "openai": 0}
+    calls = {"elevenlabs": 0, "deepgram": 0, "openai": 0}
     last_error: Optional[ProviderError] = None
     last_provider = order[0] if order else "none"
     last_model = ""
     fallback_used = False
 
     for i, name in enumerate(order):
+        if name == "elevenlabs" and not cfg.elevenlabs_key:
+            continue
         if name == "deepgram" and not cfg.deepgram_key:
             continue
         if name == "openai" and not cfg.openai_allowed:

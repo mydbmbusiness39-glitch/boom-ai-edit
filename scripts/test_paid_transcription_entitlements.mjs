@@ -31,6 +31,7 @@ const processor = readFileSync(
 const worker = readFileSync(path.join(root, "ai-worker/main.py"), "utf8");
 const whisper = readFileSync(path.join(root, "ai-worker/transcription/openai_whisper.py"), "utf8");
 const deepgram = readFileSync(path.join(root, "ai-worker/transcription/deepgram_nova.py"), "utf8");
+const scribe = readFileSync(path.join(root, "ai-worker/transcription/elevenlabs_scribe.py"), "utf8");
 const txService = readFileSync(path.join(root, "ai-worker/transcription/service.py"), "utf8");
 const createJob = readFileSync(
   path.join(root, "supabase/functions/create-job/index.ts"),
@@ -105,6 +106,7 @@ pass("WORKER_SILENT_NO_WHISPER", worker.includes('"reason": "silent_source"') &&
 pass("WORKER_TIMED_SEGMENTS", whisper.includes('"text": text, "start": start, "end": end'));
 pass("WORKER_LOG_DURATION", worker.includes("media_duration_s"));
 pass("WORKER_DEEPGRAM_LISTEN", deepgram.includes("api.deepgram.com/v1/listen"));
+pass("WORKER_SCRIBE_STT", scribe.includes("api.elevenlabs.io/v1/speech-to-text") && scribe.includes("scribe_v2"));
 pass("WORKER_INTERFACE", worker.includes("from transcription import transcribe_media"));
 
 const ownerMov = decideTranscribe({

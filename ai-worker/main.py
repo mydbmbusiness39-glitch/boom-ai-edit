@@ -358,9 +358,10 @@ async def transcribe_audio(
 ):
     """Timed captions from source audio via config-driven providers.
 
-    Primary: TRANSCRIPTION_PROVIDER (default deepgram). Fallback: openai
-    whisper-1, at most one call per provider. Global ALLOW_PAID_CALLS stays
-    fail-closed. Entitled Edge Function sends X-Boom-Paid-Transcription: entitled.
+    Primary: TRANSCRIPTION_PROVIDER (default elevenlabs / Scribe v2).
+    Fallback: TRANSCRIPTION_FALLBACK (default deepgram,openai). At most one
+    call per provider. Global ALLOW_PAID_CALLS stays fail-closed. Entitled
+    Edge Function sends X-Boom-Paid-Transcription: entitled.
     """
     import time as _time
     t0 = _time.monotonic()
@@ -413,7 +414,7 @@ async def transcribe_audio(
         if silent:
             print(json.dumps({
                 "event": "transcribe",
-                "provider": os.getenv("TRANSCRIPTION_PROVIDER", "deepgram"),
+                "provider": os.getenv("TRANSCRIPTION_PROVIDER", "elevenlabs"),
                 "model": None,
                 "media_duration_s": media_duration,
                 "elapsed_ms": int((_time.monotonic() - t0) * 1000),
@@ -477,7 +478,7 @@ async def transcribe_audio(
     except Exception as e:
         print(json.dumps({
             "event": "transcribe",
-            "provider": os.getenv("TRANSCRIPTION_PROVIDER", "deepgram"),
+            "provider": os.getenv("TRANSCRIPTION_PROVIDER", "elevenlabs"),
             "model": None,
             "media_duration_s": media_duration,
             "elapsed_ms": int((_time.monotonic() - t0) * 1000),
