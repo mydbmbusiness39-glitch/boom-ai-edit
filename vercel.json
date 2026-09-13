@@ -12,7 +12,7 @@
       "destination": "/privacy/index.html"
     },
     {
-      "source": "/((?!terms|privacy|assets|api).*)",
+      "source": "/((?!terms|privacy|assets|api|tiktok).*)",
       "destination": "/index.html"
     }
   ],
@@ -29,6 +29,19 @@
     {
       "source": "/(terms|privacy)",
       "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        }
+      ]
+    },
+    {
+      "source": "/tiktok(.*).txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=300"
