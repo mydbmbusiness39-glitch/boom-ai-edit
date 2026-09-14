@@ -194,19 +194,31 @@ const PREEXISTING_DIRTY = [
   "supabase/functions/ai-worker-proxy/index.ts",
 ];
 const ours = changed.filter((f) => !PREEXISTING_DIRTY.includes(f));
-ok("TIKTOK_UNCHANGED", !ours.some((f) => /tiktok/i.test(f)));
-ok("YOUTUBE_UNCHANGED", !ours.some((f) => /youtube/i.test(f)));
-ok("GATE77_UNCHANGED", !ours.some((f) => /job-processor|renderer\.py|create-job|ai-worker/.test(f)));
-ok("CAPTIONS_UNCHANGED", !ours.some((f) => /renderer\.py|caption/i.test(f)));
-// This build legitimately touches these non-"meta"-named files; anything else is scope creep.
+// Product surface = src/ + supabase/ + ai-worker/. Test files under scripts/ are
+// not product surface, so scope claims are made about product files only.
+const oursProduct = ours.filter((f) => !f.startsWith("scripts/"));
+ok("TIKTOK_UNCHANGED", !oursProduct.some((f) => /tiktok/i.test(f)));
+ok("YOUTUBE_UNCHANGED", !oursProduct.some((f) => /youtube/i.test(f)));
+ok("GATE77_UNCHANGED", !oursProduct.some((f) => /job-processor|renderer\.py|create-job|ai-worker/.test(f)));
+ok("CAPTIONS_UNCHANGED", !oursProduct.some((f) => /renderer\.py|caption/i.test(f)));
+// This build legitimately touches these non-"meta"-named product files.
 const ALLOWED_NON_META = [
   "supabase/config.toml",
   "src/App.tsx",
   "src/pages/AutoUpload.tsx",
   "src/components/SocialPublishPanel.tsx",
 ];
-const outOfScope = ours.filter((f) => !/meta/i.test(f) && !ALLOWED_NON_META.includes(f));
+const outOfScope = oursProduct.filter((f) => !/meta/i.test(f) && !ALLOWED_NON_META.includes(f));
 ok("ONLY_META_FILES_TOUCHED", outOfScope.length === 0, outOfScope.join(","));
+// Cross-platform test edits are limited to the two suites whose assertions this
+// build had to restate (nav scope check + AutoUpload safe-column allowlist).
+ok(
+  "OTHER_PLATFORM_TESTS_ONLY_ASSERTIONS",
+  ours
+    .filter((f) => f.startsWith("scripts/"))
+    .every((f) => /meta|mobile_nav|youtube_social/.test(f)),
+  ours.filter((f) => f.startsWith("scripts/")).join(","),
+);
 ok("NO_TIKTOK_FILES_EXIST_UNMODIFIED", has(fn("tiktok-oauth/index.ts")) && has(fn("tiktok-publish/index.ts")));
 
 console.log(`\nTEST_RESULTS=${fail === 0 ? "ALL_PASS" : "FAIL"} (${pass} pass, ${fail} fail)`);

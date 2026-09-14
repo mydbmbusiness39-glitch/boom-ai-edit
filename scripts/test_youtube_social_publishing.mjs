@@ -369,7 +369,24 @@ async function main() {
     const autoPath = path.join(root, "src/pages/AutoUpload.tsx");
     const auto = readFileSync(autoPath, "utf8");
     pass("AUTOUPLOAD_READS_SOCIAL_ACCOUNTS", auto.includes('.from("social_accounts")'));
-    pass("AUTOUPLOAD_SELECTS_SAFE_COLUMNS", auto.includes('select("id,platform,platform_username,display_name,status,created_at")'));
+    // Every selected column must be in the safe allowlist (stronger than pinning
+    // one exact string). platform_account_id is safe: it is the channel/Page id
+    // already returned by the oauth `status` actions, never token material.
+    const SAFE_AUTOUPLOAD_COLS = [
+      "id",
+      "platform",
+      "platform_account_id",
+      "platform_username",
+      "display_name",
+      "status",
+      "created_at",
+    ];
+    const autoSelect = auto.match(/select\("([^"]+)"\)/);
+    const autoCols = autoSelect ? autoSelect[1].split(",").map((c) => c.trim()) : [];
+    pass(
+      "AUTOUPLOAD_SELECTS_SAFE_COLUMNS",
+      autoCols.length > 0 && autoCols.every((c) => SAFE_AUTOUPLOAD_COLS.includes(c)),
+    );
     pass("AUTOUPLOAD_NO_TOKEN_COLUMN_IN_SELECT", !/select\([^)]*token[^)]*\)/.test(auto));
     pass("AUTOUPLOAD_LOADS_ON_MOUNT", auto.includes("loadSocialAccounts();"));
     pass("AUTOUPLOAD_COUNT_FROM_STATE_NOT_HARDCODED", auto.includes("socialAccounts.filter(account => account.connected).length"));

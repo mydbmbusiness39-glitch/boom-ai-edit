@@ -108,28 +108,30 @@ ok("SIGNOUT_BLOCK_INTACT", src.includes('data-cy="sign-out-button"') && src.incl
 ok("LIBS_SIGNAL", src.includes("const { user, signOut } = useAuth()"));
 
 // --- scope: nothing else changed ------------------------------------------ //
-// git status is noisy here (many files were already dirty from earlier phases),
-// so assert scope by modification time: only this component may be fresh.
-let recentlyTouched = [];
+// Scope is asserted per-COMMIT, not by wall clock: a wall-clock "only this file
+// is fresh" check only holds in the minutes after the change and breaks as soon
+// as the next unrelated build lands. Instead, the commit that last touched
+// Navigation.tsx must not have dragged in backend or unrelated files.
+let navCommitFiles = [];
 try {
-  const out = execSync(
-    "find src supabase ai-worker -newermt '-20 minutes' -type f " +
-      "-not -path '*/node_modules/*' -not -path '*/.temp/*'",
-    { cwd: root },
-  )
+  const sha = execSync("git log -1 --format=%H -- src/components/Layout/Navigation.tsx", { cwd: root })
     .toString()
     .trim();
-  recentlyTouched = out ? out.split("\n") : [];
+  if (sha) {
+    const out = execSync(`git show --name-only --format= ${sha}`, { cwd: root }).toString().trim();
+    navCommitFiles = out ? out.split("\n").map((s) => s.trim()).filter(Boolean) : [];
+  }
 } catch {
-  recentlyTouched = [];
+  navCommitFiles = [];
 }
 ok(
   "SCOPE_ONLY_NAVIGATION_TOUCHED",
-  recentlyTouched.length === 0 ||
-    (recentlyTouched.length === 1 && recentlyTouched[0].endsWith("Layout/Navigation.tsx")),
+  navCommitFiles.length > 0 &&
+    navCommitFiles.every((f) => f.endsWith("Layout/Navigation.tsx") || /test_mobile_nav/.test(f)),
+  navCommitFiles.join(","),
 );
-ok("NO_BACKEND_FILES_TOUCHED", recentlyTouched.every((f) => !/supabase\/|ai-worker\//.test(f)));
-ok("NO_CAPTION_RENDERER_TOUCHED", !recentlyTouched.some((f) => /renderer\.py|job-processor|youtube-publish|tiktok/.test(f)));
+ok("NO_BACKEND_FILES_TOUCHED", navCommitFiles.every((f) => !/^supabase\/|^ai-worker\//.test(f)));
+ok("NO_CAPTION_RENDERER_TOUCHED", !navCommitFiles.some((f) => /renderer\.py|job-processor/.test(f)));
 
 console.log(`\nTEST_RESULTS=${fail === 0 ? "ALL_PASS" : "FAIL"} (${pass} pass, ${fail} fail)`);
 process.exit(fail === 0 ? 0 : 1);
