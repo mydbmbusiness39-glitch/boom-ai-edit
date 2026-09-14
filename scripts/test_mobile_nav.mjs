@@ -72,7 +72,10 @@ ok(
 );
 
 // --- mobile presentation -------------------------------------------------- //
-ok("MOBILE_LABEL_SPAN_PRESENT", src.includes("md:hidden text-[10px] leading-tight whitespace-nowrap"));
+ok("MOBILE_LABEL_SPAN_PRESENT", src.includes("md:hidden text-[11px] font-medium leading-tight whitespace-nowrap"));
+// 11px is the floor for comfortable legibility on iPhone widths.
+ok("MOBILE_LABEL_READABLE_SIZE", /text-\[1[1-9]px\]/.test(src) && !src.includes("text-[10px]"));
+ok("MOBILE_LABEL_MEDIUM_WEIGHT", src.includes("font-medium leading-tight"));
 ok("MOBILE_STACK_ICON_OVER_LABEL", src.includes("flex flex-col md:flex-row"));
 ok("MOBILE_GAP_BETWEEN_ICON_AND_LABEL", src.includes("gap-0.5 md:gap-0"));
 ok("MOBILE_TAP_TARGET_MIN_WIDTH", src.includes("min-w-[3.75rem] md:min-w-0"));

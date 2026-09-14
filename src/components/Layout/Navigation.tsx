@@ -69,7 +69,7 @@ const Navigation = () => {
                 "h-4 w-4 shrink-0",
                 isActive && "text-primary"
               )} />
-              <span className="md:hidden text-[10px] leading-tight whitespace-nowrap text-center">
+              <span className="md:hidden text-[11px] font-medium leading-tight whitespace-nowrap text-center">
                 {mobileLabel ?? label}
               </span>
               <span className="hidden md:inline-block">{label}</span>
