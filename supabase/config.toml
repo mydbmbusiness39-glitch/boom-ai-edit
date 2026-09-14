@@ -83,6 +83,12 @@ verify_jwt = true
 [functions.youtube-publish]
 verify_jwt = true
 
+[functions.meta-oauth]
+verify_jwt = true
+
+[functions.meta-publish]
+verify_jwt = true
+
 [functions.generate-ai-avatar]
 verify_jwt = true
 

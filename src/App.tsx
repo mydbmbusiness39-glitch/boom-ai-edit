@@ -21,6 +21,7 @@ import BatchProcessor from "./pages/BatchProcessor";
 import AutoUpload from "./pages/AutoUpload";
 import TikTokOAuthCallback from "./pages/TikTokOAuthCallback";
 import YouTubeOAuthCallback from "./pages/YouTubeOAuthCallback";
+import MetaOAuthCallback from "./pages/MetaOAuthCallback";
 import VoiceCloning from "./pages/VoiceCloning";
 import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
@@ -74,6 +75,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <YouTubeOAuthCallback />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/meta-oauth"
+            element={
+              <ProtectedRoute>
+                <MetaOAuthCallback />
               </ProtectedRoute>
             }
           />

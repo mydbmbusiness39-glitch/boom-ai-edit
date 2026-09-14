@@ -33,7 +33,7 @@ type Props = {
   jobTitle?: string;
 };
 
-type PlatformTab = "tiktok" | "youtube";
+type PlatformTab = "tiktok" | "youtube" | "facebook" | "instagram";
 
 const TIKTOK_PRIVACY = [
   { value: "SELF_ONLY", label: "Only me" },
@@ -53,10 +53,16 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
   const [tab, setTab] = useState<PlatformTab>("tiktok");
   const [tiktokConfigured, setTiktokConfigured] = useState(false);
   const [youtubeConfigured, setYoutubeConfigured] = useState(false);
+  const [metaConfigured, setMetaConfigured] = useState(false);
   const [tiktokAccounts, setTiktokAccounts] = useState<SafeAccount[]>([]);
   const [youtubeAccounts, setYoutubeAccounts] = useState<SafeAccount[]>([]);
+  const [metaAccounts, setMetaAccounts] = useState<SafeAccount[]>([]);
   const [tiktokAccountId, setTiktokAccountId] = useState("");
   const [youtubeAccountId, setYoutubeAccountId] = useState("");
+  const [facebookAccountId, setFacebookAccountId] = useState("");
+  const [instagramAccountId, setInstagramAccountId] = useState("");
+  const [fbDescription, setFbDescription] = useState("");
+  const [igCaption, setIgCaption] = useState("");
   const [caption, setCaption] = useState("");
   const [hashtags, setHashtags] = useState("");
   const [tiktokPrivacy, setTiktokPrivacy] = useState("SELF_ONLY");
@@ -100,6 +106,7 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
         supabase.functions.invoke("tiktok-oauth", { body: { action: "status" } }),
         supabase.functions.invoke("youtube-oauth", { body: { action: "status" } }),
       ]);
+      const meta = await supabase.functions.invoke("meta-oauth", { body: { action: "status" } });
       if (!mounted) return;
       if (!tt.error) {
         setTiktokConfigured(Boolean(tt.data?.configured));
@@ -112,6 +119,15 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
         const list = Array.isArray(yt.data?.accounts) ? yt.data.accounts : [];
         setYoutubeAccounts(list);
         if (list[0]?.id) setYoutubeAccountId(list[0].id);
+      }
+      if (!meta.error) {
+        setMetaConfigured(Boolean(meta.data?.configured));
+        const list = Array.isArray(meta.data?.accounts) ? meta.data.accounts : [];
+        setMetaAccounts(list);
+        const fb = list.find((a) => a.platform === "facebook");
+        const ig = list.find((a) => a.platform === "instagram");
+        if (fb?.id) setFacebookAccountId(fb.id);
+        if (ig?.id) setInstagramAccountId(ig.id);
       }
       await loadPublishRows();
       if (!mounted) return;
@@ -265,8 +281,95 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
         r.publish_status !== "failed",
     ) || null;
 
+  const connectMeta = async () => {
+    if (!metaConfigured) {
+      toast({
+        title: "Meta setup required",
+        description:
+          "A Meta app is not configured. Facebook and Instagram cannot be connected yet.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const redirectUri = `${window.location.origin}/meta-oauth`;
+    const { data, error } = await supabase.functions.invoke("meta-oauth", {
+      body: { action: "start", redirectUri },
+    });
+    if (error) {
+      toast({
+        title: "Meta connection blocked",
+        description: await readEdgeFunctionError(error),
+        variant: "destructive",
+      });
+      return;
+    }
+    if (data?.authUrl) window.location.href = data.authUrl;
+  };
+
+  /**
+   * Facebook and Instagram both publish through meta-publish. Privacy is NOT a
+   * user choice on either platform, so it is pinned here and re-validated
+   * server-side (Facebook: public only; Instagram: platform default audience).
+   */
+  const publishMeta = async (platform: "facebook" | "instagram") => {
+    const accountId = platform === "facebook" ? facebookAccountId : instagramAccountId;
+    if (!accountId) {
+      toast({
+        title: "Connect an account first",
+        description: "No connected Meta account was found for this platform.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBusy(true);
+    setStatusText(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("meta-publish", {
+        body: {
+          action: "publish",
+          platform,
+          boomJobId: jobId,
+          socialAccountId: accountId,
+          title: jobTitle || "",
+          description: platform === "facebook" ? fbDescription : igCaption,
+          approvalStatus: "approved",
+          privacyLevel: platform === "facebook" ? "PUBLIC" : "PLATFORM_DEFAULT",
+        },
+      });
+      if (error || data?.error) {
+        setStatusText(data?.code || "failed");
+        toast({
+          title: "Publish blocked",
+          description: data?.error || (await readEdgeFunctionError(error)) || "Publish did not start",
+          variant: "destructive",
+        });
+        await loadPublishRows();
+        return;
+      }
+      setStatusText(data?.publish_status || "processing");
+      toast({
+        title: "Publish requested",
+        description:
+          platform === "facebook"
+            ? "Facebook is processing this Reel."
+            : "Instagram is processing this Reel.",
+      });
+      await loadPublishRows();
+    } catch (e: unknown) {
+      toast({
+        title: "Publish blocked",
+        description: await readEdgeFunctionError(e),
+        variant: "destructive",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const existingTikTok = existingFor("tiktok", tiktokAccountId);
   const existingYouTube = existingFor("youtube", youtubeAccountId);
+  const existingFacebook = existingFor("facebook", facebookAccountId);
+  const existingInstagram = existingFor("instagram", instagramAccountId);
 
   if (!loaded) return null;
 
@@ -288,6 +391,22 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
           </Button>
           <Button variant={tab === "youtube" ? "default" : "outline"} size="sm" onClick={() => setTab("youtube")}>
             YouTube
+          </Button>
+          <Button
+            variant={tab === "facebook" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTab("facebook")}
+            data-cy="tab-facebook"
+          >
+            Facebook
+          </Button>
+          <Button
+            variant={tab === "instagram" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setTab("instagram")}
+            data-cy="tab-instagram"
+          >
+            Instagram
           </Button>
         </div>
 
@@ -472,6 +591,193 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
                 data-cy="youtube-approve-and-publish"
               >
                 APPROVE & PUBLISH
+              </Button>
+            )}
+          </>
+        )}
+
+        {tab === "facebook" && (
+          <>
+            <div className="space-y-2">
+              <Label>Facebook Page</Label>
+              {metaAccounts.filter((a) => a.platform === "facebook").length === 0 ? (
+                <p className="text-sm text-muted-foreground" data-cy="facebook-no-page">
+                  No Facebook Page is connected. Publishing a Reel requires a Page you can post to.
+                </p>
+              ) : (
+                <select
+                  className="w-full border rounded-md h-10 px-3 bg-background"
+                  value={facebookAccountId}
+                  onChange={(e) => setFacebookAccountId(e.target.value)}
+                  data-cy="facebook-account-select"
+                >
+                  {metaAccounts
+                    .filter((a) => a.platform === "facebook")
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.display_name || a.platform_username || a.id} ({a.status})
+                      </option>
+                    ))}
+                </select>
+              )}
+              {metaConfigured ? (
+                <Button variant="outline" size="sm" onClick={connectMeta} data-cy="facebook-connect">
+                  Connect Facebook Page
+                </Button>
+              ) : (
+                <div className="space-y-1">
+                  <Badge variant="secondary" data-cy="facebook-setup-required">setup-required</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    A Meta app is not configured. Connect is disabled until the owner adds official
+                    app credentials.
+                  </p>
+                  <Button variant="outline" size="sm" disabled>
+                    Connect Facebook Page
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="facebook-description">description</Label>
+              <Textarea
+                id="facebook-description"
+                value={fbDescription}
+                onChange={(e) => setFbDescription(e.target.value)}
+              />
+            </div>
+
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs text-muted-foreground" data-cy="facebook-public-only">
+                Facebook Page Reels are always public. The Graph API exposes no privacy setting, so
+                no privacy chooser is shown here.
+              </p>
+            </div>
+
+            {statusText && <p className="text-sm">Status: {statusText}</p>}
+
+            {existingFacebook ? (
+              <div className="rounded-md border border-border p-3 space-y-1" data-cy="facebook-already-published">
+                <p className="text-sm font-medium">
+                  Already published to Facebook — {existingFacebook.publish_status}
+                </p>
+                {existingFacebook.platform_post_url && (
+                  <a
+                    className="text-sm underline break-all"
+                    href={existingFacebook.platform_post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {existingFacebook.platform_post_url}
+                  </a>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  This render already has a publish job for this account. Choose a different
+                  completed render to publish again.
+                </p>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={busy || !entitled || !facebookAccountId}
+                onClick={() => publishMeta("facebook")}
+                data-cy="facebook-approve-and-publish"
+              >
+                APPROVE &amp; PUBLISH
+              </Button>
+            )}
+          </>
+        )}
+
+        {tab === "instagram" && (
+          <>
+            <div className="space-y-2">
+              <Label>Instagram professional account</Label>
+              {metaAccounts.filter((a) => a.platform === "instagram").length === 0 ? (
+                <p className="text-sm text-muted-foreground" data-cy="instagram-no-professional-account">
+                  No Instagram professional account is connected. Instagram publishing requires a
+                  Business or Creator account linked to your Facebook Page.
+                </p>
+              ) : (
+                <select
+                  className="w-full border rounded-md h-10 px-3 bg-background"
+                  value={instagramAccountId}
+                  onChange={(e) => setInstagramAccountId(e.target.value)}
+                  data-cy="instagram-account-select"
+                >
+                  {metaAccounts
+                    .filter((a) => a.platform === "instagram")
+                    .map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.display_name || a.platform_username || a.id} ({a.status})
+                      </option>
+                    ))}
+                </select>
+              )}
+              {metaConfigured ? (
+                <Button variant="outline" size="sm" onClick={connectMeta} data-cy="instagram-connect">
+                  Connect Instagram
+                </Button>
+              ) : (
+                <div className="space-y-1">
+                  <Badge variant="secondary" data-cy="instagram-setup-required">setup-required</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    A Meta app is not configured. Connect is disabled until the owner adds official
+                    app credentials.
+                  </p>
+                  <Button variant="outline" size="sm" disabled>
+                    Connect Instagram
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="instagram-caption">caption</Label>
+              <Textarea
+                id="instagram-caption"
+                value={igCaption}
+                onChange={(e) => setIgCaption(e.target.value)}
+              />
+            </div>
+
+            <div className="rounded-md border border-border p-3">
+              <p className="text-xs text-muted-foreground" data-cy="instagram-default-audience">
+                Instagram Reels publish to this account's default audience. The publishing API
+                exposes no per-post privacy control, so no privacy chooser is shown here.
+              </p>
+            </div>
+
+            {statusText && <p className="text-sm">Status: {statusText}</p>}
+
+            {existingInstagram ? (
+              <div className="rounded-md border border-border p-3 space-y-1" data-cy="instagram-already-published">
+                <p className="text-sm font-medium">
+                  Already published to Instagram — {existingInstagram.publish_status}
+                </p>
+                {existingInstagram.platform_post_url && (
+                  <a
+                    className="text-sm underline break-all"
+                    href={existingInstagram.platform_post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {existingInstagram.platform_post_url}
+                  </a>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  This render already has a publish job for this account. Choose a different
+                  completed render to publish again.
+                </p>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={busy || !entitled || !instagramAccountId}
+                onClick={() => publishMeta("instagram")}
+                data-cy="instagram-approve-and-publish"
+              >
+                APPROVE &amp; PUBLISH
               </Button>
             )}
           </>

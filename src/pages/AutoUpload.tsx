@@ -17,8 +17,17 @@ import Layout from "@/components/Layout/Layout";
 
 interface SocialAccount {
   platform: string;
+  /** DB `social_accounts.platform` key — never derive this from the display name. */
+  platformKey: "tiktok" | "youtube" | "facebook" | "instagram";
+  /** Which Edge function owns the connect flow for this platform. */
+  oauthFunction: "tiktok-oauth" | "youtube-oauth" | "meta-oauth";
+  oauthRoute: string;
+  /** Short, honest note shown when the platform is not yet connected. */
+  connectNote?: string;
   username: string;
   connected: boolean;
+  /** Non-token account metadata from the DB (Page name / IG handle / channel). */
+  accountId?: string | null;
   lastPost?: string;
   followers?: string;
   color: string;
@@ -37,9 +46,10 @@ interface ScheduledPost {
 
 const AutoUpload = () => {
   const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([
-    { platform: "TikTok", username: "", connected: false, color: "bg-black", icon: "🎵" },
-    { platform: "YouTube Shorts", username: "", connected: false, followers: "", color: "bg-red-500", icon: "📹" },
-    { platform: "Instagram Reels", username: "", connected: false, followers: "", color: "bg-gradient-to-r from-purple-500 to-pink-500", icon: "📷" }
+    { platform: "TikTok", platformKey: "tiktok", oauthFunction: "tiktok-oauth", oauthRoute: "/tiktok-oauth", username: "", connected: false, color: "bg-black", icon: "🎵" },
+    { platform: "YouTube Shorts", platformKey: "youtube", oauthFunction: "youtube-oauth", oauthRoute: "/youtube-oauth", username: "", connected: false, followers: "", color: "bg-red-500", icon: "📹" },
+    { platform: "Facebook Reels", platformKey: "facebook", oauthFunction: "meta-oauth", oauthRoute: "/meta-oauth", connectNote: "Requires a Facebook Page you can publish to.", username: "", connected: false, followers: "", color: "bg-blue-600", icon: "📘" },
+    { platform: "Instagram Reels", platformKey: "instagram", oauthFunction: "meta-oauth", oauthRoute: "/meta-oauth", connectNote: "Requires an Instagram professional account linked to that Page.", username: "", connected: false, followers: "", color: "bg-gradient-to-r from-purple-500 to-pink-500", icon: "📷" }
   ]);
 
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
@@ -73,26 +83,31 @@ const AutoUpload = () => {
       if (!uid) return;
       const { data, error } = await supabase
         .from("social_accounts")
-        .select("id,platform,platform_username,display_name,status,created_at")
+        .select("id,platform,platform_account_id,platform_username,display_name,status,created_at")
         .eq("user_id", uid);
       if (error) return;
       const rows = (data || []) as Array<{
         platform: string;
+        platform_account_id: string | null;
         platform_username: string | null;
         display_name: string | null;
         status: string;
       }>;
       setSocialAccounts((prev) =>
         prev.map((account) => {
-          const key = account.platform === "YouTube Shorts" ? "youtube" : account.platform.toLowerCase();
-          const match = rows.find((r) => r.platform === key && r.status === "active");
+          // Only a real DB row with status=active counts as connected — the UI
+          // never infers a connection it cannot verify.
+          const match = rows.find(
+            (r) => r.platform === account.platformKey && r.status === "active",
+          );
           return match
             ? {
                 ...account,
                 connected: true,
+                accountId: match.platform_account_id,
                 username: match.display_name || match.platform_username || "Connected",
               }
-            : { ...account, connected: false, username: "", followers: "" };
+            : { ...account, connected: false, accountId: null, username: "", followers: "" };
         })
       );
     } catch {
@@ -101,7 +116,12 @@ const AutoUpload = () => {
   };
 
   const connectPlatform = async (platform: string) => {
-    if (platform !== "TikTok" && platform !== "YouTube Shorts") {
+    if (
+      platform !== "TikTok" &&
+      platform !== "YouTube Shorts" &&
+      platform !== "Facebook Reels" &&
+      platform !== "Instagram Reels"
+    ) {
       toast({
         title: "Not available in Gate #78",
         description: `${platform} is not part of the current social MVP.`,
@@ -157,6 +177,48 @@ const AutoUpload = () => {
       return;
     }
     setIsConnecting(platform);
+    // Meta (Facebook Reels + Instagram Reels): ONE Facebook Login consent for
+    // both, through the meta-oauth function. No credentials -> no redirect.
+    if (platform === "Facebook Reels" || platform === "Instagram Reels") {
+      setIsConnecting(platform);
+      try {
+        const { data, error } = await supabase.functions.invoke("meta-oauth", {
+          body: { action: "status" },
+        });
+        if (error) throw error;
+        if (!data?.configured) {
+          toast({
+            title: "Meta setup required",
+            description:
+              "A Meta app is not configured yet, so Facebook and Instagram cannot be connected.",
+            variant: "destructive",
+          });
+          return;
+        }
+        const redirectUri = `${window.location.origin}/meta-oauth`;
+        const started = await supabase.functions.invoke("meta-oauth", {
+          body: { action: "start", redirectUri },
+        });
+        if (started.error) {
+          toast({
+            title: "Meta connection blocked",
+            description: await readEdgeFunctionError(started.error),
+            variant: "destructive",
+          });
+          return;
+        }
+        if (started.data?.authUrl) window.location.href = started.data.authUrl;
+      } catch (error: unknown) {
+        toast({
+          title: "Connection Failed",
+          description: await readEdgeFunctionError(error),
+          variant: "destructive",
+        });
+      } finally {
+        setIsConnecting(null);
+      }
+      return;
+    }
     try {
       const { data, error } = await supabase.functions.invoke("tiktok-oauth", {
         body: { action: "status" },
