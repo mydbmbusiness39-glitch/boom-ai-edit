@@ -1,19 +1,28 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Upload, Palette, Edit, Activity, Zap, Menu, Music, BarChart3, Bot, Building, Eye, Globe, Heart, HandHeart, Link2, Layers, LogOut, Monitor, Repeat, Scissors, Shield, Sparkles, Store, TrendingUp, Trophy, Users, Volume2, Brain } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthProvider";
+
+type NavItem = {
+  href: string;
+  label: string;
+  /** Compact label used ONLY below md, where the icon sits above the text. */
+  mobileLabel?: string;
+  icon: LucideIcon;
+};
 
 const Navigation = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { href: "/", label: "Home", icon: Zap },
     { href: "/dashboard", label: "Dashboard", icon: Brain },
     { href: "/upload", label: "Upload", icon: Upload },
     { href: "/repurpose", label: "Repurpose", icon: Repeat },
-    { href: "/auto-music-sync", label: "Music Sync", icon: Music },
+    { href: "/auto-music-sync", label: "Music Sync", mobileLabel: "Music", icon: Music },
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/auto-upload", label: "Auto Upload", icon: Link2 },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
@@ -24,8 +33,8 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="flex items-center justify-between w-full p-4 bg-card border-b border-border">
-      <div className="flex items-center space-x-2">
+    <nav className="flex items-center justify-between w-full gap-2 md:gap-0 p-4 bg-card border-b border-border">
+      <div className="flex items-center space-x-2 shrink-0">
         <div className="relative">
           <Zap className="h-8 w-8 text-boom-primary" />
           <div className="absolute inset-0 h-8 w-8 text-boom-primary animate-pulse opacity-50" />
@@ -35,8 +44,8 @@ const Navigation = () => {
         </span>
       </div>
 
-      <div className="flex items-center space-x-1">
-        {navItems.map(({ href, label, icon: Icon }) => {
+      <div className="flex items-center space-x-1 min-w-0 flex-1 overflow-x-auto overscroll-x-contain md:flex-none md:overflow-visible">
+        {navItems.map(({ href, label, mobileLabel, icon: Icon }) => {
           const isActive = location.pathname === href;
           
           return (
@@ -44,7 +53,9 @@ const Navigation = () => {
               key={href}
               to={href}
               className={cn(
-                "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-300",
+                "flex flex-col md:flex-row items-center justify-center md:justify-start shrink-0",
+                "gap-0.5 md:gap-0 md:space-x-2",
+                "min-w-[3.75rem] md:min-w-0 px-2 md:px-4 py-1.5 md:py-2 rounded-lg transition-all duration-300",
                 "hover:bg-secondary/50 hover:shadow-lg",
               isActive && [
                 "bg-primary/10 text-primary",
@@ -55,9 +66,12 @@ const Navigation = () => {
               )}
             >
               <Icon className={cn(
-                "h-4 w-4",
+                "h-4 w-4 shrink-0",
                 isActive && "text-primary"
               )} />
+              <span className="md:hidden text-[10px] leading-tight whitespace-nowrap text-center">
+                {mobileLabel ?? label}
+              </span>
               <span className="hidden md:inline-block">{label}</span>
             </Link>
           );
