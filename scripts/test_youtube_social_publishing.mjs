@@ -425,6 +425,27 @@ async function main() {
     pass("REAUTH_NO_ACCOUNT_DELETE", !autoReauth.includes('.from("social_accounts").delete'));
   }
 
+  // ---- UI-path publish failure contract ----
+  {
+    const panel = readFileSync(path.join(root, "src/components/SocialPublishPanel.tsx"), "utf8");
+    pass("PANEL_USES_READ_EDGE_FUNCTION_ERROR", panel.includes("readEdgeFunctionError("));
+    pass("PANEL_NO_GENERIC_EDGE_ERROR_TOAST", !panel.includes("error?.message || \"Publish did not start\""));
+    pass("PANEL_LOADS_EXISTING_PUBLISHES", panel.includes('.from("publish_jobs")') && panel.includes('.eq("boom_job_id", jobId)'));
+    pass("PANEL_PUBLISH_SELECT_SAFE", panel.includes('select("id,platform,social_account_id,publish_status,platform_post_url")'));
+    pass("PANEL_NO_TOKEN_COLUMNS_IN_SELECT", !/select\([^)]*(token|encrypted)[^)]*\)/.test(panel));
+    pass("PANEL_YOUTUBE_ALREADY_PUBLISHED", panel.includes('data-cy="youtube-already-published"'));
+    pass("PANEL_TIKTOK_ALREADY_PUBLISHED", panel.includes('data-cy="tiktok-already-published"'));
+    pass(
+      "PANEL_BLOCKS_REPUBLISH",
+      panel.includes("existingYouTube ? (") && panel.includes("existingTikTok ? ("),
+    );
+    pass(
+      "PANEL_IGNORES_FAILED_ROWS",
+      panel.includes('r.publish_status !== "failed"'),
+    );
+    pass("PANEL_STILL_HAS_APPROVE_BUTTONS", panel.includes('data-cy="approve-and-publish"') && panel.includes('data-cy="youtube-approve-and-publish"'));
+  }
+
   // ---- Phase C2: token column privileges ----
   {
     const priv = readFileSync(

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { resolveEntitlements } from "@/lib/access";
+import { readEdgeFunctionError } from "@/utils/edgeFunctionError";
 
 type SafeAccount = {
   id: string;
@@ -15,6 +16,15 @@ type SafeAccount = {
   platform_username?: string | null;
   display_name?: string | null;
   status: string;
+};
+
+/** Safe columns only from publish_jobs (RLS limits rows to the owner). */
+type PublishRow = {
+  id: string;
+  platform: string;
+  social_account_id: string;
+  publish_status: string;
+  platform_post_url: string | null;
 };
 
 type Props = {
@@ -57,6 +67,17 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
   const [statusText, setStatusText] = useState<string | null>(null);
   const [entitled, setEntitled] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [publishRows, setPublishRows] = useState<PublishRow[]>([]);
+
+  // Existing publish jobs for this render (owner-visible rows only).
+  const loadPublishRows = async () => {
+    const { data, error } = await supabase
+      .from("publish_jobs")
+      .select("id,platform,social_account_id,publish_status,platform_post_url")
+      .eq("boom_job_id", jobId);
+    if (error || !Array.isArray(data)) return;
+    setPublishRows(data as PublishRow[]);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -92,6 +113,8 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
         setYoutubeAccounts(list);
         if (list[0]?.id) setYoutubeAccountId(list[0].id);
       }
+      await loadPublishRows();
+      if (!mounted) return;
       setLoaded(true);
     })();
     return () => {
@@ -176,13 +199,15 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
         setStatusText(code);
         toast({
           title: "Publish blocked",
-          description: data?.error || error?.message || "Publish did not start",
+          description: data?.error || (await readEdgeFunctionError(error)) || "Publish did not start",
           variant: "destructive",
         });
+        await loadPublishRows();
         return;
       }
       setStatusText(data?.publishJob?.publish_status || "processing");
       toast({ title: "Publish requested", description: "TikTok is processing this video." });
+      await loadPublishRows();
     } finally {
       setBusy(false);
     }
@@ -216,17 +241,32 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
         setStatusText(code);
         toast({
           title: "Publish blocked",
-          description: data?.error || error?.message || "Publish did not start",
+          description: data?.error || (await readEdgeFunctionError(error)) || "Publish did not start",
           variant: "destructive",
         });
+        await loadPublishRows();
         return;
       }
       setStatusText(data?.publishJob?.publish_status || "uploading");
       toast({ title: "Publish requested", description: "YouTube upload was queued after owner approval." });
+      await loadPublishRows();
     } finally {
       setBusy(false);
     }
   };
+
+  // A non-failed publish job for this render+account means republishing is
+  // blocked server-side (idempotency). Surface it instead of inviting a 409.
+  const existingFor = (platform: PlatformTab, accountId: string): PublishRow | null =>
+    publishRows.find(
+      (r) =>
+        r.platform === platform &&
+        r.social_account_id === accountId &&
+        r.publish_status !== "failed",
+    ) || null;
+
+  const existingTikTok = existingFor("tiktok", tiktokAccountId);
+  const existingYouTube = existingFor("youtube", youtubeAccountId);
 
   if (!loaded) return null;
 
@@ -311,14 +351,36 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
 
             {statusText && <p className="text-sm">Status: {statusText}</p>}
 
-            <Button
-              className="w-full"
-              disabled={busy || !entitled}
-              onClick={approveAndPublishTikTok}
-              data-cy="approve-and-publish"
-            >
-              APPROVE & PUBLISH
-            </Button>
+            {existingTikTok ? (
+              <div className="rounded-md border border-border p-3 space-y-1" data-cy="tiktok-already-published">
+                <p className="text-sm font-medium">
+                  Already published to TikTok — {existingTikTok.publish_status}
+                </p>
+                {existingTikTok.platform_post_url && (
+                  <a
+                    className="text-sm underline break-all"
+                    href={existingTikTok.platform_post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {existingTikTok.platform_post_url}
+                  </a>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  This render already has a publish job for this account, so republishing is blocked to
+                  prevent duplicate uploads.
+                </p>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={busy || !entitled}
+                onClick={approveAndPublishTikTok}
+                data-cy="approve-and-publish"
+              >
+                APPROVE & PUBLISH
+              </Button>
+            )}
           </>
         )}
 
@@ -382,14 +444,36 @@ const SocialPublishPanel = ({ jobId, outputUrl, jobTitle }: Props) => {
 
             {statusText && <p className="text-sm">Status: {statusText}</p>}
 
-            <Button
-              className="w-full"
-              disabled={busy || !entitled}
-              onClick={approveAndPublishYouTube}
-              data-cy="youtube-approve-and-publish"
-            >
-              APPROVE & PUBLISH
-            </Button>
+            {existingYouTube ? (
+              <div className="rounded-md border border-border p-3 space-y-1" data-cy="youtube-already-published">
+                <p className="text-sm font-medium">
+                  Already published to YouTube — {existingYouTube.publish_status}
+                </p>
+                {existingYouTube.platform_post_url && (
+                  <a
+                    className="text-sm underline break-all"
+                    href={existingYouTube.platform_post_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {existingYouTube.platform_post_url}
+                  </a>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  This render already has a publish job for this account, so republishing is blocked to
+                  prevent duplicate uploads. Choose a different completed render to publish again.
+                </p>
+              </div>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={busy || !entitled}
+                onClick={approveAndPublishYouTube}
+                data-cy="youtube-approve-and-publish"
+              >
+                APPROVE & PUBLISH
+              </Button>
+            )}
           </>
         )}
 
