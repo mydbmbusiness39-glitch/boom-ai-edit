@@ -37,8 +37,64 @@ const Status = () => {
   // Load real job data from jobs_new and poll for updates
   useEffect(() => {
     if (!jobId) {
-      setIsLoading(false);
-      return;
+      // Bare /status (nav link, VideoCreationForm, home card). Resolve a REAL job
+      // for the signed-in user, then redirect to /status/<id>. Never fabricate a
+      // job and never select another user's row.
+      let cancelled = false;
+
+      const resolveLatestJob = async () => {
+        const stored = (() => {
+          try {
+            return localStorage.getItem("currentJobId") || "";
+          } catch {
+            return "";
+          }
+        })();
+
+        if (UUID_REGEX.test(stored)) {
+          if (!cancelled) navigate(`/status/${stored}`, { replace: true });
+          return;
+        }
+
+        const { data: sessionData } = await supabase.auth.getSession();
+        const uid = sessionData.session?.user?.id;
+        if (!uid) {
+          if (!cancelled) {
+            setPollError("Please sign in to view render status.");
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("jobs_new")
+          .select("id")
+          .eq("user_id", uid)
+          .eq("status", "completed")
+          .not("output_url", "is", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (error || !data?.id) {
+          setPollError("No completed render yet. Create a video and its status will appear here.");
+          setIsLoading(false);
+          return;
+        }
+
+        try {
+          localStorage.setItem("currentJobId", data.id);
+        } catch {}
+        navigate(`/status/${data.id}`, { replace: true });
+      };
+
+      resolveLatestJob();
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (!UUID_REGEX.test(jobId)) {
@@ -191,7 +247,7 @@ const Status = () => {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
             <h1 className="text-2xl font-bold">Job Not Found</h1>
             <p className="text-muted-foreground">
-              {pollError || `The job with ID "${jobId}" could not be found.`}
+              {pollError || (jobId ? `The job with ID "${jobId}" could not be found.` : "No render selected.")}
             </p>
             <Button variant="outline" onClick={() => navigate("/editor")}>
               Back to Editor

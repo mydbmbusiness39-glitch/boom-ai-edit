@@ -74,7 +74,7 @@ const Index = () => {
       icon: Activity,
       title: "Render Status",
       description: "Track your video processing progress in real-time",
-      href: "/status/demo-job"
+      href: "/status"
     }
   ];
 

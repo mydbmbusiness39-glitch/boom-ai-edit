@@ -22,9 +22,14 @@ const bundle = fs.readFileSync(bundlePath, 'utf8');
 // 1. Status.tsx contains UUID_REGEX
 assert(src.includes('UUID_REGEX'), 'Status.tsx contains UUID_REGEX');
 
-// 2. Status.tsx validates jobId before jobs_new query
+// 2. Status.tsx validates jobId before the jobs_new poll query.
+// Status.tsx also has a 1-column id lookup that resolves bare /status (guarded
+// by UUID_REGEX.test(stored)), so anchor the comparison on the poll query's
+// own column list rather than "the first jobs_new query in the file".
+const guardIdx = src.indexOf('UUID_REGEX.test(jobId)');
+const pollSelectIdx = src.indexOf('output_url, files');
 assert(
-  src.indexOf('UUID_REGEX.test(jobId)') < src.indexOf('.from("jobs_new")'),
+  guardIdx !== -1 && pollSelectIdx !== -1 && guardIdx < pollSelectIdx,
   'Status.tsx UUID check occurs before jobs_new query'
 );
 
