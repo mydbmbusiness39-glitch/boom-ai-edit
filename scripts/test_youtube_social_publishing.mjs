@@ -404,6 +404,25 @@ async function main() {
     pass("C1_STORES_DISPLAY_NAME", ytOauth.includes("display_name: display"));
     pass("C1_CHANNELS_LIST_MINE", ytOauth.includes("channels?part=snippet,id&mine=true"));
     pass("C1_UPDATE_IN_PLACE_ONLY", ytOauth.includes('.update(row)') && !ytOauth.includes(".upsert("));
+
+    // Re-authorize must reuse the existing flow and never disconnect/delete.
+    const autoReauth = readFileSync(path.join(root, "src/pages/AutoUpload.tsx"), "utf8");
+    pass("REAUTH_BUTTON_PRESENT", autoReauth.includes("Re-authorize YouTube"));
+    pass("REAUTH_USES_EXISTING_FLOW", autoReauth.includes('onClick={() => connectPlatform(account.platform)}'));
+    pass("REAUTH_ONLY_FOR_YOUTUBE", autoReauth.includes('account.platform === "YouTube Shorts" &&'));
+    const reauthStart = autoReauth.indexOf('account.platform === "YouTube Shorts" && (');
+    const disconnectStart = autoReauth.indexOf("disconnectPlatform(account.platform)");
+    const reauthBlock =
+      reauthStart >= 0 && disconnectStart > reauthStart
+        ? autoReauth.slice(reauthStart, disconnectStart)
+        : "";
+    pass(
+      "REAUTH_NO_DISCONNECT_CALL",
+      reauthBlock.includes("connectPlatform(account.platform)") && !reauthBlock.includes("disconnectPlatform"),
+    );
+    pass("REAUTH_NO_REVOKE_ACTION", !autoReauth.includes('action: "revoke"'));
+    pass("REAUTH_DOES_NOT_HIDE_DISCONNECT", autoReauth.includes("disconnectPlatform(account.platform)"));
+    pass("REAUTH_NO_ACCOUNT_DELETE", !autoReauth.includes('.from("social_accounts").delete'));
   }
 
   // ---- Phase C2: token column privileges ----

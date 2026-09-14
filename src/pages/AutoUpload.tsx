@@ -321,6 +321,28 @@ const AutoUpload = () => {
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Connected
                         </Badge>
+                        {account.platform === "YouTube Shorts" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => connectPlatform(account.platform)}
+                            disabled={isConnecting === account.platform}
+                            data-cy="youtube-reauthorize"
+                            title="Re-run Google consent to grant additional YouTube permissions. Does not disconnect the account."
+                          >
+                            {isConnecting === account.platform ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Re-authorizing...
+                              </>
+                            ) : (
+                              <>
+                                <Link2 className="h-4 w-4 mr-2" />
+                                Re-authorize YouTube
+                              </>
+                            )}
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
