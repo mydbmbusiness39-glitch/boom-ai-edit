@@ -94,3 +94,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Mobile preview stage (iPhone first).
+   ---------------------------------------------------------------------------
+   On a phone the available editor viewport is the SCREEN, not the wide desktop
+   canvas. Previously the frame kept `aspect-video` (16:9) inside a column that a
+   fixed w-80 side panel had squeezed, so a 9:16 source sat letterboxed at an
+   offset with large black areas instead of being centred.
+
+   Mobile-only (desktop layout is untouched: the md: breakpoint starts at 768px):
+     - hug the SOURCE aspect ratio (default 9:16 vertical reel)
+     - never exceed the visible viewport width (frame stays on-screen, centred)
+     - cap against the available height so it cannot overflow vertically
+     - stay centred via auto margins
+   The video itself keeps `object-contain`, so nothing is ever cropped or
+   stretched even if a bound clamps the frame.
+   --------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .editor-preview-frame {
+    aspect-ratio: var(--preview-aspect, 9 / 16);
+    width: 100%;
+    max-width: min(100%, calc(100vw - 3rem)); /* 3rem = the p-6 stage padding */
+    max-height: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

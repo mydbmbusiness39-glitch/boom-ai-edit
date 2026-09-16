@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { Play, Pause, SkipBack, SkipForward, Volume2, Scissors, Copy, Trash2, Settings, Zap, Upload, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { aiWorkerClient } from "@/utils/aiWorkerClient";
 import { parseSourceDuration, SOURCE_DURATION_STORAGE_KEY } from "@/pages/Upload";
 import { readEdgeFunctionError } from "@/utils/edgeFunctionError";
+import { hasMusic, musicLabel, musicTrackName, normalizeMusic } from "@/lib/music";
+import { DEFAULT_PREVIEW_ASPECT_CSS, previewAspectCss } from "@/lib/previewFit";
 
 type EditItem = {
   id: string;
@@ -99,6 +101,8 @@ const Editor = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [previewDuration, setPreviewDuration] = useState(0);
+  // Source aspect ratio for the preview frame (defaults to 9:16 until metadata loads).
+  const [previewAspect, setPreviewAspect] = useState<string>(DEFAULT_PREVIEW_ASPECT_CSS);
   const [volume, setVolume] = useState([80]);
   const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
   const [projectData, setProjectData] = useState<any>(null);
@@ -124,7 +128,9 @@ const Editor = () => {
   // Load project data from localStorage
   useEffect(() => {
     const uploadedFiles = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
-    const selectedMusic = localStorage.getItem('selectedMusic');
+    // Normalise the stored music value: a cleared selection can round-trip as the
+    // STRING "null"/"undefined", which is truthy and would render "Music: null".
+    const selectedMusic = normalizeMusic(localStorage.getItem('selectedMusic'));
     const selectedStyle = localStorage.getItem('selectedStyle');
     const videoDuration = localStorage.getItem('videoDuration');
     const sourceVideoDuration = localStorage.getItem(SOURCE_DURATION_STORAGE_KEY);
@@ -180,16 +186,17 @@ const Editor = () => {
       color: file.type === 'video' ? "bg-neon-purple/20 border-neon-purple" : "bg-blue-500/20 border-blue-500",
       sourceName: file.file?.name || file.name,
     }));
-    if (projectData.music) {
+    if (hasMusic(projectData.music)) {
+      const trackName = musicTrackName(projectData.music) as string;
       items.push({
         id: "music",
-        name: `Music: ${projectData.music}`,
+        name: trackName,
         type: "audio",
         startTime: 0,
         duration: baseDuration,
         track: projectData.files.length,
         color: "bg-neon-green/20 border-neon-green",
-        sourceName: `Music: ${projectData.music}`,
+        sourceName: trackName,
       });
     }
     return items;
@@ -722,6 +729,8 @@ const Editor = () => {
   const handlePreviewLoadedMetadata = () => {
     const video = previewVideoRef.current;
     if (!video) return;
+    // Track the SOURCE aspect so the frame can hug it (mobile) instead of forcing 16:9.
+    setPreviewAspect(previewAspectCss(video.videoWidth, video.videoHeight));
     setPreviewDuration(readMediaDuration(video));
     syncPreviewTime(video);
     applyPreviewVolumeToMedia(video, volume[0] ?? 80);
@@ -855,12 +864,19 @@ const Editor = () => {
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        {/* Mobile: stack the side panel BELOW the editor so the preview keeps the
+            full viewport width. Desktop keeps the original side-by-side row (every
+            new utility below is max-md:-scoped, so md+ is byte-identical). */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden max-md:min-h-0">
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col max-md:min-h-0 max-md:min-w-0">
             {/* Preview Window */}
-            <div className="flex-1 bg-black/50 p-6 flex items-center justify-center">
-              <div className="relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden">
+            <div className="flex-1 bg-black/50 p-6 flex items-center justify-center max-md:min-h-0 max-md:min-w-0">
+              <div
+                className="editor-preview-frame relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden"
+                style={{ "--preview-aspect": previewAspect } as CSSProperties}
+                data-cy="editor-preview-frame"
+              >
                 <Watermark />
                 {previewVideoUrl ? (
                   <video
@@ -1247,7 +1263,7 @@ const Editor = () => {
           </div>
 
           {/* Side Panel - Chat Assistant or Project Summary */}
-          <div className="w-80 border-l border-border bg-card flex flex-col">
+          <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-border bg-card flex flex-col max-md:max-h-[45vh] max-md:min-h-0 max-md:shrink-0">
             {/* Tab Switcher */}
             <div className="flex border-b border-border">
               <button
@@ -1304,8 +1320,8 @@ const Editor = () => {
                           
                           <div>
                             <label className="text-sm font-medium">Music</label>
-                            <p className="text-sm text-muted-foreground capitalize">
-                              {projectData.music}
+                            <p className="text-sm text-muted-foreground capitalize" data-cy="editor-project-music">
+                              {musicLabel(projectData.music)}
                             </p>
                           </div>
                           
