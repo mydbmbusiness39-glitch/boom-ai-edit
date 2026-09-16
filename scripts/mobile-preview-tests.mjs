@@ -185,8 +185,30 @@ check("frame is centred with auto margins", () => {
   const block = css.match(/\.editor-preview-frame\s*\{([^}]*)\}/)[1];
   ok(/margin-left:\s*auto/.test(block) && /margin-right:\s*auto/.test(block));
 });
-check("frame is height-capped", () => {
-  ok(/\.editor-preview-frame\s*\{[^}]*max-height:\s*100%/.test(css));
+check("frame height cap uses DEFINITE units (canary regression guard)", () => {
+  // Strip CSS comments first: the explanatory comment names the bad pattern.
+  const block = css.match(/\.editor-preview-frame\s*\{([^}]*)\}/)[1]
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  // The collapse bug: `max-height: 100%` against a `flex: 1 1 0%` parent -> 0 on iOS Safari.
+  ok(!/max-height:\s*100%/.test(block),
+     "max-height:100% collapses inside a flex-basis:0 parent on iOS Safari");
+  ok(/max-height:\s*calc\(100vh\s*-\s*18rem\)/.test(block), "missing vh fallback cap");
+  ok(/max-height:\s*calc\(100dvh\s*-\s*18rem\)/.test(block), "missing dvh (iOS 15.4+) cap");
+  for (const m of block.matchAll(/max-height:\s*([^;]+)/g)) {
+    ok(!/%/.test(m[1]), `max-height must not use a percentage: ${m[1].trim()}`);
+  }
+});
+check("mobile preview cannot be squeezed to a sliver", () => {
+  // stage + column size to the video on mobile (base flex-1 still applies at md+)
+  ok(/flex-1 bg-black\/50 p-6 flex items-center justify-center max-md:flex-none max-md:min-w-0/
+       .test(editor), "preview stage must be max-md:flex-none");
+  ok(/flex-1 flex flex-col max-md:flex-none max-md:min-w-0/.test(editor),
+     "main column must be max-md:flex-none");
+});
+check("row scrolls vertically on mobile so nothing is clipped", () => {
+  ok(/overflow-hidden max-md:min-h-0 max-md:overflow-y-auto/.test(editor),
+     "row needs max-md:overflow-y-auto with base overflow-hidden");
+  ok(!/max-md:overflow-x/.test(editor), "must not touch horizontal scrolling");
 });
 check("editor frame carries the class + aspect var + data-cy", () => {
   ok(/className="editor-preview-frame[^"]*"/.test(editor), "missing frame class");

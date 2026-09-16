@@ -865,13 +865,14 @@ const Editor = () => {
         </div>
 
         {/* Mobile: stack the side panel BELOW the editor so the preview keeps the
-            full viewport width. Desktop keeps the original side-by-side row (every
-            new utility below is max-md:-scoped, so md+ is byte-identical). */}
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden max-md:min-h-0">
+            full viewport width, and let the row scroll vertically so the preview is
+            never squeezed to a sliver (it sizes to the video). Desktop keeps the
+            original side-by-side row (every new utility is max-md:-scoped). */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden max-md:min-h-0 max-md:overflow-y-auto">
           {/* Main Content Area */}
-          <div className="flex-1 flex flex-col max-md:min-h-0 max-md:min-w-0">
+          <div className="flex-1 flex flex-col max-md:flex-none max-md:min-w-0">
             {/* Preview Window */}
-            <div className="flex-1 bg-black/50 p-6 flex items-center justify-center max-md:min-h-0 max-md:min-w-0">
+            <div className="flex-1 bg-black/50 p-6 flex items-center justify-center max-md:flex-none max-md:min-w-0">
               <div
                 className="editor-preview-frame relative w-full max-w-4xl aspect-video bg-black rounded-lg overflow-hidden"
                 style={{ "--preview-aspect": previewAspect } as CSSProperties}

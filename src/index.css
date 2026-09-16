@@ -116,7 +116,16 @@
     aspect-ratio: var(--preview-aspect, 9 / 16);
     width: 100%;
     max-width: min(100%, calc(100vw - 3rem)); /* 3rem = the p-6 stage padding */
-    max-height: 100%;
+    /*
+     * Height cap MUST be definite viewport units, never `max-height: 100%`.
+     * A percentage resolves against the containing block's height, and the parent
+     * is a `flex: 1 1 0%` flex item — flex-basis 0 — which iOS Safari resolves to
+     * a ZERO height, collapsing the frame and hiding the video entirely (canary
+     * regression after a0e0faf). `vh`/`dvh` cannot collapse. The `dvh` line wins
+     * where supported (iOS 15.4+); older Safari keeps the `vh` line.
+     */
+    max-height: calc(100vh - 18rem);
+    max-height: calc(100dvh - 18rem);
     margin-left: auto;
     margin-right: auto;
   }
