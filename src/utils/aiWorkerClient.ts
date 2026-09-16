@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { createPrewarmer } from "@/lib/workerPrewarm";
 
 export interface BeatsAnalysis {
   bpm: number;
@@ -256,3 +257,22 @@ function normalizeTimelineRequest(request: any): any {
 }
 
 export const aiWorkerClient = new AIWorkerClient();
+
+/**
+ * Wake the Cloud Run worker in the background so a later BOOM press does not
+ * land on a scaled-to-zero instance (Cloud Run aborts such requests before any
+ * app code runs, surfacing as "Timeline compile failed").
+ *
+ * Goes through the ai-worker-proxy — which injects the worker bearer token, so
+ * no worker credential is ever exposed to the browser — to the lightweight
+ * /health route. It never calls /timeline/compile.
+ *
+ * Fire-and-forget: single-flight (exactly one request per page load), never
+ * rejects, and never produces user-visible UI.
+ */
+export const prewarmAiWorker = createPrewarmer(async (body) => {
+  return supabase.functions.invoke('ai-worker-proxy', {
+    body,
+    headers: { 'X-Trace-Id': generateTraceId() },
+  });
+});

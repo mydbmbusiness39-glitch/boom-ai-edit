@@ -13,7 +13,7 @@ import ChatAssistant from "@/components/Editor/ChatAssistant";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
-import { aiWorkerClient } from "@/utils/aiWorkerClient";
+import { aiWorkerClient, prewarmAiWorker } from "@/utils/aiWorkerClient";
 import { parseSourceDuration, SOURCE_DURATION_STORAGE_KEY } from "@/pages/Upload";
 import { readEdgeFunctionError } from "@/utils/edgeFunctionError";
 import { hasMusic, musicLabel, musicTrackName, normalizeMusic } from "@/lib/music";
@@ -205,6 +205,16 @@ const Editor = () => {
   useEffect(() => {
     setEditItems(buildInitialEditItems());
   }, [projectData]);
+
+  // Warm the Cloud Run worker in the background as soon as the Editor mounts, so a
+  // later BOOM press does not hit a scaled-to-zero instance (which Cloud Run aborts
+  // before any app code runs, surfacing as "Timeline compile failed").
+  //
+  // Deliberately fire-and-forget: it does not block the UI, never sets state, and
+  // reports nothing to the user — prewarmAiWorker is single-flight and never rejects.
+  useEffect(() => {
+    void prewarmAiWorker();
+  }, []);
 
   const updateItem = (id: string, patch: Partial<EditItem>) => {
     setEditItems((prev) =>
@@ -485,6 +495,15 @@ const Editor = () => {
 
       let compiledTimeline: any = null;
       if (timelineItems.length > 0) {
+        // Close the cold-start race: wait for the worker wake before compiling.
+        // prewarmAiWorker is single-flight, so if the mount pre-warm is still in
+        // flight this reuses that same promise instead of issuing a second wake.
+        // It resolves a boolean and NEVER rejects, so a failed wake cannot fail the
+        // BOOM flow — the compile is attempted regardless (fail-open, not a gate).
+        // Placement is deliberate: uploads above already ran, so in the common case
+        // the boot overlapped them and this await costs nothing. The existing
+        // "Processing..." state covers the wait; nothing new is rendered.
+        await prewarmAiWorker();
         try {
           compiledTimeline = await aiWorkerClient.compileTimeline({
             items: timelineItems,
