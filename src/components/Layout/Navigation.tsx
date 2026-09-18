@@ -26,6 +26,7 @@ const Navigation = () => {
     { href: "/clip-post", label: "Clip & Post", icon: Scissors },
     { href: "/auto-upload", label: "Auto Upload", icon: Link2 },
     { href: "/ai-studio", label: "AI Studio", icon: Brain },
+    { href: "/twin", label: "AI Twin", mobileLabel: "Twin", icon: Bot },
     { href: "/analytics", label: "Analytics", icon: BarChart3 },
     { href: "/editor", label: "Editor", icon: Edit },
     { href: "/status", label: "Status", icon: Activity },
