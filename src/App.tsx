@@ -25,6 +25,7 @@ import MetaOAuthCallback from "./pages/MetaOAuthCallback";
 import VoiceCloning from "./pages/VoiceCloning";
 import AiHost from "./pages/AiHost";
 import DynamicOverlays from "./pages/DynamicOverlays";
+import TwinSetupPage from "./pages/TwinSetup";
 import AiStudio from "./pages/AiStudio";
 import Marketplace from "./pages/Marketplace";
 import BrandMarketplace from "./pages/BrandMarketplace";
@@ -214,6 +215,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <DynamicOverlays />
+              </ProtectedRoute>
+            } 
+          />
+          <Route
+            path="/twin" 
+            element={
+              <ProtectedRoute>
+                <TwinSetupPage />
               </ProtectedRoute>
             } 
           />
