@@ -100,6 +100,14 @@ async function handle(req: Request): Promise<Response> {
   const lastAttempt = rows[0] ?? null;
   const avatarReady = !!twin.visual_provider_id;
 
+  // The twin's already-ingested likeness asset, so the Generate button can bind to it without
+  // re-uploading and without any provider contact.
+  const boundAsset = rows.find((o) => {
+    const f = (o.entitlement_snapshot as { flow?: { asset_id?: string; ingest_status?: string } } | null)?.flow;
+    return !!f?.asset_id && f.ingest_status === "completed";
+  }) ?? rows.find((o) => (o.entitlement_snapshot as { flow?: { asset_id?: string } } | null)?.flow?.asset_id) ?? null;
+  const boundAssetId = ((boundAsset?.entitlement_snapshot as { flow?: { asset_id?: string } } | null)?.flow?.asset_id) ?? null;
+
   const versions = versionList(twin as never);
   const active = activeVersion(twin as never);
   const preview = estimateCost({ audioDurationS, willCreateAvatar: !avatarReady });
@@ -110,6 +118,7 @@ async function handle(req: Request): Promise<Response> {
   return json(200, {
     ok: true,
     capabilities: capabilitiesForRole(role),
+    boundAssetId,
     twin: {
       id: twin.id,
       name: twin.name ?? "My Twin",

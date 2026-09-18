@@ -72,6 +72,8 @@ export interface TwinVersionView {
 
 export interface TwinStateView {
   capabilities: string[];
+  /** The twin's already-ingested likeness asset, if one exists. The Generate button binds THIS. */
+  boundAssetId: string | null;
   twin: {
     id: string;
     name: string;
@@ -115,6 +117,20 @@ export const rollbackVersion = (twinId: string) =>
   call<{ activeVersion: number; versions: TwinVersionView[] }>("twin-version", { action: "rollback", twinId });
 
 /**
+ * Unpaid bootstrap: establish an operation bound to the twin's EXISTING likeness asset and seed
+ * the persisted avatar, so the paid step has nothing to create. The server reports
+ * `providerCalls: 0` for this path, and it is asserted below before any spend.
+ */
+export const bootstrapTwinOperation = async (twinId: string, assetId: string) => {
+  const idempotencyKey = `ui-${crypto.randomUUID()}`;
+  return call<{ status: string; operationId: string; assetId: string; avatarId: string | null;
+                avatarSource: string | null; providerCalls: number; idempotencyKey: string }>(
+    "twin-visual-ingest",
+    { twinId, idempotencyKey, bindAssetId: assetId }
+  ).then((r) => ({ ...r, idempotencyKey }));
+};
+
+/**
  * Run the proven generation flow. This calls the EXISTING twin-visual-generate function
  * unchanged; the product layer only supplies the operation id for idempotency, so a repeated
  * click cannot create a second avatar or a second video.
@@ -124,7 +140,7 @@ export const generateTwinVideo = async (
   opts: { operationId?: string; idempotencyKey?: string } = {}
 ) => {
   const operationId = opts.operationId ?? crypto.randomUUID();
-  return call<{ status: string; providerJobId?: string; audioDurationS?: number; stage?: string }>(
+  return call<{ status: string; providerJobId?: string; videoUrl?: string; audioDurationS?: number; stage?: string }>(
     "twin-visual-generate",
     { twinId, operationId, idempotencyKey: opts.idempotencyKey ?? operationId }
   );

@@ -7,8 +7,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  TwinApiError, activateVersion, compareVersions, generateTwinVideo, getTwinState,
-  rollbackVersion, sendToTimeline, type TwinStateView,
+  TwinApiError, activateVersion, bootstrapTwinOperation, compareVersions, generateTwinVideo,
+  getTwinState, rollbackVersion, sendToTimeline, type TwinStateView,
 } from "@/lib/twinApi";
 
 const CARD = "rounded-xl border border-white/10 bg-white/[0.03] p-5";
@@ -37,7 +37,7 @@ export default function TwinSetupPage() {
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [compare, setCompare] = useState<Set<number>>(new Set());
   const [compareResult, setCompareResult] = useState<string | null>(null);
-  const [lastClip, setLastClip] = useState<{ src: string; operationId: string } | null>(null);
+  const [lastClip, setLastClip] = useState<{ src: string; operationId: string; durationS: number } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -70,11 +70,24 @@ export default function TwinSetupPage() {
     if (!twin) return;
     setBusy(true); setError(null);
     try {
-      // One call. The server owns idempotency, consent, entitlement, the spend ceiling and
-      // the kill switch; the browser cannot override any of them.
-      const res = await generateTwinVideo(twin.id);
+      // STEP 1 (unpaid): bootstrap the operation against the twin's EXISTING asset. This binds
+      // the likeness asset and seeds the persisted avatar, so the paid step has nothing to
+      // create. No provider request is made on this path.
+      if (!state?.boundAssetId) {
+        setError("Twin unavailable"); // nothing to bind — never fall through to a paid call
+        return;
+      }
+      const boot = await bootstrapTwinOperation(twin.id, state.boundAssetId);
+      if (boot.providerCalls !== 0 || (boot.avatarSource ?? "") !== "twin_persisted") {
+        // The avatar was not resolved from the twin: refuse rather than risk buying one.
+        setError("Generation failed");
+        return;
+      }
+
+      // STEP 2 (paid, exactly once): the proven generation step for the bootstrapped operation.
+      const res = await generateTwinVideo(twin.id, { operationId: boot.operationId, idempotencyKey: boot.idempotencyKey });
       if (res.status === "queued" || res.status === "video_requested") {
-        setLastClip({ src: "", operationId: twin.id });
+        setLastClip({ src: res.videoUrl ?? "", operationId: boot.operationId, durationS: res.audioDurationS ?? 5.5 });
       }
       await load();
     } catch (e) {
@@ -88,8 +101,8 @@ export default function TwinSetupPage() {
     try {
       await sendToTimeline({
         id: `twin-${Date.now()}`, type: "video", track: 0,
-        start_time: 0, end_time: lastClip.operationId ? audioDurationS : 5.5,
-        content: { src: lastClip.src, duration: 5.5, has_audio: true },
+        start_time: 0, end_time: lastClip.durationS,
+        content: { src: lastClip.src, duration: lastClip.durationS, has_audio: true },
       });
     } catch (e) {
       setError(e instanceof TwinApiError ? e.message : "Generation failed");
