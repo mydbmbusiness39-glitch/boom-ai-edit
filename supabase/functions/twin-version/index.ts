@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
   if (userErr || !user) return json(401, { ...userError("TWIN_UNAVAILABLE"), error: "User not authenticated" });
 
   const service = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
-  const { data: profile } = await service.from("profiles").select("role, plan, tier").eq("id", user.id).maybeSingle();
+  const { data: profile } = await service.from("profiles").select("role, plan").eq("id", user.id).maybeSingle();
   const role = roleFromProfile(profile);
 
   // Version administration is owner-only. Deny BEFORE reading anything about the twin.
@@ -66,8 +66,24 @@ Deno.serve(async (req: Request) => {
 
   const current = activeVersion(twin as never);
 
+  /** Same masking rule as twin-state: never hand back a full provider id. */
+  const fp = (id: string | null | undefined) =>
+    !id ? null : id.length <= 8 ? `…${id}` : `…${id.slice(-8)}`;
+  const maskList = (list: ReturnType<typeof versionList>) =>
+    list.map((v) => ({
+      version: v.version,
+      label: v.label,
+      status: v.version === current.version ? "active" : v.status,
+      voiceId: fp(v.voiceProviderId),
+      visualAvatarId: fp(v.visualProviderId),
+      voiceProvider: v.voiceProvider,
+      visualProvider: v.visualProvider,
+      createdAt: v.createdAt,
+      notes: v.notes ?? null
+    }));
+
   if (action === "list") {
-    return json(200, { ok: true, activeVersion: current.version, versions: versionList(twin as never) });
+    return json(200, { ok: true, activeVersion: current.version, versions: maskList(versionList(twin as never)) });
   }
 
   if (action === "compare") {
@@ -77,7 +93,20 @@ Deno.serve(async (req: Request) => {
     }
     try {
       const cmp = compareVersions(twin as never, a, b);
-      return json(200, { ok: true, ...cmp, costNote: cmp.visualChange ? "These versions use different visual avatars." : null });
+      // Mask the raw ids out of the field-level diff before it leaves the server.
+      const changes = cmp.changes.map((c) => ({
+        field: c.field,
+        from: /Id$/.test(c.field) ? fp(c.from) : c.from,
+        to: /Id$/.test(c.field) ? fp(c.to) : c.to
+      }));
+      return json(200, {
+        ok: true,
+        a: { version: cmp.a.version, label: cmp.a.label },
+        b: { version: cmp.b.version, label: cmp.b.label },
+        changes,
+        visualChange: cmp.visualChange,
+        costNote: cmp.visualChange ? "These versions use different visual avatars." : null
+      });
     } catch (err) {
       return json(404, { ...userError("TWIN_UNAVAILABLE"), error: sanitizeForLog(err, 120) });
     }

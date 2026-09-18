@@ -22,6 +22,23 @@ const fingerprint = (id: string | null | undefined) =>
   !id ? null : id.length <= 8 ? `…${id}` : `…${id.slice(-8)}`;
 
 Deno.serve(async (req: Request) => {
+  try {
+    return await handle(req);
+  } catch (err) {
+    // Never a bare 500: name the failure in a sanitized form so it is diagnosable.
+    const name = (err as { name?: string })?.name ?? "Error";
+    const msg = sanitizeForLog((err as { message?: string })?.message ?? err, 200);
+    const stack = sanitizeForLog((err as { stack?: string })?.stack ?? "", 300);
+    console.log(`[twin-state] UNHANDLED ${name}: ${msg} :: ${stack}`);
+    return json(500, {
+      ...userError("GENERATION_FAILED"),
+      error: "TWIN_STATE_INTERNAL",
+      debug: { name, message: msg, frames: stack.split("\n").slice(0, 3) }
+    });
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   if (req.method === "OPTIONS") return new Response(null, { headers: cors });
   if (req.method !== "POST") return json(405, { error: "Method not allowed" });
 
@@ -39,7 +56,7 @@ Deno.serve(async (req: Request) => {
 
   // Role from public.profiles — the same source src/lib/access.ts uses. Fails closed.
   const { data: profile } = await service
-    .from("profiles").select("role, plan, tier").eq("id", user.id).maybeSingle();
+    .from("profiles").select("role, plan").eq("id", user.id).maybeSingle();
   const role = roleFromProfile(profile);
   const authz = authorize(role, "twin.view");
   if (!authz.ok) return json(authz.http, { ...userError("TWIN_UNAVAILABLE"), error: authz.code });
@@ -61,15 +78,25 @@ Deno.serve(async (req: Request) => {
     return json(404, { ...userError("TWIN_UNAVAILABLE"), error: "No twin found for this account" });
   }
 
-  const { data: entitlement } = await service.rpc("account_entitlements", { _user_id: user.id })
-    .select("*").maybeSingle().then((r) => r, () => ({ data: null }));
+  // account_entitlements(user_uuid uuid). Read defensively: a problem here must never
+  // take the page down — the caller still learns consent/avatar state.
+  let entitlement: Record<string, unknown> | null = null;
+  try {
+    const { data } = await service.rpc("account_entitlements", { user_uuid: user.id });
+    entitlement = Array.isArray(data) ? (data[0] ?? null) : (data ?? null);
+  } catch (e) {
+    console.log(`[twin-state] entitlement read failed: ${sanitizeForLog(e)}`);
+  }
 
   const { data: ops } = await service.from("ai_twin_operations")
     .select("id, kind, status, provider_job_id, attempt_count, error_code, created_at, updated_at, entitlement_snapshot")
     .eq("twin_id", twin.id).order("created_at", { ascending: false }).limit(20);
 
   const rows = ops ?? [];
-  const lastSuccess = rows.find((o) => o.status === "video_completed" || o.status === "completed") ?? null;
+  // A generation is "successful" when the provider accepted it and returned a job id. The
+  // ledger row can still carry an earlier attempt's error_code (the row is reused across
+  // attempts), so the status — not the stale error — decides.
+  const lastSuccess = rows.find((o) => o.provider_job_id && o.status !== "failed") ?? null;
   const lastAttempt = rows[0] ?? null;
   const avatarReady = !!twin.visual_provider_id;
 
@@ -97,7 +124,7 @@ Deno.serve(async (req: Request) => {
       consentStatus: consentOk ? "granted" : "required",
       consentVersion: twin.consent_version ?? null,
       entitlementStatus: entitlementOk ? "active" : "inactive",
-      providerStatus: deno.env.get("HEYGEN_API_KEY") ? "available" : "unavailable",
+      providerStatus: Deno.env.get("HEYGEN_API_KEY") ? "available" : "unavailable",
       status: twin.status ?? "unknown",
       createdAt: twin.created_at,
       updatedAt: twin.updated_at
@@ -137,4 +164,4 @@ Deno.serve(async (req: Request) => {
     // UI hint only — the server re-checks every one of these before any paid call.
     readyToGenerate: consentOk && entitlementOk && avatarReady
   });
-});
+}
