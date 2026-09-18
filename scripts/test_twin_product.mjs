@@ -30,7 +30,7 @@ rmSync(BUILD, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 // The four product modules are standalone (no cross-imports), so they are compiled
 // directly from source as TypeScript and the emitted .js is what the tests import.
-const PURE = ["capabilities.ts", "costPreview.ts", "twinVersions.ts", "userErrors.ts"];
+const PURE = ["capabilities.ts", "costPreview.ts", "twinVersions.ts", "userErrors.ts", "avatarReuse.ts"];
 writeFileSync(join(BUILD, "package.json"), JSON.stringify({ type: "module" }));
 try {
   execFileSync("npx", ["--yes", "--package", "typescript", "tsc",
@@ -194,6 +194,51 @@ const leaks = uiFiles.filter((f) => {
 check("no provider key is assigned anywhere in the product layer", leaks.length === 0, leaks.join(","));
 check("[source] the provider key is read only from the server environment",
   /Deno\.env\.get\("HEYGEN_API_KEY"\)/.test(readFileSync(join(REPO, "supabase/functions/twin-visual-generate/index.ts"), "utf8")));
+
+/* ------------------------------- 11. avatar reuse (FIX 1) — the $1.32 defect ---------- */
+console.log("\n=== 11. avatar reuse resolution (fresh operation must NOT create an avatar) ===");
+const reuseMod = await import(join(OUT, "avatarReuse.js"));
+const rFresh = reuseMod.resolveAvatar({ snapAvatarId: null, snapLookId: null, twinVisualProviderId: AVATAR });
+check("FRESH operation + existing twin avatar => resolved from the TWIN (reuse)",
+  rFresh.source === "twin" && rFresh.avatarId === AVATAR && rFresh.creationAllowed === false);
+check("FRESH operation + existing twin avatar => create-avatar NOT called",
+  reuseMod.guardAgainstNeedlessAvatarCreate(rFresh, AVATAR) === null && rFresh.creationAllowed === false);
+const rSnap = reuseMod.resolveAvatar({ snapAvatarId: AVATAR, snapLookId: AVATAR, twinVisualProviderId: "different" });
+check("operation snapshot avatar => snapshot wins (continuity), no creation",
+  rSnap.source === "snapshot" && rSnap.avatarId === AVATAR && rSnap.creationAllowed === false);
+const rNone = reuseMod.resolveAvatar({ snapAvatarId: null, snapLookId: null, twinVisualProviderId: null });
+check("no snapshot + no persisted twin avatar => creation is allowed (the ONLY case)",
+  rNone.source === "none" && rNone.creationAllowed === true &&
+  reuseMod.guardAgainstNeedlessAvatarCreate(rNone, null) === null);
+const rConflict = reuseMod.resolveAvatar({ snapAvatarId: null, snapLookId: null, twinVisualProviderId: AVATAR });
+check("HARD ASSERTION: twin has an avatar but resolution found none => refuse, never create",
+  reuseMod.guardAgainstNeedlessAvatarCreate(rConflict, AVATAR) === null && rConflict.creationAllowed === false);
+const forced = { avatarId: null, lookId: null, source: "none", conflict: true, creationAllowed: false };
+check("the explicit impossible-state guard refuses with AVATAR_REUSE_RESOLUTION_FAILED",
+  reuseMod.guardAgainstNeedlessAvatarCreate(forced, AVATAR) === "AVATAR_REUSE_RESOLUTION_FAILED");
+const flowNow = readFileSync(join(SRC, "flow.ts"), "utf8");
+check("[source] Phase B applies the resolution before the create branch can run",
+  flowNow.indexOf("resolution.source === \"twin\"") > 0 &&
+  flowNow.indexOf("resolution.source === \"twin\"") < flowNow.indexOf("if (!avatarId) {"));
+check("[source] FIX 1 falls back to the twin's persisted avatar", /twinVisualProviderId: g\.twin\.visual_provider_id/.test(flowNow));
+check("[source] the resolution is persisted for continuity", /avatar_source: "twin_persisted"/.test(flowNow));
+
+/* ---------------------------- 12. UI bootstrap (FIX 2) — zero provider contact ---------- */
+console.log("\n=== 12. UI operation bootstrap (no upload, no provider call, no spend) ===");
+const ingestSrc = readFileSync(join(REPO, "supabase/functions/twin-visual-ingest/index.ts"), "utf8");
+check("bootstrap path exists and is dispatched before the ingest switch check",
+  ingestSrc.indexOf("runBootstrapBind(") < ingestSrc.indexOf("if (!sw.assetIngestEnabled)"));
+check("[source] bootstrap binds the existing asset id (no re-upload)",
+  /bindAssetId/.test(ingestSrc) && /assetId: bindAssetId/.test(ingestSrc));
+check("[source] bootstrap seeds the twin's persisted avatar into the operation",
+  /avatar_source: "twin_persisted"/.test(flowNow) && /avatar_id: twinAvatar/.test(flowNow));
+const bindBody = flowNow.slice(flowNow.indexOf("export async function runBootstrapBind"));
+check("bootstrap performs no provider request (no createAvatar/uploadAsset/getAssetStatus)",
+  !/createAvatar|uploadAsset|getAssetStatus|generateVideo/.test(bindBody.slice(0, bindBody.indexOf("export async function runPhaseAIngest"))));
+check("cost preview stays reuse-only when a persisted avatar exists",
+  cost.estimateCost({ audioDurationS: 5.56, willCreateAvatar: false }).estimatedDisplay === "$0.21");
+check("idempotency still prevents duplicate video requests",
+  /claimOperation/.test(flowNow) && /"duplicate" in claim/.test(flowNow));
 
 /* ----------------------------------------------------------------- summary */
 const passed = results.filter((r) => r.passed).length;
