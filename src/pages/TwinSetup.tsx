@@ -38,6 +38,10 @@ export default function TwinSetupPage() {
   const [compare, setCompare] = useState<Set<number>>(new Set());
   const [compareResult, setCompareResult] = useState<string | null>(null);
   const [lastClip, setLastClip] = useState<{ src: string; operationId: string; durationS: number } | null>(null);
+  // Inline status shown right next to the Generate button, so a failure is never invisible.
+  const [gen, setGen] = useState<{ state: "idle" | "preparing" | "generating" | "complete" | "failed"; note: string }>(
+    { state: "idle", note: "Ready" }
+  );
 
   const load = useCallback(async () => {
     try {
@@ -66,32 +70,47 @@ export default function TwinSetupPage() {
     return out;
   }, [state, twin, preview]);
 
+  /** Friendly wording only — raw provider/edge codes are never surfaced to the user. */
+  function friendlyFailure(e: unknown): string {
+    const code = e instanceof TwinApiError ? e.code : "";
+    if (/disabled/i.test(code)) return "Generation is temporarily unavailable.";
+    if (e instanceof TwinApiError && e.status === 402) return "Spend limit reached";
+    return "Generation failed";
+  }
+
   async function onGenerate() {
     if (!twin) return;
     setBusy(true); setError(null);
     try {
-      // STEP 1 (unpaid): bootstrap the operation against the twin's EXISTING asset. This binds
-      // the likeness asset and seeds the persisted avatar, so the paid step has nothing to
-      // create. No provider request is made on this path.
       if (!state?.boundAssetId) {
+        setGen({ state: "failed", note: "Generation failed" });
         setError("Twin unavailable"); // nothing to bind — never fall through to a paid call
         return;
       }
+
+      // STEP 1 (unpaid): bootstrap the operation against the twin's EXISTING asset.
+      setGen({ state: "preparing", note: "Preparing…" });
       const boot = await bootstrapTwinOperation(twin.id, state.boundAssetId);
       if (boot.providerCalls !== 0 || (boot.avatarSource ?? "") !== "twin_persisted") {
-        // The avatar was not resolved from the twin: refuse rather than risk buying one.
+        setGen({ state: "failed", note: "Generation failed" });
         setError("Generation failed");
         return;
       }
 
       // STEP 2 (paid, exactly once): the proven generation step for the bootstrapped operation.
+      setGen({ state: "generating", note: "Generating…" });
       const res = await generateTwinVideo(twin.id, { operationId: boot.operationId, idempotencyKey: boot.idempotencyKey });
       if (res.status === "queued" || res.status === "video_requested") {
         setLastClip({ src: res.videoUrl ?? "", operationId: boot.operationId, durationS: res.audioDurationS ?? 5.5 });
+        setGen({ state: "complete", note: "Complete" });
+      } else {
+        setGen({ state: "failed", note: "Generation failed" });
       }
       await load();
     } catch (e) {
-      setError(e instanceof TwinApiError ? e.message : "Generation failed");
+      const note = friendlyFailure(e);
+      setGen({ state: "failed", note });
+      setError(note);
     } finally { setBusy(false); }
   }
 
@@ -249,13 +268,32 @@ export default function TwinSetupPage() {
           </ul>
         )}
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <button className={BTN_PRIMARY} disabled={busy || blockers.length > 0 || !canGenerate || !twin} onClick={onGenerate}>
             {busy ? "Working…" : "Generate talking-head video"}
           </button>
           <button className={BTN_GHOST} disabled={busy || !lastClip} onClick={onSendToTimeline}>
             Send to timeline
           </button>
+
+          {/* Inline status — directly beside the button so a failure can never be missed. */}
+          <span
+            data-cy="twin-generate-status"
+            role="status"
+            aria-live="polite"
+            className={
+              "rounded-md px-3 py-1.5 text-sm font-medium " +
+              (gen.state === "failed"
+                ? "border border-red-500/40 bg-red-500/10 text-red-200"
+                : gen.state === "complete"
+                  ? "border border-emerald-500/40 bg-emerald-500/10 text-emerald-200"
+                  : gen.state === "idle"
+                    ? "border border-white/10 text-white/50"
+                    : "border border-amber-500/40 bg-amber-500/10 text-amber-200")
+            }
+          >
+            {gen.note}
+          </span>
         </div>
         {!canGenerate && <p className="mt-2 text-xs text-amber-300">You do not have access to generate with this twin.</p>}
       </section>
